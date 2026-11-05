@@ -117,8 +117,14 @@ class SinumHomeAssistantConfigFlow(ConfigFlow, domain=DOMAIN):
             elif info is not None:
                 await self.async_set_unique_id(device_id)
                 self._abort_if_unique_id_configured()
+                hub_name = str(info.get("name") or "").strip()
+                title = (
+                    f"Sinum Home Assistant — {hub_name}"
+                    if hub_name and hub_name.lower() != "sinum"
+                    else "Sinum Home Assistant"
+                )
                 return self.async_create_entry(
-                    title=str(info.get("name") or "Sinum"),
+                    title=title,
                     data={
                         CONF_EMAIL: email,
                         CONF_DEVICE_ID: device_id,
