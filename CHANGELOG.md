@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.0.2 — 2026-11-06
+
+- Clarify the copyright and trademark notice.
+
 ## 1.0.1 — 2026-11-06
 
 - Use the product name for newly created config entries.
