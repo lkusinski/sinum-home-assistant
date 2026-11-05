@@ -1,0 +1,44 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Connect to Sinum",
+        "description": "Sign in with the Sinum account that owns the hub. The cloud device ID is the `uid` shown by the Sinum app or in the hub settings, for example `{device_id_example}`.",
+        "data": {
+          "email": "E-mail",
+          "password": "Password",
+          "device_id": "Cloud device ID"
+        }
+      },
+      "reauth_confirm": {
+        "title": "Reauthenticate Sinum",
+        "description": "The refresh token is no longer valid. Enter the password for {email}.",
+        "data": {
+          "password": "Password"
+        }
+      }
+    },
+    "error": {
+      "invalid_auth": "Invalid e-mail or password.",
+      "invalid_device_id": "The cloud device ID does not match this account or hub.",
+      "cannot_connect": "Cannot connect to Sinum."
+    },
+    "abort": {
+      "already_configured": "This Sinum hub is already configured.",
+      "reauth_successful": "Reauthentication was successful."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Sinum Home Assistant",
+        "description": "Cloud polling is intentionally conservative. Weather adds one request per cycle; system modules add diagnostic entities.",
+        "data": {
+          "scan_interval": "Polling interval (seconds)",
+          "enable_weather": "Enable weather and forecast",
+          "enable_system_modules": "Enable system modules"
+        }
+      }
+    }
+  }
+}

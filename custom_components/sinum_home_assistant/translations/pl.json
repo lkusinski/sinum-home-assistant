@@ -1,0 +1,44 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Połącz z Sinum",
+        "description": "Zaloguj się kontem Sinum, do którego należy centrala. Cloud device ID to `uid` widoczny w aplikacji Sinum lub w ustawieniach centrali, np. `{device_id_example}`.",
+        "data": {
+          "email": "E-mail",
+          "password": "Hasło",
+          "device_id": "Cloud device ID"
+        }
+      },
+      "reauth_confirm": {
+        "title": "Ponowne uwierzytelnienie Sinum",
+        "description": "Refresh token wygasł. Podaj hasło do konta {email}.",
+        "data": {
+          "password": "Hasło"
+        }
+      }
+    },
+    "error": {
+      "invalid_auth": "Nieprawidłowy e-mail lub hasło.",
+      "invalid_device_id": "Cloud device ID nie pasuje do tego konta lub centrali.",
+      "cannot_connect": "Nie można połączyć się z Sinum."
+    },
+    "abort": {
+      "already_configured": "Ta centrala Sinum jest już skonfigurowana.",
+      "reauth_successful": "Ponowne uwierzytelnienie zakończone sukcesem."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Sinum Home Assistant",
+        "description": "Polling chmury jest oszczędny. Pogoda dodaje jedno zapytanie na cykl; moduły systemowe dodają encje diagnostyczne.",
+        "data": {
+          "scan_interval": "Interwał odpytywania (sekundy)",
+          "enable_weather": "Włącz pogodę i prognozę",
+          "enable_system_modules": "Włącz moduły systemowe"
+        }
+      }
+    }
+  }
+}
