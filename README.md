@@ -3,6 +3,7 @@
 [![HACS Custom](https://img.shields.io/badge/HACS-Custom-41BDF5.svg)](https://hacs.xyz)
 [![Home Assistant](https://img.shields.io/badge/Home%20Assistant-2026.11%2B-18BCEE.svg)](https://www.home-assistant.io)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Validate](https://github.com/lkusinski/sinum-home-assistant/actions/workflows/validate.yml/badge.svg)](https://github.com/lkusinski/sinum-home-assistant/actions/workflows/validate.yml)
 
 **Sinum Home Assistant** is a native Home Assistant integration for [Sinum](https://sinum.tech)
 heating and home automation systems by **Tech Sterowniki**.
