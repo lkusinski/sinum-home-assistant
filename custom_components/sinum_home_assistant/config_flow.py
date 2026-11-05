@@ -119,7 +119,7 @@ class SinumHomeAssistantConfigFlow(ConfigFlow, domain=DOMAIN):
                 self._abort_if_unique_id_configured()
                 hub_name = str(info.get("name") or "").strip()
                 title = (
-                    f"Sinum Home Assistant — {hub_name}"
+                    f"Sinum Home Assistant - {hub_name}"
                     if hub_name and hub_name.lower() != "sinum"
                     else "Sinum Home Assistant"
                 )
