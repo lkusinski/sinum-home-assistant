@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.0.1 — 2026-11-06
+
+- Use the product name for newly created config entries.
+- Add lint validation to CI.
+
 ## 1.0.0 — 2026-11-05
 
 First public release.
