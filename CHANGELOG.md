@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.1.1 — 2026-11-06
+
+- Automatically reload the config entry when new devices, parents or schedules appear.
+- Keep entity creation up to date without a manual restart after extending the Sinum system.
+
 ## 1.1.0 — 2026-11-06
 
 - Thermal schedule entities: current/fallback target, associated devices and activity.

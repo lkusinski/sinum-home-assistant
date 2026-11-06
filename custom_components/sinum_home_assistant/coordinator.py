@@ -55,6 +55,8 @@ class SinumHomeAssistantCoordinator(DataUpdateCoordinator[SinumHomeAssistantData
         )
         self._info: dict[str, Any] = {}
         self._info_at = 0.0
+        self._known_keys: set[tuple[str, int]] | None = None
+        self._reload_requested = False
         super().__init__(
             hass,
             _LOGGER,
@@ -112,7 +114,7 @@ class SinumHomeAssistantCoordinator(DataUpdateCoordinator[SinumHomeAssistantData
                 raise ConfigEntryAuthFailed(str(err)) from err
             except SinumHomeAssistantError as err:
                 _LOGGER.debug("Sinum schedules unavailable: %s", err)
-        return build_data(
+        data = build_data(
             info=info,
             rooms=rooms,
             parents=parents,
@@ -120,3 +122,24 @@ class SinumHomeAssistantCoordinator(DataUpdateCoordinator[SinumHomeAssistantData
             weather=weather,
             schedules=schedules,
         )
+        keys: set[tuple[str, int]] = set()
+        for group, items in data.device_groups.items():
+            keys.update((group, device_id) for device_id in items)
+        for group, items in data.parent_groups.items():
+            keys.update(
+                (f"parent:{group}", parent_id) for parent_id in items
+            )
+        keys.update(("schedule", schedule_id) for schedule_id in data.schedules)
+        if self._known_keys is None:
+            self._known_keys = keys
+        elif keys != self._known_keys and not self._reload_requested:
+            self._reload_requested = True
+            _LOGGER.info(
+                "Sinum device set changed; reloading config entry"
+            )
+            self.hass.async_create_task(
+                self.hass.config_entries.async_reload(
+                    self.config_entry.entry_id
+                )
+            )
+        return data

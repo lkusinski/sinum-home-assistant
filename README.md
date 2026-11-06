@@ -34,6 +34,8 @@ pogodą, przekaźnikami, diagnostyką i aktualizacjami firmware.
 - **Uwierzytelnianie refresh tokenem** — hasło jest używane tylko podczas
   konfiguracji lub ponownego uwierzytelnienia i nie jest zapisywane.
 - **Oszczędne odpytywanie chmury** — jeden cykl aktualizacji co 30 sekund.
+- **Automatyczne wykrywanie nowych urządzeń** — dodanie urządzenia lub harmonogramu
+  w Sinum przeładowuje integrację i tworzy nowe encje.
 
 ## Podgląd
 
@@ -172,6 +174,7 @@ firmware updates.
 - Config flow and options flow — no YAML required.
 - Refresh-token authentication; the password is never stored.
 - Conservative cloud polling every 30 seconds.
+- Automatic reload when new devices, parents or schedules are added.
 
 ### Installation
 
