@@ -5,133 +5,199 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Validate](https://github.com/lkusinski/sinum-home-assistant/actions/workflows/validate.yml/badge.svg)](https://github.com/lkusinski/sinum-home-assistant/actions/workflows/validate.yml)
 
-**Sinum Home Assistant** is a native Home Assistant integration for [Sinum](https://sinum.tech)
-heating and home automation systems by **Tech Sterowniki**.
+**Sinum Home Assistant** to natywna integracja Home Assistant dla systemów
+grzewczych i automatyki domowej **Sinum** firmy **Tech Sterowniki**.
 
-It connects directly to the Sinum cloud, discovers the rooms and devices available
-to your account, and creates native Home Assistant entities for climate, weather,
-switches, diagnostics and firmware updates.
+Integracja łączy się bezpośrednio z chmurą Sinum, automatycznie mapuje pokoje
+i urządzenia oraz tworzy natywne encje Home Assistant do sterowania klimatem,
+pogodą, przekaźnikami, diagnostyką i aktualizacjami firmware.
 
 ![Sinum Home Assistant](assets/banner.png)
 
-## Highlights
+## Najważniejsze cechy
 
-- **Native climate entities** for Sinum thermostats and WTP temperature regulators.
-- **Current temperature, target temperature and HVAC action** exposed through the
-  standard Home Assistant climate model.
-- **Weather entity with hourly and daily forecasts**, including temperature,
-  humidity, pressure, wind, UV index and solar irradiance.
-- **Firmware update entities**, including devices whose update is available through
-  the Sinum cloud but is not shown in the app.
-- **Areas mapped 1:1 to Sinum rooms**, with automatic assignment of rooms,
-  controllers, sensors, relays and system modules.
-- **Relay switches for free outputs**, read-only relay state sensors and a broad set of diagnostics: signal strength,
-  battery, uptime, IP address, latency, network channel and more.
-- **Config flow and options flow** — no YAML required.
-- **Refresh-token authentication** — the password is used only during setup or
-  reauthentication and is never stored.
-- **Conservative polling** — a five-request update cycle every 30 seconds by default.
+- **Natywne encje klimatu** dla termostatów Sinum i regulatorów temperatury WTP.
+- **Temperatura bieżąca, temperatura docelowa i `hvac_action`** zgodne
+  ze standardowym modelem klimatu Home Assistant.
+- **Encja pogody z prognozą godzinną i dzienną** — temperatura, wilgotność,
+  ciśnienie, wiatr, indeks UV i irradiancja słoneczna.
+- **Encje aktualizacji firmware**, również dla urządzeń, których aktualizacja
+  jest dostępna w chmurze, ale nie jest widoczna w aplikacji.
+- **Obszary 1:1 z pokojami Sinum** — automatyczne przypisywanie pokoi,
+  kontrolerów, czujników, przekaźników i modułów systemowych.
+- **Przełączniki wolnych przekaźników**, encje stanu przekaźników zarządzanych
+  przez termostat oraz szeroki zestaw diagnostyki: sygnał, bateria, czas pracy,
+  adres IP, opóźnienie i kanał sieci.
+- **Konfiguracja przez UI** — bez YAML.
+- **Uwierzytelnianie refresh tokenem** — hasło jest używane tylko podczas
+  konfiguracji lub ponownego uwierzytelnienia i nie jest zapisywane.
+- **Oszczędne odpytywanie chmury** — jeden cykl aktualizacji co 30 sekund.
 
-## Preview
+## Podgląd
 
-![Dashboard preview](assets/dashboard-preview.png)
+![Podgląd dashboardu](assets/dashboard-preview.png)
 
-## Installation
+## Instalacja
 
-### HACS (recommended)
+### HACS (zalecane)
 
-1. Open **HACS → Integrations**.
-2. Open the menu and choose **Custom repositories**.
-3. Add `https://github.com/lkusinski/sinum-home-assistant` as an **Integration**.
-4. Search for **Sinum Home Assistant**, install it and restart Home Assistant.
-5. Go to **Settings → Devices & Services → Add Integration → Sinum Home Assistant**.
+1. Otwórz **HACS → Integracje**.
+2. Z menu wybierz **Repozytoria niestandardowe**.
+3. Dodaj `https://github.com/lkusinski/sinum-home-assistant` jako **Integrację**.
+4. Wyszukaj **Sinum Home Assistant**, zainstaluj i uruchom ponownie Home Assistant.
+5. Przejdź do **Ustawienia → Urządzenia i usługi → Dodaj integrację →
+   Sinum Home Assistant**.
 
-[![Open in HACS](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=lkusinski&repository=sinum-home-assistant&category=integration)
+[![Otwórz w HACS](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=lkusinski&repository=sinum-home-assistant&category=integration)
 
-### Manual installation
+### Instalacja ręczna
 
-Copy `custom_components/sinum_home_assistant` into your Home Assistant
-`config/custom_components/` directory, then restart Home Assistant.
+Skopiuj katalog `custom_components/sinum_home_assistant` do
+`config/custom_components/` w Home Assistant, a następnie uruchom ponownie HA.
 
-## Configuration
+## Konfiguracja
 
-You need:
+Potrzebujesz:
 
-- the e-mail address and password of the Sinum account that owns the hub;
-- the **cloud device ID** (`uid`) of the Sinum hub.
+- adresu e-mail i hasła do konta Sinum, do którego należy centrala;
+- **cloud device ID** (`uid`) centrali Sinum.
 
-The cloud device ID is shown in the Sinum app / hub settings. Enter it exactly as
-shown; it is stored in lowercase.
+Cloud device ID znajdziesz w aplikacji Sinum lub w ustawieniach centrali.
+Integracja zapisuje wyłącznie adres e-mail, device ID i refresh token. Hasło
+nie jest przechowywane.
 
-During setup the integration validates the account and the hub, obtains a refresh
-token and creates the config entry. The password is not persisted.
+### Opcje
 
-### Options
-
-| Option | Default | Description |
+| Opcja | Domyślnie | Opis |
 |---|---:|---|
-| Polling interval | 30 s | Range: 15–300 seconds. |
-| Enable weather | on | Adds the weather entity and forecast. |
-| Enable system modules | on | Adds extender and transceiver diagnostics. |
+| Interwał odpytywania | 30 s | Zakres 15–300 sekund. |
+| Pogoda | włączona | Dodaje encję pogody i prognozę. |
+| Moduły systemowe | włączone | Dodaje diagnostykę extenderów i transceiverów. |
 
-## Entities
+Zmiana opcji przeładowuje integrację. Wyłączenie pogody lub modułów systemowych
+usuwa powiązane encje z rejestru; ponowne włączenie odtwarza je z tymi samymi
+identyfikatorami.
 
-A typical installation creates:
+## Encje
 
-| Platform | Examples |
+W typowej instalacji powstają:
+
+| Platforma | Przykłady |
 |---|---|
-| `climate` | Room thermostats and WTP temperature regulators |
-| `weather` | Current conditions and hourly/daily forecast |
-| `sensor` | Temperature, humidity, battery, signal, IP, latency, firmware |
-| `binary_sensor` | Window contact, heating/cooling state, warnings, target reached |
-| `switch` | Relay outputs |
-| `update` | Hub, controller, extender and device firmware |
+| `climate` | Termostaty pokojowe i regulatory temperatury WTP |
+| `weather` | Warunki bieżące oraz prognoza godzinowa i dzienna |
+| `sensor` | Temperatura, wilgotność, bateria, sygnał, IP, opóźnienie, firmware |
+| `binary_sensor` | Kontakt okna, grzanie/chłodzenie, ostrzeżenia, stan przekaźnika |
+| `switch` | Wolne wyjścia przekaźnikowe |
+| `update` | Firmware centrali, kontrolerów, extenderów i urządzeń |
 
-Entity IDs are generated from the room name, device name and entity name. Areas
-and devices are created automatically.
+Przekaźniki zarządzane przez termostat wirtualny są **tylko do odczytu** —
+chmura Sinum nie pozwala sterować nimi bezpośrednio. Są widoczne jako
+`binary_sensor` „Stan przekaźnika”. Wolne przekaźniki działają jako switche.
 
-## Requirements
+Identyfikatory encji tworzone są z nazwy pokoju, urządzenia i właściwości.
+Obszary i urządzenia są tworzone automatycznie.
+
+## Wymagania
+
+- Home Assistant **2026.11** lub nowszy.
+- Konto Sinum z dostępem do chmury.
+- Dostęp do internetu i `backend.prd.sinum24.com`.
+
+## Prywatność
+
+Integracja komunikuje się wyłącznie z endpointami chmury Sinum potrzebnymi do
+odczytu stanu urządzeń i wysyłania poleceń sterujących. Przechowuje adres
+e-mail, cloud device ID i refresh token w config entry Home Assistant. Hasło nie
+jest zapisywane. Dane nie są wysyłane do żadnych innych usług.
+
+Szczegóły: [docs/PRIVACY.md](docs/PRIVACY.md).
+
+## Rozwiązywanie problemów
+
+- **Nieprawidłowy e-mail lub hasło** — sprawdź dane konta Sinum.
+- **Nieprawidłowy cloud device ID** — skopiuj `uid` z aplikacji lub ustawień centrali.
+- **Brak połączenia** — sprawdź internet i dostępność chmury Sinum.
+- **Część czujników ma stan `unknown`** — puste pola sieciowe transceiverów są
+  normalne.
+- **Nazwy encji różnią się od aplikacji** — Home Assistant używa nazw pokoju
+  i urządzenia; encje można zmienić w UI.
+
+Więcej: [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md).
+
+## Dokumentacja
+
+- [Instalacja i konfiguracja](docs/INSTALL.md)
+- [Opcje integracji](docs/CONFIGURATION.md)
+- [Opis encji](docs/ENTITIES.md)
+- [Rozwiązywanie problemów](docs/TROUBLESHOOTING.md)
+- [Rozwój integracji](docs/DEVELOPMENT.md)
+- [Prywatność](docs/PRIVACY.md)
+
+## Prawa autorskie i znaki towarowe
+
+Copyright © 2026 **Tech Sterowniki**. Szczegóły: [LICENSE](LICENSE)
+i [NOTICE.md](NOTICE.md).
+
+Sinum i Tech Sterowniki są znakami towarowymi Tech Sterowniki. Pozostałe nazwy
+produktów i znaki towarowe należą do ich właścicieli.
+
+Repozytorium zawiera niezależną integrację Home Assistant. Nie jest oficjalnym
+wydaniem Tech Sterowniki, chyba że zostało opublikowane przez Tech Sterowniki.
+
+---
+
+## English
+
+**Sinum Home Assistant** is a native Home Assistant integration for **Sinum**
+heating and home automation systems by **Tech Sterowniki**.
+
+It connects directly to the Sinum cloud, discovers rooms and devices, and creates
+native Home Assistant entities for climate, weather, relays, diagnostics and
+firmware updates.
+
+### Highlights
+
+- Native climate entities for Sinum thermostats and WTP temperature regulators.
+- Current temperature, target temperature and HVAC action.
+- Weather entity with hourly and daily forecasts.
+- Firmware update entities, including cloud-only updates.
+- Areas mapped 1:1 to Sinum rooms.
+- Switches for free relays and read-only state sensors for thermostat-managed relays.
+- Config flow and options flow — no YAML required.
+- Refresh-token authentication; the password is never stored.
+- Conservative cloud polling every 30 seconds.
+
+### Installation
+
+1. Add `https://github.com/lkusinski/sinum-home-assistant` as a custom
+   **Integration** repository in HACS.
+2. Install **Sinum Home Assistant** and restart Home Assistant.
+3. Open **Settings → Devices & Services → Add Integration → Sinum Home Assistant**.
+4. Enter the Sinum account e-mail, password and cloud device ID.
+
+### Requirements
 
 - Home Assistant **2026.11** or newer.
-- A Sinum account with cloud access enabled.
+- A Sinum account with cloud access.
 - Internet access to `backend.prd.sinum24.com`.
 
-## Privacy
+### Documentation
 
-The integration communicates only with the Sinum cloud endpoints required to read
-device state and send control commands. It stores the account e-mail, cloud device
-ID and a refresh token in the Home Assistant config entry. The password is not
-stored. No telemetry is sent anywhere else.
-
-See [docs/PRIVACY.md](docs/PRIVACY.md) for details.
-
-## Troubleshooting
-
-- **Invalid e-mail or password** — verify the Sinum account credentials.
-- **Invalid cloud device ID** — copy the `uid` from the Sinum app or hub settings.
-- **Cannot connect** — check internet access and whether the Sinum cloud is reachable.
-- **Some sensors are unknown** — network fields are empty for transceivers that do
-  not report Wi-Fi/Ethernet details. This is expected.
-- **Entity names differ from the app** — Home Assistant uses room + device names;
-  rename entities freely in the UI.
-
-More help: [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md).
-
-## Documentation
-
-- [Installation and setup](docs/INSTALL.md)
-- [Configuration and options](docs/CONFIGURATION.md)
-- [Entity reference](docs/ENTITIES.md)
+- [Installation](docs/INSTALL.md)
+- [Configuration](docs/CONFIGURATION.md)
+- [Entities](docs/ENTITIES.md)
 - [Troubleshooting](docs/TROUBLESHOOTING.md)
 - [Development](docs/DEVELOPMENT.md)
 - [Privacy](docs/PRIVACY.md)
 
-## Copyright and trademarks
+### Copyright and trademarks
 
-Copyright © 2026 **Tech Sterowniki**. See [LICENSE](LICENSE) and [NOTICE.md](NOTICE.md).
+Copyright © 2026 **Tech Sterowniki**. See [LICENSE](LICENSE) and
+[NOTICE.md](NOTICE.md).
 
 Sinum and Tech Sterowniki are trademarks of Tech Sterowniki. All other product
 names and trademarks are the property of their respective owners.
 
-This repository is an independent Home Assistant integration. It is not an official
-Tech Sterowniki release unless published by Tech Sterowniki.
+This repository is an independent Home Assistant integration. It is not an
+official Tech Sterowniki release unless published by Tech Sterowniki.
