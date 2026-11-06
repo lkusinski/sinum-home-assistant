@@ -25,7 +25,7 @@ switches, diagnostics and firmware updates.
   the Sinum cloud but is not shown in the app.
 - **Areas mapped 1:1 to Sinum rooms**, with automatic assignment of rooms,
   controllers, sensors, relays and system modules.
-- **Relay switches** and a broad set of diagnostic sensors: signal strength,
+- **Relay switches for free outputs**, read-only relay state sensors and a broad set of diagnostics: signal strength,
   battery, uptime, IP address, latency, network channel and more.
 - **Config flow and options flow** — no YAML required.
 - **Refresh-token authentication** — the password is used only during setup or

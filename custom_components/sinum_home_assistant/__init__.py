@@ -12,7 +12,13 @@ from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from .api import SinumAuthError, SinumHomeAssistantClient, SinumHomeAssistantError
 from .const import CONF_DEVICE_ID, CONF_EMAIL, CONF_REFRESH_TOKEN, PLATFORMS
 from .coordinator import SinumHomeAssistantCoordinator
-from .entity import async_assign_areas, async_ensure_device_hierarchy
+from .entity import (
+    async_assign_areas,
+    async_ensure_device_hierarchy,
+    async_remove_stale_relay_switches,
+    async_remove_system_module_entities,
+    async_remove_weather_entities,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -51,6 +57,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         hass, entry, coordinator.data, coordinator.enable_system_modules
     )
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
+    async_remove_stale_relay_switches(hass, entry, coordinator.data)
+    if not coordinator.enable_system_modules:
+        async_remove_system_module_entities(hass, entry)
+    if not coordinator.enable_weather:
+        async_remove_weather_entities(hass, entry)
     await async_assign_areas(hass, entry, coordinator.data)
 
     entry.async_on_unload(entry.add_update_listener(_async_update_listener))

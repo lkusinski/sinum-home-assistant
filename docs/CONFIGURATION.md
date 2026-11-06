@@ -23,7 +23,9 @@ Open **Settings → Devices & Services → Sinum Home Assistant → Configure**.
 | Enable weather | on | — | Adds the weather entity and forecast. |
 | Enable system modules | on | — | Adds extenders, transceivers and their diagnostics. |
 
-Changing options reloads the config entry. Entity history is preserved.
+Changing options reloads the config entry. Disabling weather or system modules
+removes their entities from the registry; enabling them again recreates the
+entities with the same unique IDs. Entity history is preserved.
 
 ## Reauthentication
 

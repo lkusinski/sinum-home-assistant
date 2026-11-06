@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.0.4 — 2026-11-06
+
+- Expose thermostat-managed relays as read-only state sensors instead of switches.
+- Remove stale entities when weather or system modules are disabled.
+- Remove legacy managed-relay switch entities during upgrade.
+- Detect managed relays from both labels and virtual supervisors.
+
 ## 1.0.3 — 2026-11-06
 
 - Use day/night-aware conditions in hourly forecasts.

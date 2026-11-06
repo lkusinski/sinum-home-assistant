@@ -12,6 +12,7 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .api import SinumHomeAssistantError
 from .coordinator import SinumHomeAssistantCoordinator
+from .data import is_managed_relay
 from .entity import SinumDeviceEntity, wtp_device_info
 
 PARALLEL_UPDATES = 1
@@ -82,6 +83,8 @@ async def async_setup_entry(
 
     for device_id, device in data.wtp.items():
         if device.get("type") != "relay":
+            continue
+        if is_managed_relay(device):
             continue
         parent = data.parents_wtp.get(device.get("parent_id"))
         entities.append(

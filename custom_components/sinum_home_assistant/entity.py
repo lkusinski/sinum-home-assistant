@@ -8,12 +8,13 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import area_registry as ar
 from homeassistant.helpers import device_registry as dr
+from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import DOMAIN, MANUFACTURER, MODEL
 from .coordinator import SinumHomeAssistantCoordinator
-from .data import SinumHomeAssistantData
+from .data import SinumHomeAssistantData, is_managed_relay
 
 
 def _room(data: SinumHomeAssistantData, device: dict[str, Any]) -> str | None:
@@ -241,6 +242,53 @@ def async_ensure_device_hierarchy(
             via_device_id=hub.id,
         )
         data.system_parent_ids[parent_id] = parent_device.id
+
+
+def _async_remove_entities_by_prefix(
+    hass: HomeAssistant, entry: ConfigEntry, prefix: str
+) -> None:
+    registry = er.async_get(hass)
+    for entity in list(registry.entities.values()):
+        if (
+            entity.config_entry_id == entry.entry_id
+            and entity.unique_id.startswith(prefix)
+        ):
+            registry.async_remove(entity.entity_id)
+
+
+def async_remove_system_module_entities(
+    hass: HomeAssistant, entry: ConfigEntry
+) -> None:
+    """Remove system-module entities when the option is disabled."""
+
+    _async_remove_entities_by_prefix(
+        hass, entry, f"{entry.entry_id}_system_module_"
+    )
+
+
+def async_remove_weather_entities(
+    hass: HomeAssistant, entry: ConfigEntry
+) -> None:
+    """Remove weather entities when the option is disabled."""
+
+    _async_remove_entities_by_prefix(hass, entry, f"{entry.entry_id}_weather")
+
+
+def async_remove_stale_relay_switches(
+    hass: HomeAssistant, entry: ConfigEntry, data: SinumHomeAssistantData
+) -> None:
+    """Remove old switch entities for relays now managed by a thermostat."""
+
+    registry = er.async_get(hass)
+    for device_id, device in data.wtp.items():
+        if device.get("type") != "relay":
+            continue
+        if not is_managed_relay(device):
+            continue
+        unique_id = f"{entry.entry_id}_wtp_{device_id}_switch"
+        entity_id = registry.async_get_entity_id("switch", DOMAIN, unique_id)
+        if entity_id is not None:
+            registry.async_remove(entity_id)
 
 
 async def async_assign_areas(

@@ -51,8 +51,12 @@ Sensors whose network information is not reported by the device remain
 
 ## Switches
 
-One switch per relay output. The state follows the Sinum cloud and commands are
-sent directly to the cloud.
+One switch per free relay output. The state follows the Sinum cloud and commands
+are sent directly to the cloud.
+
+Relays managed by a Sinum virtual thermostat are **read-only** in Home Assistant.
+They are exposed as `Stan przekaźnika` binary sensors because the cloud rejects
+direct relay commands for those outputs.
 
 ## Update
 

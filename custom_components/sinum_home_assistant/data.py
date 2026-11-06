@@ -69,6 +69,18 @@ class SinumHomeAssistantData:
         return bool(device.get("has_messages"))
 
 
+def is_managed_relay(device: dict[str, Any]) -> bool:
+    """Return True when a relay is controlled by a virtual thermostat."""
+
+    if "managed_by_thermostat" in (device.get("labels") or []):
+        return True
+    return any(
+        supervisor.get("class") == "virtual"
+        and supervisor.get("responsibility") == "relays"
+        for supervisor in (device.get("supervisors") or [])
+    )
+
+
 def build_data(
     *,
     info: dict[str, Any],
