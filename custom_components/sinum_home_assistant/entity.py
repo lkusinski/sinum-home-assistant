@@ -65,7 +65,7 @@ def system_module_device_info(
     software = str(device.get("software_version") or "")
     return DeviceInfo(
         identifiers={(DOMAIN, f"{entry_id}_system_module_{device_id}")},
-        name=str(device.get("name") or f"System module {device_id}"),
+        name=str(device.get("name") or f"System module {device_id}").strip(),
         manufacturer=MANUFACTURER,
         model=software.split(" v")[0] if software else "System module",
         sw_version=software,
@@ -85,7 +85,7 @@ def wtp_device_info(
 ) -> DeviceInfo:
     device_id = int(device["id"])
     software = str(device.get("software_version") or "")
-    name = str(device.get("name") or f"WTP {device_id}")
+    name = str(device.get("name") or f"WTP {device_id}").strip()
     room = _room(data, device)
     device_info = DeviceInfo(
         identifiers={(DOMAIN, f"{entry_id}_wtp_{device_id}")},
@@ -110,7 +110,7 @@ def virtual_device_info(
     room = _room(data, device)
     return DeviceInfo(
         identifiers={(DOMAIN, f"{entry_id}_virtual_{device_id}")},
-        name=str(device.get("name") or f"Thermostat {device_id}"),
+        name=str(device.get("name") or f"Thermostat {device_id}").strip(),
         manufacturer=MANUFACTURER,
         model="Virtual Thermostat",
         suggested_area=room,
@@ -191,7 +191,10 @@ class SinumDeviceEntity(SinumHomeAssistantEntity):
 
 
 def async_ensure_device_hierarchy(
-    hass: HomeAssistant, entry: ConfigEntry, data: SinumHomeAssistantData
+    hass: HomeAssistant,
+    entry: ConfigEntry,
+    data: SinumHomeAssistantData,
+    include_system_modules: bool = True,
 ) -> None:
     """Create hub and parent devices before child entities are added."""
 
@@ -221,6 +224,9 @@ def async_ensure_device_hierarchy(
             via_device_id=hub.id,
         )
         data.wtp_parent_ids[parent_id] = parent_device.id
+
+    if not include_system_modules:
+        return
 
     for parent_id, parent in data.parents_system_module.items():
         parent_device = devices.async_get_or_create(

@@ -60,8 +60,8 @@ Firmware update entities are created for the hub, parent controllers, extenders,
 transceivers and supported devices. The update entity shows the installed and
 latest version reported by the cloud.
 
-> Firmware installation is a physical operation. Only install an update when the
-> device is powered and the installation is supervised.
+> Firmware installation is performed in the Sinum app. Home Assistant reports
+> available versions and progress, but does not start the update itself.
 
 ## Areas and devices
 

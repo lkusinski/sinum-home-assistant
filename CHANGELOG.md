@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.0.3 — 2026-11-06
+
+- Use day/night-aware conditions in hourly forecasts.
+- Keep controller and module connectivity sensors available while offline.
+- Preserve a valid zero solar irradiance value.
+- Avoid string `"None"` for missing sunrise/sunset attributes.
+- Strip trailing whitespace from generated device names.
+- Do not create system-module parent devices when that option is disabled.
+- Clarify that firmware installation is performed in the Sinum app.
+
 ## 1.0.2 — 2026-11-06
 
 - Clarify the copyright and trademark notice.

@@ -26,7 +26,6 @@ from .entity import (
 PARALLEL_UPDATES = 0
 
 ONLINE = "Online"
-PROBLEM = "Problem"
 OPENING = "Otwarcie"
 TARGET_REACHED = "Osiągnięto temperaturę"
 WINDOW_OPEN = "Okno otwarte"
@@ -53,6 +52,7 @@ class SinumDeviceBinarySensor(SinumDeviceEntity, BinarySensorEntity):
         device_class: BinarySensorDeviceClass | None = None,
         icon: str | None = None,
         entity_category: EntityCategory | None = None,
+        use_device_status: bool = True,
     ) -> None:
         super().__init__(
             coordinator, device_info, unique_key, device_id, store
@@ -62,6 +62,13 @@ class SinumDeviceBinarySensor(SinumDeviceEntity, BinarySensorEntity):
         self._attr_device_class = device_class
         self._attr_icon = icon
         self._attr_entity_category = entity_category
+        self._use_device_status = use_device_status
+
+    @property
+    def available(self) -> bool:
+        if not self._use_device_status:
+            return self.coordinator.last_update_success
+        return super().available
 
     @property
     def is_on(self) -> bool | None:
@@ -156,6 +163,7 @@ async def async_setup_entry(
                 lambda d: d.get("status") == "online",
                 device_class=BinarySensorDeviceClass.CONNECTIVITY,
                 entity_category=EntityCategory.DIAGNOSTIC,
+                use_device_status=False,
             )
         )
 
@@ -246,6 +254,7 @@ async def async_setup_entry(
                     lambda d: d.get("status") == "online",
                     device_class=BinarySensorDeviceClass.CONNECTIVITY,
                     entity_category=EntityCategory.DIAGNOSTIC,
+                    use_device_status=False,
                 )
             )
 

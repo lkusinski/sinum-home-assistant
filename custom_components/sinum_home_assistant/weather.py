@@ -80,6 +80,36 @@ def _is_day(weather: dict[str, Any]) -> bool:
     return float(sunrise) <= now < float(sunset)
 
 
+def _parse_local_time(value: Any) -> datetime | None:
+    if not isinstance(value, str) or not value:
+        return None
+    try:
+        parsed = datetime.fromisoformat(value)
+    except ValueError:
+        return None
+    return parsed if parsed.tzinfo is not None else None
+
+
+def _daylight_window(weather: dict[str, Any]) -> tuple[int, int] | None:
+    sunrise = _parse_local_time(weather.get("sunrise_time"))
+    sunset = _parse_local_time(weather.get("sunset_time"))
+    if sunrise is None or sunset is None:
+        return None
+    return (
+        sunrise.hour * 60 + sunrise.minute,
+        sunset.hour * 60 + sunset.minute,
+    )
+
+
+def _is_day_at(weather: dict[str, Any], item: dict[str, Any]) -> bool:
+    item_time = _parse_local_time(item.get("time"))
+    window = _daylight_window(weather)
+    if item_time is not None and window is not None:
+        minutes = item_time.hour * 60 + item_time.minute
+        return window[0] <= minutes < window[1]
+    return _is_day(weather)
+
+
 def _condition(weather: dict[str, Any], is_day: bool = True) -> str | None:
     current = weather.get("current") or {}
     condition = current.get("weather") or {}
@@ -113,12 +143,12 @@ def _uv(weather: dict[str, Any]) -> float | None:
     return _scaled(value)
 
 
-def _iso(timestamp: Any) -> str:
+def _iso(timestamp: Any) -> str | None:
     if isinstance(timestamp, (int, float)):
         return datetime.fromtimestamp(
             float(timestamp), tz=UTC
         ).isoformat()
-    return str(timestamp)
+    return str(timestamp) if timestamp is not None else None
 
 
 def _daily_forecast(weather: dict[str, Any]) -> list[Forecast]:
@@ -131,6 +161,9 @@ def _daily_forecast(weather: dict[str, Any]) -> list[Forecast]:
         wind = item.get("wind") or {}
         rain = item.get("rain") or 0
         snow = item.get("snow") or 0
+        apparent = _nested(item, "feels_like", "day")
+        if not isinstance(apparent, (int, float)):
+            apparent = item.get("feels_like")
         result.append(
             {
                 "datetime": _iso(item.get("timestamp") or item.get("time")),
@@ -145,10 +178,7 @@ def _daily_forecast(weather: dict[str, Any]) -> list[Forecast]:
                 "humidity": item.get("humidity"),
                 "native_pressure": item.get("pressure"),
                 "cloud_coverage": item.get("cloud_coverage"),
-                "native_apparent_temperature": _scaled(
-                    _nested(item, "feels_like", "day")
-                    or item.get("feels_like")
-                ),
+                "native_apparent_temperature": _scaled(apparent),
                 "is_daytime": True,
             }
         )
@@ -167,7 +197,9 @@ def _hourly_forecast(weather: dict[str, Any]) -> list[Forecast]:
         result.append(
             {
                 "datetime": _iso(item.get("timestamp") or item.get("time")),
-                "condition": _condition_from_id(condition.get("id"), True),
+                "condition": _condition_from_id(
+                    condition.get("id"), _is_day_at(weather, item)
+                ),
                 "native_temperature": _scaled(item.get("temperature")),
                 "native_apparent_temperature": _scaled(
                     item.get("feels_like")
@@ -281,7 +313,10 @@ class SinumWeather(SinumHomeAssistantEntity, WeatherEntity):
         weather = self._weather
         current = weather.get("current") or {}
         condition = current.get("weather") or {}
-        attrs: dict[str, Any] = {
+        solar = _nested(weather, "current", "solar", "irradiance")
+        if solar is None:
+            solar = _nested(weather, "hourly", 0, "solar", "irradiance")
+        return {
             "city": weather.get("city_name"),
             "is_day": _is_day(weather),
             "sunrise": _iso(weather.get("sunrise")),
@@ -290,13 +325,9 @@ class SinumWeather(SinumHomeAssistantEntity, WeatherEntity):
             or condition.get("description"),
             "condition_id": condition.get("id"),
             "cloud_coverage": current.get("cloud_coverage"),
-            "solar_irradiance": _nested(
-                weather, "current", "solar", "irradiance"
-            )
-            or _nested(weather, "hourly", 0, "solar", "irradiance"),
+            "solar_irradiance": solar,
             "wind_gust_speed": _wind(weather, "gust"),
         }
-        return attrs
 
 
 async def async_setup_entry(

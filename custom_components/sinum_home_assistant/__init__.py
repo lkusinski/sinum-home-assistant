@@ -47,7 +47,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     await coordinator.async_config_entry_first_refresh()
 
     entry.runtime_data = coordinator
-    async_ensure_device_hierarchy(hass, entry, coordinator.data)
+    async_ensure_device_hierarchy(
+        hass, entry, coordinator.data, coordinator.enable_system_modules
+    )
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     await async_assign_areas(hass, entry, coordinator.data)
 
