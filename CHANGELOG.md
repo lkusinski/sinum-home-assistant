@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.0.5 — 2026-11-06
+
+- Polish-first README and repository description.
+- New brand icon combining the Sinum house with Home Assistant network nodes.
+- Refreshed logo, banner and dashboard preview.
+
 ## 1.0.4 — 2026-11-06
 
 - Expose thermostat-managed relays as read-only state sensors instead of switches.
