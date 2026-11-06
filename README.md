@@ -25,6 +25,8 @@ pogodą, przekaźnikami, diagnostyką i aktualizacjami firmware.
   jest dostępna w chmurze, ale nie jest widoczna w aplikacji.
 - **Obszary 1:1 z pokojami Sinum** — automatyczne przypisywanie pokoi,
   kontrolerów, czujników, przekaźników i modułów systemowych.
+- **Harmonogramy termiczne** — temperatura docelowa, zapasowa, liczba
+  powiązanych urządzeń i informacja o aktywnym przedziale.
 - **Przełączniki wolnych przekaźników**, encje stanu przekaźników zarządzanych
   przez termostat oraz szeroki zestaw diagnostyki: sygnał, bateria, czas pracy,
   adres IP, opóźnienie i kanał sieci.
@@ -73,6 +75,7 @@ nie jest przechowywane.
 | Interwał odpytywania | 30 s | Zakres 15–300 sekund. |
 | Pogoda | włączona | Dodaje encję pogody i prognozę. |
 | Moduły systemowe | włączone | Dodaje diagnostykę extenderów i transceiverów. |
+| Harmonogramy | włączone | Dodaje harmonogramy termiczne i ich stan. |
 
 Zmiana opcji przeładowuje integrację. Wyłączenie pogody lub modułów systemowych
 usuwa powiązane encje z rejestru; ponowne włączenie odtwarza je z tymi samymi
@@ -90,6 +93,7 @@ W typowej instalacji powstają:
 | `binary_sensor` | Kontakt okna, grzanie/chłodzenie, ostrzeżenia, stan przekaźnika |
 | `switch` | Wolne wyjścia przekaźnikowe |
 | `update` | Firmware centrali, kontrolerów, extenderów i urządzeń |
+| `sensor`/`binary_sensor` | Harmonogramy: temperatura docelowa, zapasowa, liczba urządzeń, aktywność |
 
 Przekaźniki zarządzane przez termostat wirtualny są **tylko do odczytu** —
 chmura Sinum nie pozwala sterować nimi bezpośrednio. Są widoczne jako
@@ -163,6 +167,7 @@ firmware updates.
 - Weather entity with hourly and daily forecasts.
 - Firmware update entities, including cloud-only updates.
 - Areas mapped 1:1 to Sinum rooms.
+- Thermal schedules with current target, fallback, associated devices and activity.
 - Switches for free relays and read-only state sensors for thermostat-managed relays.
 - Config flow and options flow — no YAML required.
 - Refresh-token authentication; the password is never stored.

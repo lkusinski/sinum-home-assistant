@@ -219,6 +219,8 @@ async def async_setup_entry(
     entities: list[ClimateEntity] = []
 
     for device_id, device in data.virtual.items():
+        if device.get("type") != "thermostat":
+            continue
         entities.append(
             SinumClimate(
                 coordinator,

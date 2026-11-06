@@ -20,6 +20,7 @@ from .api import (
     SinumNotSupportedError,
 )
 from .const import (
+    CONF_ENABLE_SCHEDULES,
     CONF_ENABLE_SYSTEM_MODULES,
     CONF_ENABLE_WEATHER,
     CONF_SCAN_INTERVAL,
@@ -48,6 +49,9 @@ class SinumHomeAssistantCoordinator(DataUpdateCoordinator[SinumHomeAssistantData
         )
         self.enable_system_modules = bool(
             self.options.get(CONF_ENABLE_SYSTEM_MODULES, True)
+        )
+        self.enable_schedules = bool(
+            self.options.get(CONF_ENABLE_SCHEDULES, True)
         )
         self._info: dict[str, Any] = {}
         self._info_at = 0.0
@@ -98,10 +102,21 @@ class SinumHomeAssistantCoordinator(DataUpdateCoordinator[SinumHomeAssistantData
             except SinumHomeAssistantError as err:
                 _LOGGER.debug("Sinum weather unavailable: %s", err)
 
+        schedules: list[dict[str, Any]] = []
+        if self.enable_schedules:
+            try:
+                schedules = await self.client.async_get_schedules()
+            except SinumNotSupportedError:
+                schedules = []
+            except SinumAuthError as err:
+                raise ConfigEntryAuthFailed(str(err)) from err
+            except SinumHomeAssistantError as err:
+                _LOGGER.debug("Sinum schedules unavailable: %s", err)
         return build_data(
             info=info,
             rooms=rooms,
             parents=parents,
             devices=devices,
             weather=weather,
+            schedules=schedules,
         )

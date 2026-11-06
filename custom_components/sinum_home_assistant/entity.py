@@ -59,6 +59,63 @@ def parent_device_info(
     )
 
 
+def schedule_device_info(
+    entry_id: str, schedule: dict[str, Any], data: SinumHomeAssistantData
+) -> DeviceInfo:
+    schedule_id = int(schedule["id"])
+    return DeviceInfo(
+        identifiers={(DOMAIN, f"{entry_id}_schedule_{schedule_id}")},
+        name=f"Harmonogram: {str(schedule.get('name') or schedule_id).strip()}",
+        manufacturer=MANUFACTURER,
+        model="Harmonogram",
+        via_device_id=data.hub_device_id,
+    )
+
+
+def generic_device_info(
+    entry_id: str,
+    group: str,
+    device: dict[str, Any],
+    data: SinumHomeAssistantData,
+) -> DeviceInfo:
+    device_id = int(device["id"])
+    software = str(device.get("software_version") or "")
+    device_info = DeviceInfo(
+        identifiers={(DOMAIN, f"{entry_id}_{group}_{device_id}")},
+        name=str(device.get("name") or f"{group} {device_id}").strip(),
+        manufacturer=MANUFACTURER,
+        model=software.split(" v")[0] if software else group.upper(),
+        sw_version=software,
+        serial_number=str(device.get("address") or device.get("uuid") or ""),
+        suggested_area=_room(data, device),
+    )
+    parent_id = device.get("parent_id")
+    if isinstance(parent_id, int):
+        via = data.parent_ids.get(group, {}).get(parent_id)
+        if via is not None:
+            device_info["via_device_id"] = via
+    return device_info
+
+
+def generic_parent_device_info(
+    entry_id: str,
+    group: str,
+    parent: dict[str, Any],
+    data: SinumHomeAssistantData,
+) -> DeviceInfo:
+    parent_id = int(parent["id"])
+    return DeviceInfo(
+        identifiers={(DOMAIN, f"{entry_id}_{group}_parent_{parent_id}")},
+        name=str(parent.get("name") or f"{group} {parent_id}").strip(),
+        manufacturer=MANUFACTURER,
+        model=str(parent.get("model") or group.upper()),
+        sw_version=str(parent.get("version") or ""),
+        serial_number=str(parent.get("address") or parent.get("uuid") or ""),
+        suggested_area=data.area_names.get(f"{group}_parent_{parent_id}"),
+        via_device_id=data.hub_device_id,
+    )
+
+
 def system_module_device_info(
     entry_id: str, device: dict[str, Any], data: SinumHomeAssistantData
 ) -> DeviceInfo:
@@ -157,7 +214,13 @@ class SinumDeviceEntity(SinumHomeAssistantEntity):
         self._store = store
 
     def _device(self) -> dict[str, Any]:
-        store = getattr(self.coordinator.data, self._store, {})
+        if self._store.startswith("parents:"):
+            group = self._store.split(":", 1)[1]
+            store = self.coordinator.data.parent_groups.get(group, {})
+        else:
+            store = self.coordinator.data.device_groups.get(self._store)
+            if store is None:
+                store = getattr(self.coordinator.data, self._store, {})
         return store.get(self._device_id, {})
 
     @property
@@ -226,6 +289,30 @@ def async_ensure_device_hierarchy(
         )
         data.wtp_parent_ids[parent_id] = parent_device.id
 
+    for group, parents in data.parent_groups.items():
+        if group in ("wtp", "system_module"):
+            continue
+        parent_ids = data.parent_ids.setdefault(group, {})
+        for parent_id, parent in parents.items():
+            parent_device = devices.async_get_or_create(
+                config_entry_id=entry.entry_id,
+                identifiers={
+                    (DOMAIN, f"{entry.entry_id}_{group}_parent_{parent_id}")
+                },
+                name=str(parent.get("name") or f"{group} {parent_id}").strip(),
+                manufacturer=MANUFACTURER,
+                model=str(parent.get("model") or group.upper()),
+                sw_version=str(parent.get("version") or ""),
+                serial_number=str(
+                    parent.get("address") or parent.get("uuid") or ""
+                ),
+                suggested_area=data.area_names.get(
+                    f"{group}_parent_{parent_id}"
+                ),
+                via_device_id=hub.id,
+            )
+            parent_ids[parent_id] = parent_device.id
+
     if not include_system_modules:
         return
 
@@ -272,6 +359,16 @@ def async_remove_weather_entities(
     """Remove weather entities when the option is disabled."""
 
     _async_remove_entities_by_prefix(hass, entry, f"{entry.entry_id}_weather")
+
+
+def async_remove_schedule_entities(
+    hass: HomeAssistant, entry: ConfigEntry
+) -> None:
+    """Remove schedule entities when the option is disabled."""
+
+    _async_remove_entities_by_prefix(
+        hass, entry, f"{entry.entry_id}_schedule_"
+    )
 
 
 def async_remove_stale_relay_switches(

@@ -13,7 +13,7 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from .api import SinumHomeAssistantError
 from .coordinator import SinumHomeAssistantCoordinator
 from .data import is_managed_relay
-from .entity import SinumDeviceEntity, wtp_device_info
+from .entity import SinumDeviceEntity, generic_device_info, wtp_device_info
 
 PARALLEL_UPDATES = 1
 
@@ -30,10 +30,13 @@ class SinumRelaySwitch(SinumDeviceEntity, SwitchEntity):
         device_info: Any,
         unique_key: str,
         device_id: int,
+        device_class: str = "wtp",
+        store: str = "wtp",
     ) -> None:
         super().__init__(
-            coordinator, device_info, unique_key, device_id, "wtp"
+            coordinator, device_info, unique_key, device_id, store
         )
+        self._device_class = device_class
 
     @property
     def is_on(self) -> bool | None:
@@ -65,7 +68,7 @@ class SinumRelaySwitch(SinumDeviceEntity, SwitchEntity):
     async def _async_set_state(self, state: bool) -> None:
         try:
             await self.coordinator.client.async_patch_device(
-                "wtp", self._device_id, {"state": state}
+                self._device_class, self._device_id, {"state": state}
             )
         except SinumHomeAssistantError as err:
             raise HomeAssistantError(f"Cannot set relay state: {err}") from err
@@ -95,5 +98,24 @@ async def async_setup_entry(
                 device_id,
             )
         )
+
+    for group, group_devices in data.device_groups.items():
+        if group in ("wtp", "virtual", "system_module"):
+            continue
+        for device_id, device in group_devices.items():
+            if device.get("type") != "relay" or is_managed_relay(device):
+                continue
+            entities.append(
+                SinumRelaySwitch(
+                    coordinator,
+                    generic_device_info(
+                        entry.entry_id, group, device, data
+                    ),
+                    f"{group}_{device_id}_switch",
+                    device_id,
+                    device_class=group,
+                    store=group,
+                )
+            )
 
     async_add_entities(entities)

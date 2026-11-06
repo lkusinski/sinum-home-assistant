@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.1.0 — 2026-11-06
+
+- Thermal schedule entities: current/fallback target, associated devices and activity.
+- Schedules option and dedicated coordinator polling.
+- Pressure, CO2, IAQ, particulate matter, illuminance, smoke, flood, motion,
+  two-state input, radiator actuator, throttle, energy meter, IR heater and
+  blind controller support for WTP devices.
+- Generic read-only support for remaining Sinum buses and parent devices.
+- Automatic cleanup of optional schedule/weather/system-module entities.
+
 ## 1.0.5 — 2026-11-06
 
 - Polish-first README and repository description.

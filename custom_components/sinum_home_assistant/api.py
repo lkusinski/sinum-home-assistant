@@ -223,6 +223,11 @@ class SinumHomeAssistantClient:
         data = await self.async_get("weather")
         return data.get("data", {}) if isinstance(data, dict) else {}
 
+    async def async_get_schedules(self) -> list[dict[str, Any]]:
+        data = await self.async_get("schedules")
+        value = data.get("data", []) if isinstance(data, dict) else []
+        return value if isinstance(value, list) else []
+
     async def async_patch_device(
         self, device_class: str, device_id: int, payload: dict[str, Any]
     ) -> Any:

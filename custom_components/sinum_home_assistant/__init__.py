@@ -15,6 +15,7 @@ from .coordinator import SinumHomeAssistantCoordinator
 from .entity import (
     async_assign_areas,
     async_ensure_device_hierarchy,
+    async_remove_schedule_entities,
     async_remove_stale_relay_switches,
     async_remove_system_module_entities,
     async_remove_weather_entities,
@@ -62,6 +63,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         async_remove_system_module_entities(hass, entry)
     if not coordinator.enable_weather:
         async_remove_weather_entities(hass, entry)
+    if not coordinator.enable_schedules:
+        async_remove_schedule_entities(hass, entry)
     await async_assign_areas(hass, entry, coordinator.data)
 
     entry.async_on_unload(entry.add_update_listener(_async_update_listener))

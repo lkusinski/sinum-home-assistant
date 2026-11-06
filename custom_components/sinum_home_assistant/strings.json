@@ -36,7 +36,8 @@
         "data": {
           "scan_interval": "Polling interval (seconds)",
           "enable_weather": "Enable weather and forecast",
-          "enable_system_modules": "Enable system modules"
+          "enable_system_modules": "Enable system modules",
+          "enable_schedules": "Enable schedules"
         }
       }
     }

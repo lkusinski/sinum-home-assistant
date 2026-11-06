@@ -13,12 +13,17 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.util import dt as dt_util
 
 from .coordinator import SinumHomeAssistantCoordinator
 from .data import is_managed_relay
 from .entity import (
     SinumDeviceEntity,
+    SinumHomeAssistantEntity,
+    generic_device_info,
+    generic_parent_device_info,
     parent_device_info,
+    schedule_device_info,
     system_module_device_info,
     virtual_device_info,
     wtp_device_info,
@@ -27,6 +32,7 @@ from .entity import (
 PARALLEL_UPDATES = 0
 
 ONLINE = "Online"
+PROBLEM = "Problem"
 OPENING = "Otwarcie"
 TARGET_REACHED = "Osiągnięto temperaturę"
 WINDOW_OPEN = "Okno otwarte"
@@ -36,6 +42,27 @@ LIGHT = "Światło"
 ERROR = "Błąd"
 WARNING = "Ostrzeżenie"
 RELAY_STATE = "Stan przekaźnika"
+
+WTP_BINARY_SPECS: dict[str, list[tuple]] = {
+    "smoke_sensor": [
+        ("smoke_detected", "Dym", BinarySensorDeviceClass.SMOKE),
+        ("high_temperature_detected", "Wysoka temperatura",
+         BinarySensorDeviceClass.HEAT),
+        ("tamper_detected", "Sabotaż", BinarySensorDeviceClass.TAMPER),
+    ],
+    "flood_sensor": [
+        ("flood_detected", "Zalanie", BinarySensorDeviceClass.MOISTURE),
+    ],
+    "motion_sensor": [
+        ("motion_detected", "Ruch", BinarySensorDeviceClass.MOTION),
+    ],
+    "two_state_input_sensor": [
+        ("state", "Wejście", None),
+    ],
+    "fan_coil": [
+        ("valve_state", "Zawór", None),
+    ],
+}
 
 
 class SinumDeviceBinarySensor(SinumDeviceEntity, BinarySensorEntity):
@@ -75,6 +102,49 @@ class SinumDeviceBinarySensor(SinumDeviceEntity, BinarySensorEntity):
     @property
     def is_on(self) -> bool | None:
         return self._value_fn(self._device())
+
+
+class SinumScheduleActiveBinary(SinumHomeAssistantEntity, BinarySensorEntity):
+    """Whether a thermal schedule is active now."""
+
+    _attr_icon = "mdi:calendar-clock"
+
+    def __init__(
+        self,
+        coordinator: SinumHomeAssistantCoordinator,
+        device_info: Any,
+        unique_key: str,
+        schedule_id: int,
+    ) -> None:
+        super().__init__(coordinator, device_info, unique_key)
+        self._schedule_id = schedule_id
+        self._attr_name = "Aktywny"
+
+    @property
+    def is_on(self) -> bool:
+        schedule = self.coordinator.data.schedules.get(self._schedule_id, {})
+        now = dt_util.now()
+        day = (
+            "monday",
+            "tuesday",
+            "wednesday",
+            "thursday",
+            "friday",
+            "saturday",
+            "sunday",
+        )[now.weekday()]
+        minutes = now.hour * 60 + now.minute
+        for interval in schedule.get(day) or []:
+            if not isinstance(interval, dict):
+                continue
+            try:
+                start = int(interval.get("start", 0))
+                end = int(interval.get("end", 1439))
+            except (TypeError, ValueError):
+                continue
+            if start <= minutes <= end:
+                return True
+        return False
 
 
 class SinumRoomBinarySensor(SinumDeviceEntity, BinarySensorEntity):
@@ -121,6 +191,17 @@ async def async_setup_entry(
     data = coordinator.data
     entities: list[BinarySensorEntity] = []
 
+    if coordinator.enable_schedules and data.schedules:
+        for schedule_id, schedule in data.schedules.items():
+            entities.append(
+                SinumScheduleActiveBinary(
+                    coordinator,
+                    schedule_device_info(entry.entry_id, schedule, data),
+                    f"schedule_{schedule_id}_active",
+                    schedule_id,
+                )
+            )
+
     for device_id, device in data.wtp.items():
         parent = data.parents_wtp.get(device.get("parent_id"))
         info = wtp_device_info(entry.entry_id, device, parent, data)
@@ -165,6 +246,78 @@ async def async_setup_entry(
                     icon="mdi:electric-switch",
                 )
             )
+        for key, name, device_class in WTP_BINARY_SPECS.get(
+            device_type, []
+        ):
+            if key not in device:
+                continue
+            entities.append(
+                SinumDeviceBinarySensor(
+                    coordinator,
+                    info,
+                    f"wtp_{device_id}_{key}",
+                    device_id,
+                    "wtp",
+                    name,
+                    lambda d, key=key: bool(d.get(key)),
+                    device_class=device_class,
+                )
+            )
+
+    for group, group_devices in data.device_groups.items():
+        if group in ("wtp", "system_module"):
+            continue
+        for device_id, device in group_devices.items():
+            if group == "virtual" and device.get("type") == "thermostat":
+                continue
+            info = generic_device_info(entry.entry_id, group, device, data)
+            entities.extend(
+                [
+                    SinumDeviceBinarySensor(
+                        coordinator,
+                        info,
+                        f"{group}_{device_id}_online",
+                        device_id,
+                        group,
+                        ONLINE,
+                        lambda d: d.get("status") == "online",
+                        device_class=BinarySensorDeviceClass.CONNECTIVITY,
+                        entity_category=EntityCategory.DIAGNOSTIC,
+                        use_device_status=False,
+                    ),
+                    SinumDeviceBinarySensor(
+                        coordinator,
+                        info,
+                        f"{group}_{device_id}_problem",
+                        device_id,
+                        group,
+                        PROBLEM,
+                        lambda d: bool(
+                            d.get("messages") or d.get("has_messages")
+                        ),
+                        device_class=BinarySensorDeviceClass.PROBLEM,
+                        entity_category=EntityCategory.DIAGNOSTIC,
+                        use_device_status=False,
+                    ),
+                ]
+            )
+            for key, name, device_class in WTP_BINARY_SPECS.get(
+                device.get("type"), []
+            ):
+                if key not in device:
+                    continue
+                entities.append(
+                    SinumDeviceBinarySensor(
+                        coordinator,
+                        info,
+                        f"{group}_{device_id}_{key}",
+                        device_id,
+                        group,
+                        name,
+                        lambda d, key=key: bool(d.get(key)),
+                        device_class=device_class,
+                    )
+                )
 
     for parent_id, parent in data.parents_wtp.items():
         info = parent_device_info(entry.entry_id, parent, data)
@@ -183,7 +336,47 @@ async def async_setup_entry(
             )
         )
 
+    for group, parents in data.parent_groups.items():
+        if group in ("wtp", "system_module"):
+            continue
+        for parent_id, parent in parents.items():
+            info = generic_parent_device_info(
+                entry.entry_id, group, parent, data
+            )
+            entities.extend(
+                [
+                    SinumDeviceBinarySensor(
+                        coordinator,
+                        info,
+                        f"{group}_parent_{parent_id}_online",
+                        parent_id,
+                        f"parents:{group}",
+                        ONLINE,
+                        lambda d: d.get("status") == "online",
+                        device_class=BinarySensorDeviceClass.CONNECTIVITY,
+                        entity_category=EntityCategory.DIAGNOSTIC,
+                        use_device_status=False,
+                    ),
+                    SinumDeviceBinarySensor(
+                        coordinator,
+                        info,
+                        f"{group}_parent_{parent_id}_problem",
+                        parent_id,
+                        f"parents:{group}",
+                        PROBLEM,
+                        lambda d: bool(
+                            d.get("messages") or d.get("has_messages")
+                        ),
+                        device_class=BinarySensorDeviceClass.PROBLEM,
+                        entity_category=EntityCategory.DIAGNOSTIC,
+                        use_device_status=False,
+                    ),
+                ]
+            )
+
     for device_id, device in data.virtual.items():
+        if device.get("type") != "thermostat":
+            continue
         info = virtual_device_info(entry.entry_id, device, data)
         room_id = device.get("room_id")
         entities.append(

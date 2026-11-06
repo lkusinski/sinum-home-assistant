@@ -22,6 +22,7 @@ Open **Settings → Devices & Services → Sinum Home Assistant → Configure**.
 | Polling interval | 30 s | 15–300 s | One full cloud update cycle. |
 | Enable weather | on | — | Adds the weather entity and forecast. |
 | Enable system modules | on | — | Adds extenders, transceivers and their diagnostics. |
+| Enable schedules | on | — | Adds thermal schedules and their activity state. |
 
 Changing options reloads the config entry. Disabling weather or system modules
 removes their entities from the registry; enabling them again recreates the

@@ -36,7 +36,8 @@
         "data": {
           "scan_interval": "Interwał odpytywania (sekundy)",
           "enable_weather": "Włącz pogodę i prognozę",
-          "enable_system_modules": "Włącz moduły systemowe"
+          "enable_system_modules": "Włącz moduły systemowe",
+          "enable_schedules": "Włącz harmonogramy"
         }
       }
     }

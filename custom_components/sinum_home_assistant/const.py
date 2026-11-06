@@ -21,6 +21,7 @@ CONF_HUB_NAME = "hub_name"
 CONF_SCAN_INTERVAL = "scan_interval"
 CONF_ENABLE_WEATHER = "enable_weather"
 CONF_ENABLE_SYSTEM_MODULES = "enable_system_modules"
+CONF_ENABLE_SCHEDULES = "enable_schedules"
 
 DEFAULT_SCAN_INTERVAL = 30
 MIN_SCAN_INTERVAL = 15

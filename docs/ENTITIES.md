@@ -67,6 +67,42 @@ latest version reported by the cloud.
 > Firmware installation is performed in the Sinum app. Home Assistant reports
 > available versions and progress, but does not start the update itself.
 
+## Additional WTP devices
+
+Read-only sensor and binary entities are prepared for Sinum device types that are
+not part of the current installation:
+
+- pressure, CO2, IAQ, PM1/PM2.5/PM4/PM10 and illuminance sensors;
+- smoke, flood, motion and two-state input sensors;
+- radiator actuator opening and valve temperature;
+- throttle opening, impulses and flow;
+- energy meter current, voltage, power and energy;
+- IR heater temperatures and PWM duty;
+- blind controller opening positions;
+- device state/action diagnostics.
+
+Controls are only exposed where the cloud API has a verified command path. Other
+device types remain read-only diagnostics until they can be validated.
+
+## Other buses
+
+SBus, SLink, LoRa, Modbus, alarm system, custom device modules, video, SMesh and
+TECH devices are represented as generic devices. When present they receive
+connectivity, problem, firmware and common diagnostic entities, plus the same
+sensor/binary mapping by device type where available.
+
+## Schedules
+
+One device and four entities per active thermal schedule:
+
+- current target temperature;
+- fallback temperature;
+- number of associated devices;
+- `Aktywny` binary sensor for the current weekday/time window.
+
+The schedule mode, intervals and associations are available as attributes.
+Schedules are read-only in Home Assistant; edit them in the Sinum app.
+
 ## Areas and devices
 
 - Room areas are created or matched by name.

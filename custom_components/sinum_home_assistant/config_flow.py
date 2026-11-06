@@ -26,6 +26,7 @@ from .api import (
 from .const import (
     CONF_DEVICE_ID,
     CONF_EMAIL,
+    CONF_ENABLE_SCHEDULES,
     CONF_ENABLE_SYSTEM_MODULES,
     CONF_ENABLE_WEATHER,
     CONF_HUB_NAME,
@@ -213,6 +214,10 @@ class SinumHomeAssistantOptionsFlow(OptionsFlow):
                         default=options.get(
                             CONF_ENABLE_SYSTEM_MODULES, True
                         ),
+                    ): bool,
+                    vol.Optional(
+                        CONF_ENABLE_SCHEDULES,
+                        default=options.get(CONF_ENABLE_SCHEDULES, True),
                     ): bool,
                 }
             ),

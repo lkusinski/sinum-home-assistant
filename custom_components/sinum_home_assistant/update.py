@@ -13,6 +13,7 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from .coordinator import SinumHomeAssistantCoordinator
 from .entity import (
     SinumDeviceEntity,
+    generic_parent_device_info,
     parent_device_info,
     system_module_device_info,
 )
@@ -136,6 +137,22 @@ async def async_setup_entry(
                 "parents_wtp",
             )
         )
+
+    for group, parents in data.parent_groups.items():
+        if group in ("wtp", "system_module"):
+            continue
+        for parent_id, parent in parents.items():
+            entities.append(
+                SinumFirmwareUpdate(
+                    coordinator,
+                    generic_parent_device_info(
+                        entry.entry_id, group, parent, data
+                    ),
+                    f"{group}_parent_{parent_id}_update",
+                    parent_id,
+                    f"parents:{group}",
+                )
+            )
 
     if coordinator.enable_system_modules:
         for device_id, device in data.system_modules.items():
