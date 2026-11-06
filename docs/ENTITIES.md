@@ -93,14 +93,13 @@ sensor/binary mapping by device type where available.
 
 ## Schedules
 
-One device and four entities per active thermal schedule:
+One device and two entities per active thermal schedule:
 
 - current target temperature;
-- fallback temperature;
-- number of associated devices;
 - `Aktywny` binary sensor for the current weekday/time window.
 
-The schedule mode, intervals and associations are available as attributes.
+The fallback temperature, associated devices, modes and intervals are available
+as attributes of the target-temperature sensor.
 Schedules are read-only in Home Assistant; edit them in the Sinum app.
 
 ## Areas and devices

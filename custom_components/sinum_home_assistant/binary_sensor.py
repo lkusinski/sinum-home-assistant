@@ -16,7 +16,6 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.util import dt as dt_util
 
 from .coordinator import SinumHomeAssistantCoordinator
-from .data import is_managed_relay
 from .entity import (
     SinumDeviceEntity,
     SinumHomeAssistantEntity,
@@ -41,7 +40,6 @@ COOLING = "Chłodzenie"
 LIGHT = "Światło"
 ERROR = "Błąd"
 WARNING = "Ostrzeżenie"
-RELAY_STATE = "Stan przekaźnika"
 
 WTP_BINARY_SPECS: dict[str, list[tuple]] = {
     "smoke_sensor": [
@@ -230,20 +228,6 @@ async def async_setup_entry(
                     TARGET_REACHED,
                     lambda d: d.get("target_temperature_reached"),
                     icon="mdi:thermometer-check",
-                )
-            )
-        elif device_type == "relay" and is_managed_relay(device):
-            entities.append(
-                SinumDeviceBinarySensor(
-                    coordinator,
-                    info,
-                    f"wtp_{device_id}_relay_state",
-                    device_id,
-                    "wtp",
-                    RELAY_STATE,
-                    lambda d: d.get("state") is True,
-                    device_class=BinarySensorDeviceClass.POWER,
-                    icon="mdi:electric-switch",
                 )
             )
         for key, name, device_class in WTP_BINARY_SPECS.get(

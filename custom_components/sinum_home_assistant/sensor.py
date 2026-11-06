@@ -361,6 +361,12 @@ class SinumScheduleSensor(SinumHomeAssistantEntity, SensorEntity):
             "schedule_id": self._schedule_id,
             "modes": schedule.get("modes"),
             "associations": schedule.get("associations"),
+            "fallback": _scale(schedule.get("fallback")),
+            "associated_devices": sum(
+                len(v)
+                for v in (schedule.get("associations") or {}).values()
+                if isinstance(v, list)
+            ),
         }
 
 
@@ -433,29 +439,6 @@ async def async_setup_entry(
                         device_class=SensorDeviceClass.TEMPERATURE,
                         unit=UnitOfTemperature.CELSIUS,
                         precision=1,
-                    ),
-                    SinumScheduleSensor(
-                        coordinator,
-                        info,
-                        f"schedule_{schedule_id}_fallback",
-                        schedule_id,
-                        "Temperatura zapasowa",
-                        lambda d: _scale(d.get("fallback")),
-                        device_class=SensorDeviceClass.TEMPERATURE,
-                        unit=UnitOfTemperature.CELSIUS,
-                        precision=1,
-                    ),
-                    SinumScheduleSensor(
-                        coordinator,
-                        info,
-                        f"schedule_{schedule_id}_devices",
-                        schedule_id,
-                        "Powiązane urządzenia",
-                        lambda d: sum(
-                            len(v)
-                            for v in (d.get("associations") or {}).values()
-                            if isinstance(v, list)
-                        ),
                     ),
                 ]
             )
@@ -616,40 +599,6 @@ async def async_setup_entry(
                 )
             )
 
-        if device.get("signal") is not None:
-            entities.append(
-                SinumDeviceSensor(
-                    coordinator,
-                    info,
-                    f"wtp_{device_id}_signal",
-                    device_id,
-                    "wtp",
-                    SIGNAL,
-                    lambda d: d.get("signal"),
-                    state_class=SensorStateClass.MEASUREMENT,
-                    unit=PERCENTAGE,
-                    icon="mdi:wifi",
-                    entity_category=EntityCategory.DIAGNOSTIC,
-                    precision=0,
-                )
-            )
-        if device.get("battery") is not None:
-            entities.append(
-                SinumDeviceSensor(
-                    coordinator,
-                    info,
-                    f"wtp_{device_id}_battery",
-                    device_id,
-                    "wtp",
-                    BATTERY,
-                    lambda d: d.get("battery"),
-                    device_class=SensorDeviceClass.BATTERY,
-                    state_class=SensorStateClass.MEASUREMENT,
-                    unit=PERCENTAGE,
-                    entity_category=EntityCategory.DIAGNOSTIC,
-                    precision=0,
-                )
-            )
 
     for group, group_devices in data.device_groups.items():
         if group in ("wtp", "system_module"):
@@ -724,32 +673,6 @@ async def async_setup_entry(
                 SinumDeviceSensor(
                     coordinator,
                     info,
-                    f"virtual_{device_id}_temperature",
-                    device_id,
-                    "virtual",
-                    TEMPERATURE,
-                    lambda d: _scale(d.get("temperature")),
-                    device_class=SensorDeviceClass.TEMPERATURE,
-                    state_class=SensorStateClass.MEASUREMENT,
-                    unit=UnitOfTemperature.CELSIUS,
-                    precision=1,
-                ),
-                SinumDeviceSensor(
-                    coordinator,
-                    info,
-                    f"virtual_{device_id}_humidity",
-                    device_id,
-                    "virtual",
-                    HUMIDITY,
-                    lambda d: _scale(d.get("humidity")),
-                    device_class=SensorDeviceClass.HUMIDITY,
-                    state_class=SensorStateClass.MEASUREMENT,
-                    unit=PERCENTAGE,
-                    precision=1,
-                ),
-                SinumDeviceSensor(
-                    coordinator,
-                    info,
                     f"virtual_{device_id}_dew_point",
                     device_id,
                     "virtual",
@@ -766,70 +689,75 @@ async def async_setup_entry(
     if coordinator.enable_system_modules:
         for device_id, device in data.system_modules.items():
             info = system_module_device_info(entry.entry_id, device, data)
-            entities.extend(
-                [
-                    SinumDeviceSensor(
-                        coordinator,
-                        info,
-                        f"system_module_{device_id}_signal",
-                        device_id,
-                        "system_modules",
+            specs = []
+            if device.get("network_signal") is not None:
+                specs.append(
+                    (
+                        "signal",
                         SIGNAL,
-                        lambda d: d.get("network_signal"),
-                        state_class=SensorStateClass.MEASUREMENT,
-                        unit=PERCENTAGE,
-                        icon="mdi:wifi",
-                        entity_category=EntityCategory.DIAGNOSTIC,
-                        precision=0,
-                    ),
-                    SinumDeviceSensor(
-                        coordinator,
-                        info,
-                        f"system_module_{device_id}_latency",
-                        device_id,
-                        "system_modules",
+                        SensorStateClass.MEASUREMENT,
+                        PERCENTAGE,
+                        "mdi:wifi",
+                    )
+                )
+            if device.get("link_latency") is not None:
+                specs.append(
+                    (
+                        "latency",
                         LATENCY,
-                        lambda d: d.get("link_latency"),
-                        state_class=SensorStateClass.MEASUREMENT,
-                        unit=UnitOfTime.MILLISECONDS,
-                        icon="mdi:timer-outline",
-                        entity_category=EntityCategory.DIAGNOSTIC,
-                        precision=0,
-                    ),
-                    SinumDeviceSensor(
-                        coordinator,
-                        info,
-                        f"system_module_{device_id}_channel",
-                        device_id,
-                        "system_modules",
+                        SensorStateClass.MEASUREMENT,
+                        UnitOfTime.MILLISECONDS,
+                        "mdi:timer-outline",
+                    )
+                )
+            if device.get("network_channel") is not None:
+                specs.append(
+                    (
+                        "channel",
                         CHANNEL,
-                        lambda d: d.get("network_channel"),
-                        icon="mdi:radio-tower",
-                        entity_category=EntityCategory.DIAGNOSTIC,
-                    ),
-                    SinumDeviceSensor(
-                        coordinator,
-                        info,
-                        f"system_module_{device_id}_network",
-                        device_id,
-                        "system_modules",
+                        None,
+                        None,
+                        "mdi:radio-tower",
+                    )
+                )
+            if device.get("network_name") is not None:
+                specs.append(
+                    (
+                        "network",
                         NETWORK,
-                        lambda d: d.get("network_name"),
-                        icon="mdi:wifi-settings",
-                        entity_category=EntityCategory.DIAGNOSTIC,
-                    ),
+                        None,
+                        None,
+                        "mdi:wifi-settings",
+                    )
+                )
+            ip = device.get("ip")
+            if ip and ip != "127.0.0.1":
+                specs.append(
+                    ("ip", IP_ADDRESS, None, None, "mdi:ip-network")
+                )
+            for key, name, state_class, unit, icon in specs:
+                value_key = {
+                    "signal": "network_signal",
+                    "latency": "link_latency",
+                    "channel": "network_channel",
+                    "network": "network_name",
+                    "ip": "ip",
+                }[key]
+                entities.append(
                     SinumDeviceSensor(
                         coordinator,
                         info,
-                        f"system_module_{device_id}_ip",
+                        f"system_module_{device_id}_{key}",
                         device_id,
                         "system_modules",
-                        IP_ADDRESS,
-                        lambda d: d.get("ip"),
-                        icon="mdi:ip-network",
+                        name,
+                        lambda d, value_key=value_key: d.get(value_key),
+                        state_class=state_class,
+                        unit=unit,
+                        icon=icon,
                         entity_category=EntityCategory.DIAGNOSTIC,
-                    ),
-                ]
-            )
+                        precision=0 if key in ("signal", "latency") else None,
+                    )
+                )
 
     async_add_entities(entities)

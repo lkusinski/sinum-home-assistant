@@ -25,8 +25,8 @@ pogodą, przekaźnikami, diagnostyką i aktualizacjami firmware.
   jest dostępna w chmurze, ale nie jest widoczna w aplikacji.
 - **Obszary 1:1 z pokojami Sinum** — automatyczne przypisywanie pokoi,
   kontrolerów, czujników, przekaźników i modułów systemowych.
-- **Harmonogramy termiczne** — temperatura docelowa, zapasowa, liczba
-  powiązanych urządzeń i informacja o aktywnym przedziale.
+- **Harmonogramy termiczne** — temperatura docelowa i informacja o aktywnym
+  przedziale; temperatura zapasowa i liczba urządzeń w atrybutach.
 - **Przełączniki wolnych przekaźników**, encje stanu przekaźników zarządzanych
   przez termostat oraz szeroki zestaw diagnostyki: sygnał, bateria, czas pracy,
   adres IP, opóźnienie i kanał sieci.
@@ -95,7 +95,7 @@ W typowej instalacji powstają:
 | `binary_sensor` | Kontakt okna, grzanie/chłodzenie, ostrzeżenia, stan przekaźnika |
 | `switch` | Wolne wyjścia przekaźnikowe |
 | `update` | Firmware centrali, kontrolerów, extenderów i urządzeń |
-| `sensor`/`binary_sensor` | Harmonogramy: temperatura docelowa, zapasowa, liczba urządzeń, aktywność |
+| `sensor`/`binary_sensor` | Harmonogramy: temperatura docelowa i aktywność; zapasowa/liczba urządzeń w atrybutach |
 
 Przekaźniki zarządzane przez termostat wirtualny są **tylko do odczytu** —
 chmura Sinum nie pozwala sterować nimi bezpośrednio. Są widoczne jako
@@ -169,7 +169,7 @@ firmware updates.
 - Weather entity with hourly and daily forecasts.
 - Firmware update entities, including cloud-only updates.
 - Areas mapped 1:1 to Sinum rooms.
-- Thermal schedules with current target, fallback, associated devices and activity.
+- Thermal schedules with current target and activity; fallback/details in attributes.
 - Switches for free relays and read-only state sensors for thermostat-managed relays.
 - Config flow and options flow — no YAML required.
 - Refresh-token authentication; the password is never stored.

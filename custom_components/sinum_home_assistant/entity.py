@@ -371,6 +371,46 @@ def async_remove_schedule_entities(
     )
 
 
+def async_remove_deprecated_entities(
+    hass: HomeAssistant, entry: ConfigEntry, data: SinumHomeAssistantData
+) -> None:
+    """Remove entities now represented on their parent or as attributes."""
+
+    obsolete: set[str] = set()
+    for device_id in data.wtp:
+        obsolete.add(f"{entry.entry_id}_wtp_{device_id}_signal")
+        obsolete.add(f"{entry.entry_id}_wtp_{device_id}_battery")
+    for parent_id in data.parents_wtp:
+        obsolete.add(f"{entry.entry_id}_wtp_parent_{parent_id}_signal")
+        obsolete.add(f"{entry.entry_id}_wtp_parent_{parent_id}_battery")
+    for device_id in data.virtual:
+        obsolete.add(f"{entry.entry_id}_virtual_{device_id}_temperature")
+        obsolete.add(f"{entry.entry_id}_virtual_{device_id}_humidity")
+    for schedule_id in data.schedules:
+        obsolete.add(f"{entry.entry_id}_schedule_{schedule_id}_fallback")
+        obsolete.add(f"{entry.entry_id}_schedule_{schedule_id}_devices")
+    for device_id, device in data.wtp.items():
+        if device.get("type") == "relay" and is_managed_relay(device):
+            obsolete.add(f"{entry.entry_id}_wtp_{device_id}_relay_state")
+    for device_id, device in data.system_modules.items():
+        if device.get("network_signal") is None:
+            obsolete.add(f"{entry.entry_id}_system_module_{device_id}_signal")
+        if device.get("network_channel") is None:
+            obsolete.add(f"{entry.entry_id}_system_module_{device_id}_channel")
+        if device.get("network_name") is None:
+            obsolete.add(f"{entry.entry_id}_system_module_{device_id}_network")
+        if not device.get("ip") or device.get("ip") == "127.0.0.1":
+            obsolete.add(f"{entry.entry_id}_system_module_{device_id}_ip")
+
+    registry = er.async_get(hass)
+    for entity in list(registry.entities.values()):
+        if (
+            entity.config_entry_id == entry.entry_id
+            and entity.unique_id in obsolete
+        ):
+            registry.async_remove(entity.entity_id)
+
+
 def async_remove_stale_relay_switches(
     hass: HomeAssistant, entry: ConfigEntry, data: SinumHomeAssistantData
 ) -> None:

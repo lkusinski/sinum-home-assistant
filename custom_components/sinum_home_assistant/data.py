@@ -158,6 +158,19 @@ def build_data(
                     parent_id, set()
                 ).add(room_id)
 
+    for group, parents in data.parent_groups.items():
+        children = data.device_groups.get(group, {})
+        for parent_id, parent in parents.items():
+            if parent.get("signal") is not None:
+                continue
+            for child in children.values():
+                if (
+                    child.get("parent_id") == parent_id
+                    and child.get("signal") is not None
+                ):
+                    parent["signal"] = child["signal"]
+                    break
+
     for group, rooms_by_parent in parent_rooms.items():
         for parent_id, room_ids in rooms_by_parent.items():
             if len(room_ids) != 1:

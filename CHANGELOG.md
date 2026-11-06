@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.1.2 — 2026-11-06
+
+- Remove redundant relay-state entities for thermostat-managed relays.
+- Remove duplicated per-child radio signal/battery entities; parent signal and
+  battery are available as attributes on the parent connectivity entity.
+- Remove duplicated virtual thermostat temperature/humidity entities.
+- Remove empty system-module network entities for fields not reported by hardware.
+- Keep schedule fallback and associated-device details as attributes instead of
+  separate entities.
+- Entity count reduced from 278 to 182 without losing control or measurement data.
+
 ## 1.1.1 — 2026-11-06
 
 - Automatically reload the config entry when new devices, parents or schedules appear.
