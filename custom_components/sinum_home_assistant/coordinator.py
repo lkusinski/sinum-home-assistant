@@ -78,20 +78,43 @@ class SinumHomeAssistantCoordinator(DataUpdateCoordinator[SinumHomeAssistantData
             self._info_at = time.monotonic()
         return self._info
 
+    async def _async_fetch_core(self) -> tuple[
+        dict[str, Any],
+        list[dict[str, Any]],
+        dict[str, list[dict[str, Any]]],
+        dict[str, list[dict[str, Any]]],
+    ]:
+        return await asyncio.gather(
+            self._async_info(),
+            self.client.async_get_rooms(),
+            self.client.async_get_parent_devices(),
+            self.client.async_get_devices(),
+        )
+
     async def _async_update_data(self) -> SinumHomeAssistantData:
-        try:
-            info, rooms, parents, devices = await asyncio.gather(
-                self._async_info(),
-                self.client.async_get_rooms(),
-                self.client.async_get_parent_devices(),
-                self.client.async_get_devices(),
-            )
-        except SinumAuthError as err:
-            raise ConfigEntryAuthFailed(str(err)) from err
-        except SinumHomeAssistantError as err:
-            raise UpdateFailed(str(err)) from err
-        except (TimeoutError, OSError) as err:
-            raise UpdateFailed(str(err)) from err
+        last_error: Exception | None = None
+        info: dict[str, Any] = {}
+        rooms: list[dict[str, Any]] = []
+        parents: dict[str, list[dict[str, Any]]] = {}
+        devices: dict[str, list[dict[str, Any]]] = {}
+        for attempt in range(3):
+            try:
+                info, rooms, parents, devices = await self._async_fetch_core()
+                last_error = None
+                break
+            except SinumAuthError as err:
+                raise ConfigEntryAuthFailed(str(err)) from err
+            except (SinumHomeAssistantError, TimeoutError, OSError) as err:
+                last_error = err
+                if attempt < 2:
+                    _LOGGER.debug(
+                        "Sinum core request failed (attempt %s): %s",
+                        attempt + 1,
+                        err,
+                    )
+                    await asyncio.sleep(1.5 * (attempt + 1))
+        if last_error is not None:
+            raise UpdateFailed(str(last_error)) from last_error
 
         weather: dict[str, Any] | None = None
         if self.enable_weather:

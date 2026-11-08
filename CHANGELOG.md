@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.1.3 — 2026-11-08
+
+- Retry transient cloud/DNS failures before marking the coordinator update failed.
+- Reduces availability gaps caused by short Sinum cloud or resolver outages.
+
 ## 1.1.2 — 2026-11-06
 
 - Remove redundant relay-state entities for thermostat-managed relays.
