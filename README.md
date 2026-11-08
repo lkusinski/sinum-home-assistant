@@ -138,6 +138,7 @@ Więcej: [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md).
 - [Opis encji](docs/ENTITIES.md)
 - [Rozwiązywanie problemów](docs/TROUBLESHOOTING.md)
 - [Rozwój integracji](docs/DEVELOPMENT.md)
+- [Etykiety i klasyfikacja](docs/LABELS.md)
 - [Prywatność](docs/PRIVACY.md)
 
 ## Prawa autorskie i znaki towarowe
@@ -197,6 +198,7 @@ firmware updates.
 - [Entities](docs/ENTITIES.md)
 - [Troubleshooting](docs/TROUBLESHOOTING.md)
 - [Development](docs/DEVELOPMENT.md)
+- [Labels and classification](docs/LABELS.md)
 - [Privacy](docs/PRIVACY.md)
 
 ### Copyright and trademarks
