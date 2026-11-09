@@ -49,6 +49,16 @@ Sensors whose network information is not reported by the device remain
 - warning and error flags;
 - virtual thermostat light/window inputs.
 
+## Climate diagnostics
+
+For virtual thermostats, the climate entity exposes:
+
+- `relay_ids` — relay outputs controlled by the thermostat;
+- `relay_states` — current state of those outputs;
+- `relay_last_changes` — seconds since each output last changed.
+
+These are attributes, not separate entities, so they do not add clutter.
+
 ## Switches
 
 One switch per free relay output. The state follows the Sinum cloud and commands

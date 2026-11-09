@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.1.4 — 2026-11-09
+
+- Expose relay diagnostics on climate entities: relay IDs, current states and
+  seconds since last change as attributes.
+- Expose relay last-change age and Sinum labels on free relay switches.
+- This makes managed relay behavior observable without adding extra entities.
+
 ## 1.1.3 — 2026-11-08
 
 - Retry transient cloud/DNS failures before marking the coordinator update failed.

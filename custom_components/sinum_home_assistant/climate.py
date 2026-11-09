@@ -173,6 +173,26 @@ class SinumClimate(SinumDeviceEntity, ClimateEntity):
                 "mode_mutable": device.get("mode_mutable"),
             }
         )
+        relays = (device.get("associations") or {}).get("relays") or []
+        relay_ids = sorted(
+            int(relay["id"])
+            for relay in relays
+            if isinstance(relay, dict) and relay.get("id") is not None
+        )
+        if relay_ids:
+            attrs["relay_ids"] = relay_ids
+            attrs["relay_states"] = {
+                str(relay_id): self.coordinator.data.wtp.get(
+                    relay_id, {}
+                ).get("state")
+                for relay_id in relay_ids
+            }
+            attrs["relay_last_changes"] = {
+                str(relay_id): self.coordinator.data.wtp.get(
+                    relay_id, {}
+                ).get("time_since_state_change")
+                for relay_id in relay_ids
+            }
         return attrs
 
     async def async_set_temperature(self, **kwargs: Any) -> None:

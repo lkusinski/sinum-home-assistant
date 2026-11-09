@@ -55,6 +55,10 @@ class SinumRelaySwitch(SinumDeviceEntity, SwitchEntity):
                 "inverted": device.get("inverted"),
                 "address": device.get("address"),
                 "parent_id": device.get("parent_id"),
+                "time_since_state_change": device.get(
+                    "time_since_state_change"
+                ),
+                "sinum_labels": device.get("labels"),
             }
         )
         return attrs
