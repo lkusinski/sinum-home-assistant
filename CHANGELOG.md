@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.1.5 — 2026-11-10
+
+- Reassign areas after newly discovered devices appear, not only during the
+  initial setup. This fixes missing area assignment for devices added later.
+- Keeps new child sensors attached to their Sinum room after automatic reload.
+
 ## 1.1.4 — 2026-11-09
 
 - Expose relay diagnostics on climate entities: relay IDs, current states and

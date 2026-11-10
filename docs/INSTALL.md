@@ -33,6 +33,8 @@
 
 The integration creates a hub device, room areas, parent controllers and all
 supported entities. A typical installation takes less than a minute.
+Devices added later are detected automatically; their entities and room areas are
+created after the config entry reloads.
 
 ## Updating
 

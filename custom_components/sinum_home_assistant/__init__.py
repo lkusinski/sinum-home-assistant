@@ -55,6 +55,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     await coordinator.async_config_entry_first_refresh()
 
     entry.runtime_data = coordinator
+    area_signature: set[tuple[str, str]] | None = None
     async_ensure_device_hierarchy(
         hass, entry, coordinator.data, coordinator.enable_system_modules
     )
@@ -68,7 +69,19 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         async_remove_schedule_entities(hass, entry)
     async_remove_deprecated_entities(hass, entry, coordinator.data)
     await async_assign_areas(hass, entry, coordinator.data)
+    area_signature = set(coordinator.data.area_names.items())
 
+    def _handle_area_update() -> None:
+        nonlocal area_signature
+        signature = set(coordinator.data.area_names.items())
+        if area_signature is not None and signature == area_signature:
+            return
+        area_signature = signature
+        hass.async_create_task(
+            async_assign_areas(hass, entry, coordinator.data)
+        )
+
+    entry.async_on_unload(coordinator.async_add_listener(_handle_area_update))
     entry.async_on_unload(entry.add_update_listener(_async_update_listener))
     return True
 
