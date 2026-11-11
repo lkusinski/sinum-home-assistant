@@ -29,6 +29,11 @@ accessed through:
 - `GET/PATCH/DELETE /proxy/devices/custom-device-module/{id}`
 - `POST /proxy/devices/custom-device-module/{id}/command/{command}`
 
+Writable properties can also be changed directly with `PATCH` (tested:
+`target_temperature`, `mode`, `state`, `target_level`). This is useful for a
+bridge, but it may bypass the module command callback; use commands when the
+remote device must receive the action.
+
 The Lua docs list modules such as: air conditioner, air quality, analog input,
 analog output, battery, blind controller, button, car charger, CO2, dimmer,
 domestic hot water, energy meter, flood, gas/heat/water meter, heat pump,
