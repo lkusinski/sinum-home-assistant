@@ -728,5 +728,51 @@
   "scale": null,
   "unit": "",
   "name": "HA E27 Lukasz dolna swiatlo"
+ },
+ "input_boolean.sinum_lab_brama": {
+  "id": 121,
+  "variant": "relay",
+  "field": "state",
+  "scale": null,
+  "unit": "",
+  "name": "TEST · Brama"
+ },
+ "input_boolean.sinum_lab_brama_kontaktron": {
+  "id": 122,
+  "variant": "two_state_input_sensor",
+  "field": "state",
+  "scale": null,
+  "unit": "",
+  "name": "TEST · Brama kontaktron"
+ },
+ "light.sinum_lab_lampa": {
+  "id": 123,
+  "variant": "light",
+  "element": "light",
+  "field": "state",
+  "scale": null,
+  "unit": "",
+  "name": "TEST · Lampa"
+ },
+ "input_number.sinum_lab_temperatura": {
+  "id": 124,
+  "variant": "temperature_sensor",
+  "field": "temperature",
+  "scale": 10,
+  "unit": "°C",
+  "name": "TEST · Temperatura"
+ },
+ "input_number.sinum_lab_wilgotnosc": {
+  "id": 125,
+  "variant": "humidity_sensor",
+  "field": "humidity",
+  "scale": 10,
+  "unit": "%",
+  "name": "TEST · Wilgotność"
+ },
+ "climate.sinum_lab_klimatyzator": {
+  "id": 141,
+  "variant": "ac",
+  "name": "TEST · Klimatyzator symulacja"
  }
 }

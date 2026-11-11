@@ -51,3 +51,13 @@ For a real Zigbee/Tuya/ESPHome sensor, replace the trigger and template with tha
 entity. The Sinum device must already exist as a virtual custom device with
 `variant: temperature_sensor`; the integration exposes its current value as a
 temperature sensor in Home Assistant.
+
+## `sinum_home_assistant.refresh`
+
+Forces an immediate refresh of Sinum data. The Z2M event worker calls it when a
+non-bridge virtual device (e.g. a virtual thermostat) changes in Sinum, so
+Home Assistant does not have to wait for the 30 s coordinator poll.
+
+```yaml
+action: sinum_home_assistant.refresh
+```

@@ -22,3 +22,7 @@ set_virtual_temperature:
           step: 0.1
           unit_of_measurement: "°C"
           mode: box
+
+refresh:
+  name: Refresh
+  description: Force an immediate refresh of Sinum data.

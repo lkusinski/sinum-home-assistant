@@ -12,6 +12,7 @@ import argparse
 import json
 import os
 import time
+import uuid
 from pathlib import Path
 from typing import Any
 
@@ -32,6 +33,18 @@ SINUM_STATE_FILE = Path(
     os.environ.get("SINUM_STATE_FILE", "/tmp/opencode/z2m_sinum_sinum_state.json")
 )
 WRITE_BACK = os.environ.get("WRITE_BACK", "1") not in ("0", "false", "False")
+
+def read_json(path: Path) -> Any:
+    try:
+        return json.loads(path.read_text())
+    except (OSError, json.JSONDecodeError):
+        return {}
+
+
+def write_json(path: Path, data: Any) -> None:
+    tmp = Path(str(path) + ".tmp")
+    tmp.write_text(json.dumps(data, ensure_ascii=False, indent=1))
+    tmp.replace(path)
 
 
 class SinumClient:
@@ -78,12 +91,12 @@ class SinumClient:
         response.raise_for_status()
         return {int(item["id"]): item for item in response.json().get("data", [])}
 
-    def patch(self, device_id: int, payload: dict[str, Any]) -> None:
+    def patch_device(self, device_id: int, payload: dict[str, Any]) -> None:
         self.ensure_token()
         response = self.session.patch(
             f"{SINUM_BASE}/proxy/devices/virtual/{device_id}",
             headers={**self.headers, "Authorization": "Bearer " + self.token},
-            json={"variant_device": payload},
+            json=payload,
             timeout=30,
         )
         if response.status_code not in (200, 204, 304):
@@ -91,6 +104,43 @@ class SinumClient:
                 f"Sinum PATCH {device_id} HTTP {response.status_code}: "
                 f"{response.text[:200]}"
             )
+
+    def patch(self, device_id: int, payload: dict[str, Any]) -> None:
+        self.patch_device(device_id, {"variant_device": payload})
+
+    def set_sensor_text(
+        self, device_id: int, element: str, text: str
+    ) -> None:
+        try:
+            self.element(device_id, element, "set_value", {"set_value": text})
+            return
+        except RuntimeError as err:
+            if "HTTP 404" not in str(err):
+                raise
+        layout, widget = sensor_text_layout(element, text)
+        self.patch_device(device_id, {"elements": [layout], "widget": widget})
+        self.element(device_id, element, "set_value", {"set_value": text})
+
+    def get_device(self, device_id: int) -> dict[str, Any]:
+        self.ensure_token()
+        response = self.session.get(
+            f"{SINUM_BASE}/proxy/devices/virtual/{device_id}",
+            headers={**self.headers, "Authorization": "Bearer " + self.token},
+            timeout=30,
+        )
+        response.raise_for_status()
+        return response.json()["data"]
+
+    def set_relay_switch(self, device_id: int, element: str, value: bool) -> None:
+        try:
+            self.element(device_id, element, "set_value", {"set_value": bool(value)})
+            return
+        except RuntimeError as err:
+            if "HTTP 404" not in str(err):
+                raise
+        layout, widget = relay_switch_layout(element, bool(value))
+        self.patch_device(device_id, {"elements": [layout], "widget": widget})
+        self.element(device_id, element, "set_value", {"set_value": bool(value)})
 
     def element(
         self, device_id: int, element: str, command: str, payload: dict[str, Any]
@@ -125,6 +175,91 @@ def _hex_to_rgb(value: str) -> list[int]:
     return [int(value[index : index + 2], 16) for index in (0, 2, 4)]
 
 
+def sensor_text_layout(element: str, text: str) -> tuple[dict[str, Any], dict[str, Any]]:
+    element_uuid = str(uuid.uuid4())
+    row_uuid = str(uuid.uuid4())
+    cell_uuid = str(uuid.uuid4())
+    layout = {
+        "type": "text",
+        "name": element,
+        "uuid": element_uuid,
+        "enabled": True,
+        "visibility": "visible",
+        "value": text,
+        "text_id": 0,
+        "icon": "",
+        "font_weight": "normal",
+        "font_size": "large",
+        "on_change": "onSensorTextChange",
+    }
+    widget = {
+        "version": 2,
+        "content": [
+            {
+                "id": row_uuid,
+                "type": "row",
+                "cells": [
+                    {
+                        "id": cell_uuid,
+                        "type": "row",
+                        "orientation": "row",
+                        "vertical_alignment": "center",
+                        "horizontal_alignment": "center",
+                        "elements": [
+                            {"uuid": element_uuid, "variant": "text-default"}
+                        ],
+                    }
+                ],
+            }
+        ],
+    }
+    return layout, widget
+
+
+def relay_switch_layout(element: str, value: bool) -> tuple[dict[str, Any], dict[str, Any]]:
+    element_uuid = str(uuid.uuid4())
+    row_uuid = str(uuid.uuid4())
+    cell_uuid = str(uuid.uuid4())
+    layout = {
+        "type": "switcher",
+        "name": element,
+        "uuid": element_uuid,
+        "enabled": True,
+        "visibility": "visible",
+        "value": bool(value),
+        "on_change": "onRelaySwitchChange",
+    }
+    widget = {
+        "version": 2,
+        "content": [
+            {
+                "id": row_uuid,
+                "type": "row",
+                "cells": [
+                    {
+                        "id": cell_uuid,
+                        "type": "row",
+                        "orientation": "row",
+                        "vertical_alignment": "center",
+                        "horizontal_alignment": "center",
+                        "elements": [
+                            {"uuid": element_uuid, "variant": "switch-default"}
+                        ],
+                    }
+                ],
+            }
+        ],
+    }
+    return layout, widget
+
+
+def sensor_text(entry: dict[str, Any], value: Any) -> str:
+    scale = float(entry.get("scale") or 1)
+    number = float(value) / scale
+    unit = str(entry.get("unit") or "").strip()
+    return f"{number:.1f} {unit}".strip()
+
+
 def ha_light_values(state: dict[str, Any]) -> dict[str, Any]:
     attrs = state.get("attributes") or {}
     brightness = attrs.get("brightness")
@@ -154,6 +289,87 @@ def sinum_light_values(device: dict[str, Any]) -> dict[str, Any] | None:
                 "color": element.get("color"),
             }
     return None
+
+
+def ha_ac_values(state: dict[str, Any]) -> dict[str, Any]:
+    attrs = state.get("attributes") or {}
+    mode = str(state.get("state") or "off")
+    return {
+        "state": mode != "off",
+        "hvac_mode": mode,
+        "temperature": attrs.get("temperature"),
+        "current_temperature": attrs.get("current_temperature"),
+    }
+
+
+def _ac_mode_to_sinum(mode: str) -> str:
+    return "fan" if mode == "fan_only" else mode
+
+
+def _ac_mode_to_ha(mode: str) -> str:
+    return "fan_only" if mode == "fan" else mode
+
+
+def sinum_ac_values(device: dict[str, Any]) -> dict[str, Any]:
+    elements = {e.get("name"): e for e in device.get("elements") or []}
+    mode = str(elements.get("mode", {}).get("value") or "off")
+    room = elements.get("room_temp", {}).get("value")
+    current: float | None = None
+    if room is not None:
+        try:
+            current = float(str(room).replace("°C", "").strip())
+        except ValueError:
+            current = None
+    power = bool(elements.get("power", {}).get("value"))
+    return {
+        "state": power,
+        "hvac_mode": _ac_mode_to_ha(mode) if power else "off",
+        "temperature": elements.get("target", {}).get("value"),
+        "current_temperature": current,
+    }
+
+
+def apply_ha_ac(
+    sinum: "SinumClient", entry: dict[str, Any], state: dict[str, Any], old: Any
+) -> dict[str, Any]:
+    desired = ha_ac_values(state)
+    device = sinum.get_device(int(entry["id"]))
+    elements = {e.get("name"): e for e in device.get("elements") or []}
+    power = elements.get("power", {}).get("value")
+    target = elements.get("target", {}).get("value")
+    mode = elements.get("mode", {}).get("value")
+    room = elements.get("room_temp", {}).get("value")
+    if power != desired["state"]:
+        sinum.element(
+            int(entry["id"]), "power", "set_value", {"set_value": desired["state"]}
+        )
+    if desired["temperature"] is not None and target != desired["temperature"]:
+        sinum.element(
+            int(entry["id"]),
+            "target",
+            "set_value",
+            {"set_value": float(desired["temperature"])},
+        )
+    desired_mode = _ac_mode_to_sinum(str(desired["hvac_mode"]))
+    if desired_mode in ("auto", "cool", "heat", "fan", "dry") and mode != desired_mode:
+        sinum.element(
+            int(entry["id"]), "mode", "set_value", {"set_value": desired_mode}
+        )
+    current = desired["current_temperature"]
+    if current is not None:
+        text = f"{float(current):.1f} °C"
+        if room != text:
+            sinum.element(
+                int(entry["id"]), "room_temp", "set_value", {"set_value": text}
+            )
+    return desired
+
+
+def sinum_relay_values(device: dict[str, Any]) -> bool:
+    for element in device.get("elements") or []:
+        if element.get("name") == "relay_switch":
+            return bool(element.get("value"))
+    return bool((device.get("variant_device") or {}).get("state"))
 
 
 def value_for(entry: dict[str, Any], state: dict[str, Any]) -> Any | None:
@@ -245,17 +461,10 @@ def main() -> None:
         )
 
     mapping: dict[str, dict[str, Any]] = json.loads(MAPPING_FILE.read_text())
-    try:
-        previous: dict[str, Any] = json.loads(STATE_FILE.read_text())
-    except (OSError, json.JSONDecodeError):
-        previous = {}
-    try:
-        sinum_previous: dict[str, Any] = json.loads(SINUM_STATE_FILE.read_text())
-    except (OSError, json.JSONDecodeError):
-        sinum_previous = {}
-
     sinum = SinumClient()
     while True:
+        previous: dict[str, Any] = read_json(STATE_FILE)
+        sinum_previous: dict[str, Any] = read_json(SINUM_STATE_FILE)
         skip_ha: set[str] = set()
         if WRITE_BACK:
             try:
@@ -268,14 +477,14 @@ def main() -> None:
                 if not device:
                     continue
                 if entry["variant"] == "relay":
-                    current = bool((device.get("variant_device") or {}).get("state"))
+                    current = sinum_relay_values(device)
                     if entity_id not in sinum_previous:
                         sinum_previous[entity_id] = current
                         continue
                     if current == sinum_previous[entity_id]:
                         continue
                     domain = entity_id.split(".", 1)[0]
-                    if domain not in ("switch", "light"):
+                    if domain not in ("switch", "light", "input_boolean"):
                         sinum_previous[entity_id] = current
                         continue
                     action = "turn_on" if current else "turn_off"
@@ -284,6 +493,10 @@ def main() -> None:
                         print(f"SINUM→HA {entity_id}: {action}", flush=True)
                     except Exception as err:  # noqa: BLE001
                         print(f"ERROR {entity_id} {action}: {err}", flush=True)
+                    try:
+                        sinum.patch(int(entry["id"]), {"state": current})
+                    except Exception as err:  # noqa: BLE001
+                        print(f"ERROR {entity_id} relay state: {err}", flush=True)
                     sinum_previous[entity_id] = current
                     skip_ha.add(entity_id)
                 elif entry["variant"] == "light":
@@ -317,9 +530,7 @@ def main() -> None:
                         print(f"ERROR {entity_id} {service}: {err}", flush=True)
                     sinum_previous[entity_id] = current
                     skip_ha.add(entity_id)
-            SINUM_STATE_FILE.write_text(
-                json.dumps(sinum_previous, ensure_ascii=False, indent=1)
-            )
+            write_json(SINUM_STATE_FILE, sinum_previous)
 
         states = ha_states()
         updates = 0
@@ -328,6 +539,21 @@ def main() -> None:
                 continue
             state = states.get(entity_id)
             if state is None or state.get("state") in ("unavailable", "unknown"):
+                continue
+            if entry["variant"] == "ac":
+                desired = ha_ac_values(state)
+                old_value = previous.get(entity_id)
+                if old_value == desired:
+                    continue
+                try:
+                    apply_ha_ac(sinum, entry, state, old_value)
+                except Exception as err:  # noqa: BLE001
+                    print(f"ERROR {entity_id}: {err}", flush=True)
+                    continue
+                previous[entity_id] = desired
+                sinum_previous[entity_id] = desired
+                updates += 1
+                print(f"PATCH {entry['name']}: {desired}", flush=True)
                 continue
             if entry["variant"] == "light":
                 desired = ha_light_values(state)
@@ -355,7 +581,20 @@ def main() -> None:
             if payload is None:
                 continue
             try:
-                sinum.patch(int(entry["id"]), payload)
+                device_id = int(entry["id"])
+                sinum.patch(device_id, payload)
+                if entry["variant"] in ("temperature_sensor", "humidity_sensor"):
+                    sinum.set_sensor_text(
+                        device_id, entry["field"], sensor_text(entry, value)
+                    )
+                elif entry["variant"] == "relay":
+                    sinum.set_relay_switch(device_id, "relay_switch", bool(value))
+                elif entry["variant"] == "two_state_input_sensor":
+                    sinum.set_sensor_text(
+                        device_id,
+                        "contact_state",
+                        "Otwarte" if value else "Zamknięte",
+                    )
             except Exception as err:  # noqa: BLE001
                 print(f"ERROR {entity_id}: {err}", flush=True)
                 continue
@@ -364,11 +603,9 @@ def main() -> None:
                 sinum_previous[entity_id] = bool(value)
             updates += 1
             print(f"PATCH {entry['name']}: {value}", flush=True)
-        STATE_FILE.write_text(json.dumps(previous, ensure_ascii=False, indent=1))
+        write_json(STATE_FILE, previous)
         if WRITE_BACK:
-            SINUM_STATE_FILE.write_text(
-                json.dumps(sinum_previous, ensure_ascii=False, indent=1)
-            )
+            write_json(SINUM_STATE_FILE, sinum_previous)
         print(f"cycle done: {updates} updates", flush=True)
         if args.once:
             break

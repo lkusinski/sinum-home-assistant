@@ -12,6 +12,7 @@ import collections
 import json
 import os
 import time
+import uuid
 from pathlib import Path
 from typing import Any
 
@@ -202,12 +203,27 @@ def main() -> None:
         name = ("HA " + devname + " " + orig).strip()
         if len(name) > 64:
             name = name[:64].rstrip()
+        initial = _initial_value(variant, field, state, scale, unit)
         payload = {
             "type": "custom_device",
             "variant": variant,
             "name": name,
-            "variant_device": _initial_value(variant, field, state, scale, unit),
+            "variant_device": initial,
         }
+        if variant in ("temperature_sensor", "humidity_sensor"):
+            text = _format_sensor_text(initial.get(field), scale, unit)
+            layout, widget = sensor_text_layout(field, text)
+            payload["elements"] = [layout]
+            payload["widget"] = widget
+        elif variant == "relay":
+            layout, widget = relay_switch_layout("relay_switch", bool(initial.get(field)))
+            payload["elements"] = [layout]
+            payload["widget"] = widget
+        elif variant == "two_state_input_sensor":
+            text = "Otwarte" if initial.get(field) else "Zamknięte"
+            layout, widget = sensor_text_layout("contact_state", text)
+            payload["elements"] = [layout]
+            payload["widget"] = widget
         response = sinum.request("POST", "devices/virtual", json=payload)
         if not response.ok:
             print("CREATE FAIL", eid, response.status_code, response.text[:160])
@@ -231,6 +247,89 @@ def main() -> None:
         time.sleep(0.03)
     print("created", created, "existing", skipped, "total", len(mapping))
     print(collections.Counter(v["variant"] for v in mapping.values()))
+
+
+def sensor_text_layout(element: str, text: str) -> tuple[dict[str, Any], dict[str, Any]]:
+    element_uuid = str(uuid.uuid4())
+    row_uuid = str(uuid.uuid4())
+    cell_uuid = str(uuid.uuid4())
+    layout = {
+        "type": "text",
+        "name": element,
+        "uuid": element_uuid,
+        "enabled": True,
+        "visibility": "visible",
+        "value": text,
+        "text_id": 0,
+        "icon": "",
+        "font_weight": "normal",
+        "font_size": "large",
+        "on_change": "onSensorTextChange",
+    }
+    widget = {
+        "version": 2,
+        "content": [
+            {
+                "id": row_uuid,
+                "type": "row",
+                "cells": [
+                    {
+                        "id": cell_uuid,
+                        "type": "row",
+                        "orientation": "row",
+                        "vertical_alignment": "center",
+                        "horizontal_alignment": "center",
+                        "elements": [
+                            {"uuid": element_uuid, "variant": "text-default"}
+                        ],
+                    }
+                ],
+            }
+        ],
+    }
+    return layout, widget
+
+
+def relay_switch_layout(element: str, value: bool) -> tuple[dict[str, Any], dict[str, Any]]:
+    element_uuid = str(uuid.uuid4())
+    row_uuid = str(uuid.uuid4())
+    cell_uuid = str(uuid.uuid4())
+    layout = {
+        "type": "switcher",
+        "name": element,
+        "uuid": element_uuid,
+        "enabled": True,
+        "visibility": "visible",
+        "value": bool(value),
+        "on_change": "onRelaySwitchChange",
+    }
+    widget = {
+        "version": 2,
+        "content": [
+            {
+                "id": row_uuid,
+                "type": "row",
+                "cells": [
+                    {
+                        "id": cell_uuid,
+                        "type": "row",
+                        "orientation": "row",
+                        "vertical_alignment": "center",
+                        "horizontal_alignment": "center",
+                        "elements": [
+                            {"uuid": element_uuid, "variant": "switch-default"}
+                        ],
+                    }
+                ],
+            }
+        ],
+    }
+    return layout, widget
+
+
+def _format_sensor_text(value: Any, scale: Any, unit: Any) -> str:
+    number = float(value or 0) / float(scale or 1)
+    return f"{number:.1f} {str(unit or '').strip()}".strip()
 
 
 def _initial_value(

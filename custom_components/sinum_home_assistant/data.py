@@ -112,6 +112,12 @@ def build_data(
         for name, items in devices.items()
         if isinstance(items, list)
     }
+    for name, group in data.device_groups.items():
+        data.device_groups[name] = {
+            device_id: device
+            for device_id, device in group.items()
+            if str(device.get("integration_uid") or "") != "z2m-bridge"
+        }
     data.parents_wtp = data.parent_groups.get("wtp", {})
     data.parents_system_module = data.parent_groups.get("system_module", {})
     data.wtp = data.device_groups.get("wtp", {})

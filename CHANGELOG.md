@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.1.10 — 2026-11-11
+
+- Add `sinum_home_assistant.refresh` service to force an immediate coordinator
+  refresh. The Z2M event worker calls it on non-bridge virtual device changes,
+  so virtual thermostats and other native Sinum devices update in HA without
+  waiting for the 30 s poll.
+
+## 1.1.9 — 2026-11-11
+
+- Ignore virtual custom devices marked with `integration_uid: z2m-bridge` so the
+  Z2M bridge test/lab devices are not imported back into Home Assistant.
+- Prevent duplicate entities and feedback loops between the integration and the
+  bridge-owned Sinum devices.
+
 ## 1.1.8 — 2026-11-11
 
 - Do not create generic online/problem entities for virtual custom devices.
