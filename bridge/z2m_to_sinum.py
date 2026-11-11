@@ -278,13 +278,18 @@ def ha_light_values(state: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def _ha_color_mode(value: Any) -> Any:
+    """Translate Sinum color modes to Home Assistant modes."""
+    return "color_temp" if value == "temperature" else value
+
+
 def sinum_light_values(device: dict[str, Any]) -> dict[str, Any] | None:
     for element in device.get("elements") or []:
         if element.get("name") == "light":
             return {
                 "state": bool(element.get("state")),
                 "brightness": element.get("brightness"),
-                "color_mode": element.get("color_mode"),
+                "color_mode": _ha_color_mode(element.get("color_mode")),
                 "temperature": element.get("temperature"),
                 "color": element.get("color"),
             }
@@ -436,7 +441,7 @@ def _sync_light_from_ha(
             {"set_brightness": max(1, min(100, desired["brightness"]))},
         )
     if (
-        desired.get("color_mode") == "color_temp"
+        desired.get("color_mode") in ("color_temp", "temperature")
         and desired.get("temperature") is not None
         and (old is None or old.get("temperature") != desired["temperature"])
     ):
@@ -521,9 +526,10 @@ def main() -> None:
                     if current["state"]:
                         if current.get("brightness") is not None:
                             data["brightness_pct"] = current["brightness"]
-                        if current.get("color_mode") == "color_temp" and current.get(
-                            "temperature"
-                        ):
+                        if current.get("color_mode") in (
+                            "color_temp",
+                            "temperature",
+                        ) and current.get("temperature"):
                             data["color_temp_kelvin"] = current["temperature"]
                         elif current.get("color_mode") == "rgb" and current.get(
                             "color"

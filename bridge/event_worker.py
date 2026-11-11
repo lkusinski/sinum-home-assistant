@@ -58,7 +58,9 @@ def _ha_light_call(entity_id: str, current: dict[str, Any]) -> None:
     if current["state"]:
         if current.get("brightness") is not None:
             data["brightness_pct"] = current["brightness"]
-        if current.get("color_mode") == "color_temp" and current.get("temperature"):
+        if current.get("color_mode") in ("color_temp", "temperature") and current.get(
+            "temperature"
+        ):
             data["color_temp_kelvin"] = current["temperature"]
         elif current.get("color_mode") == "rgb" and current.get("color"):
             data["rgb_color"] = z._hex_to_rgb(current["color"])
@@ -255,13 +257,12 @@ def apply_ha_state(entity_id: str, new_state: dict[str, Any] | None) -> None:
         if old == desired or _is_recent(entity_id, desired):
             _update_one(entity_id, desired, desired)
             return
-        _suppress(entity_id)
+        _update_one(entity_id, desired, desired)
         try:
             z._sync_light_from_ha(SINUM_HA, entry, desired, old)
         except Exception as err:  # noqa: BLE001
             print(f"ERROR HA→Sinum light {entity_id}: {err}", flush=True)
             return
-        _update_one(entity_id, desired, desired)
         print(f"EVENT HA→SINUM {entity_id}: {desired}", flush=True)
         return
     value = z.value_for(entry, new_state)

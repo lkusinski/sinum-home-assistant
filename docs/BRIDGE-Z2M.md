@@ -49,6 +49,12 @@ element `switcher` (`switch-default`), a kontaktrony element `text`
 przekaźnika i przy zmianie wykonuje akcję w HA oraz synchronizuje
 `variant_device`.
 
+Kolory: Sinum używa `color_mode="temperature"`, a Home Assistant
+`"color_temp"`. Most normalizuje tę wartość w obie strony; bez tego zmiana
+RGB → białe nie wysyłała `color_temp_kelvin` do HA. Szybkie zmiany trybu nie są
+już blokowane przez 3-sekundowy `SUPPRESS` — stan jest zapisywany przed
+wysłaniem komend do Sinum.
+
 Uwaga: `switch.garaz_agrestowa` to wyjście impulsowe — każde `turn_on`
 przełącza bramę (otwórz/zamknij), a `turn_off` tylko zwalnia przekaźnik.
 Zamknięcie bramy wymaga drugiego impulsu, nie wyłączenia przełącznika.
