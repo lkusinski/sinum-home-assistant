@@ -23,6 +23,9 @@ jobs:
       - uses: home-assistant/actions/hassfest@master
 
   hacs:
+    # HACS validation only supports public repositories. Private repositories
+    # are validated with hassfest/lint; enable this job when the repo is public.
+    if: ${{ github.event.repository.private == false }}
     runs-on: ubuntu-latest
     steps:
       - uses: hacs/action@main
