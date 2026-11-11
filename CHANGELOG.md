@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.1.8 — 2026-11-11
+
+- Do not create generic online/problem entities for virtual custom devices.
+- Remove stale virtual connectivity entities during setup.
+- Support full light control in the separate Z2M bridge via color_picker
+  elements (on/off, brightness, RGB, color temperature).
+
 ## 1.1.7 — 2026-11-11
 
 - Add `services.yaml` for `set_virtual_temperature` so hassfest accepts the

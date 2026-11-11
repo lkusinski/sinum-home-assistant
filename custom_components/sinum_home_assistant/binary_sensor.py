@@ -249,11 +249,9 @@ async def async_setup_entry(
             )
 
     for group, group_devices in data.device_groups.items():
-        if group in ("wtp", "system_module"):
+        if group in ("wtp", "system_module", "virtual"):
             continue
         for device_id, device in group_devices.items():
-            if group == "virtual" and device.get("type") == "thermostat":
-                continue
             info = generic_device_info(entry.entry_id, group, device, data)
             entities.extend(
                 [

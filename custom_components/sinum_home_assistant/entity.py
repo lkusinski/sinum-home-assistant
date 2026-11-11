@@ -390,6 +390,8 @@ def async_remove_deprecated_entities(
         obsolete.add(f"{entry.entry_id}_wtp_parent_{parent_id}_signal")
         obsolete.add(f"{entry.entry_id}_wtp_parent_{parent_id}_battery")
     for device_id, device in data.virtual.items():
+        obsolete.add(f"{entry.entry_id}_virtual_{device_id}_online")
+        obsolete.add(f"{entry.entry_id}_virtual_{device_id}_problem")
         if device.get("type") != "thermostat":
             continue
         obsolete.add(f"{entry.entry_id}_virtual_{device_id}_temperature")
