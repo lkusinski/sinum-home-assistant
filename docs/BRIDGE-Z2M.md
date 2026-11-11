@@ -1,8 +1,9 @@
-# Bridge HA / Zigbee2MQTT → Sinum — wdrożenie LAB
+# Bridge HA / Zigbee2MQTT → Sinum — wdrożenie i model docelowy
 
 Cel: pokazać wybrane urządzenia z produkcyjnego HA (Zigbee2MQTT) w Sinum,
-w pokojach **LAB Lukasz** (11), **LAB Działające** (12) i
-**LAB Wirtualne** (13), bez modyfikowania produkcyjnego HA.
+w pokojach **LAB Lukasz** (11), **LAB Działające** (12) i **LAB Wirtualne**
+(13) jako środowisku testowym, bez modyfikowania produkcyjnego HA. Pokoje LAB
+nie są docelowym ograniczeniem architektury.
 
 ## Bezpieczeństwo
 
@@ -10,13 +11,16 @@ w pokojach **LAB Lukasz** (11), **LAB Działające** (12) i
 - Nie tworzymy encji, automatyzacji ani integracji w produkcyjnym HA.
 - Opcjonalne `zigbee2mqtt/<friendly_name>/get` służy tylko do pobrania bieżącego
   stanu; nie zmienia urządzenia.
-- Sinum: wyłącznie prywatne pokoje **LAB Lukasz** (11),
-  **LAB Działające** (12) i **LAB Wirtualne** (13) oraz wirtualne urządzenia.
+- Sinum: obecnie testowe pokoje **LAB Lukasz** (11), **LAB Działające** (12)
+  i **LAB Wirtualne** (13); docelowo pokój/etykieta mają być konfigurowalne.
 
 ## Wybór urządzeń
 
-Wariant docelowy: etykieta **`sinum`** w HA (device/entity label).
-Bridge czyta rejestr przez read-only token HA.
+Wariant docelowy: etykieta **`sinumbridge`** w HA (device/entity label).
+Bridge czyta rejestr przez read-only token HA. Obecny test używa etykiety
+`sinum`, aby nie zmieniać produkcyjnych etykiet; docelowo nazwa ma być opcją
+integracji/konfiguracji. Etykieta jest lepsza niż ręczne listy, bo pozwala
+wybierać encje/urządzenia bez edycji plików.
 
 Wariant startowy bez tokena: allowlista `friendly_name` w konfiguracji bridge’a
 lub prefiks `sinum_` w nazwie Z2M. Pozwala przetestować most bez zmian w prod HA.
@@ -80,6 +84,18 @@ native 133: zamknięta → otwarta → `closing` → zamknięta.
 | gate | native virtual `gate` + odwrócony `close_status_sensor` |
 | AC | `custom_device_module` / `variant: ac_module` |
 | cover | brak natywnego wariantu — pominięte |
+
+## Docelowy model konfiguracji
+
+W integracji HA powinna być opcja:
+
+- **Eksponuj do Sinum** (włącz/wyłącz),
+- **Etykieta urządzeń** — domyślnie `sinumbridge`,
+- **Kierunek** — HA→Sinum / dwukierunkowo,
+- ewentualnie **docelowy pokój Sinum**.
+
+Bridge wybiera encje/urządzenia po etykiecie, a nie po sztywnych pokojach LAB.
+Obecny most jest prototypem tej logiki; `sinum` to tymczasowa etykieta testowa.
 
 ## Architektura
 

@@ -11,8 +11,9 @@ grzewczych i automatyki domowej **Sinum** firmy **Tech Sterowniki**.
 Integracja łączy się bezpośrednio z chmurą Sinum, automatycznie mapuje pokoje
 i urządzenia oraz tworzy natywne encje Home Assistant do sterowania klimatem,
 pogodą, przekaźnikami, diagnostyką i aktualizacjami firmware. Repozytorium
-zawiera też opcjonalny, event-driven most **Zigbee2MQTT/HA ↔ Sinum** dla
-prywatnych pokoi LAB.
+zawiera też opcjonalny, event-driven most **Zigbee2MQTT/HA ↔ Sinum**. Pokoje
+LAB to obecne środowisko testowe; docelowo wybór urządzeń ma być konfigurowalny
+etykietą w integracji.
 
 ![Sinum Home Assistant](assets/banner.png)
 
@@ -41,8 +42,8 @@ prywatnych pokoi LAB.
   w Sinum przeładowuje integrację i tworzy nowe encje.
 - **Most LAB Z2M → Sinum** — HA WebSocket `state_changed` i Sinum STOMP/SockJS,
   światła z `color_picker`, kontaktrony, bramy, moduł AC i statystyki Lua.
-- **Bezpieczny test bench** — LAB Lukasz (11), LAB Działające (12) i
-  LAB Wirtualne (13); urządzenia spoza LAB nie są modyfikowane.
+- **Test bench LAB** — LAB Lukasz (11), LAB Działające (12) i LAB Wirtualne
+  (13) służą do walidacji; nie są docelowym ograniczeniem produktu.
 
 ## Podgląd
 
@@ -111,9 +112,10 @@ chmura Sinum nie pozwala sterować nimi bezpośrednio. Są widoczne jako
 Identyfikatory encji tworzone są z nazwy pokoju, urządzenia i właściwości.
 Obszary i urządzenia są tworzone automatycznie.
 
-## Most Z2M → Sinum (LAB)
+## Most Z2M → Sinum
 
-Repozytorium zawiera także most dla prywatnych pokoi LAB:
+Repozytorium zawiera także most HA/Z2M → Sinum. Obecnie jest wdrażany w pokojach
+LAB, ale architektura jest docelowo ogólna:
 
 - `bridge/event_worker.py` — push HA → Sinum i Sinum → HA przez WebSocket/STOMP.
 - `bridge/z2m_to_sinum.py` — reconciliation co 300 s.
@@ -126,9 +128,10 @@ wilgotności oraz moduł AC `custom_device_module`. Szczegóły:
 [docs/BRIDGE-Z2M.md](docs/BRIDGE-Z2M.md) i
 [docs/SINUM-LUA-MODULES.md](docs/SINUM-LUA-MODULES.md).
 
-Test bench i most dotyczą wyłącznie pokoi **LAB Lukasz (11)**,
+W obecnym wdrożeniu testowym most dotyczy pokoi **LAB Lukasz (11)**,
 **LAB Działające (12)** i **LAB Wirtualne (13)**. Produkcyjne HA Wiśniowa 9
-jest tylko źródłem odczytu.
+jest tylko źródłem odczytu. Docelowo wybór encji/urządzeń do ekspozycji ma
+odbywać się przez etykietę HA — proponowana nazwa: **`sinumbridge`**.
 
 ## Wymagania
 
@@ -207,8 +210,9 @@ firmware updates. The repository also contains an optional event-driven
 - Conservative cloud polling every 30 seconds for the integration; the LAB
   bridge is event-driven with a 300 s reconciliation fallback.
 - Automatic reload when new devices, parents or schedules are added.
-- LAB bridge: lights with `color_picker`, contacts, gates, AC module and Lua
-  statistics, limited to LAB rooms 11–13.
+- Configurable bridge direction and entity selection; LAB rooms 11–13 are the
+  current test deployment, not a product limitation. Lights, contacts, gates,
+  AC module and Lua statistics are supported.
 
 ### Installation
 

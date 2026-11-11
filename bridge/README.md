@@ -1,8 +1,9 @@
 # Z2M → Sinum bridge
 
-Bridge between Home Assistant Zigbee2MQTT devices and Sinum virtual custom
-devices in the private rooms **LAB Lukasz** (11), **LAB Działające** (12) and
-**LAB Wirtualne** (13).
+Bridge between Home Assistant Zigbee2MQTT devices and Sinum virtual devices.
+The current test deployment targets **LAB Lukasz** (11), **LAB Działające**
+(12) and **LAB Wirtualne** (13); the target product uses an explicit HA label
+(proposed: **`sinumbridge`**) instead of hard-coded LAB rooms.
 
 ## Direction
 
@@ -87,5 +88,6 @@ linkquality, last_seen and config switches are skipped.
 
 - Secrets belong in an environment file with mode 600; never commit them.
 - Write-back can physically change Z2M devices. Test only with devices you own.
-- Sinum side is limited to **LAB Lukasz**, **LAB Działające** and
-  **LAB Wirtualne**; devices outside LAB are not touched.
+- The current test deployment is limited to **LAB Lukasz**, **LAB Działające**
+  and **LAB Wirtualne**; devices outside those rooms are not touched until the
+  label/room mapping is configured.
