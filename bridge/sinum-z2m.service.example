@@ -1,0 +1,16 @@
+[Unit]
+Description=Zigbee2MQTT to Sinum bridge (read-only source)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=homeassistant
+WorkingDirectory=/opt/sinum-z2m
+EnvironmentFile=/etc/sinum-z2m.env
+ExecStart=/usr/bin/python3 /opt/sinum-z2m/z2m_to_sinum.py --interval 30
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
