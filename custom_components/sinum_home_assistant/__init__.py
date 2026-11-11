@@ -12,7 +12,7 @@ from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 from .api import SinumAuthError, SinumHomeAssistantClient, SinumHomeAssistantError
-from .const import CONF_DEVICE_ID, CONF_EMAIL, CONF_REFRESH_TOKEN, PLATFORMS
+from .const import CONF_DEVICE_ID, CONF_EMAIL, CONF_REFRESH_TOKEN, DOMAIN, PLATFORMS
 from .coordinator import SinumHomeAssistantCoordinator
 from .entity import (
     async_assign_areas,
