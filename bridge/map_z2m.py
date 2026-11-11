@@ -25,6 +25,8 @@ SINUM_EMAIL = os.environ.get("SINUM_EMAIL", "")
 SINUM_PASSWORD = os.environ.get("SINUM_PASSWORD", "")
 SINUM_DEVICE = os.environ.get("SINUM_DEVICE_ID", "")
 SINUM_ROOM = int(os.environ.get("SINUM_ROOM_ID", "11"))
+SINUM_BRIDGE_LABEL = os.environ.get("SINUM_BRIDGE_LABEL", "sinumbridge")
+LABEL_FALLBACKS = {SINUM_BRIDGE_LABEL, "sinum"}
 SINUM_BASE = "https://backend.prd.sinum24.com"
 MAPPING_FILE = Path(
     os.environ.get("MAPPING_FILE", Path(__file__).with_name("mapping.json"))
@@ -129,10 +131,18 @@ def main() -> None:
             labels = msg["result"]
             break
     ws.close()
-    label_id = next((x["label_id"] for x in labels if x["name"] == "sinum"), None)
-    if not label_id:
-        raise SystemExit("B7 label 'sinum' does not exist")
-    zdev = {d["id"]: d for d in devices if label_id in (d.get("labels") or [])}
+    label_ids = {
+        x["label_id"] for x in labels if x["name"] in LABEL_FALLBACKS
+    }
+    if not label_ids:
+        raise SystemExit(
+            f"B7 label '{SINUM_BRIDGE_LABEL}' (or legacy 'sinum') does not exist"
+        )
+    zdev = {
+        d["id"]: d
+        for d in devices
+        if label_ids.intersection(d.get("labels") or [])
+    }
 
     mapping: dict[str, dict[str, Any]] = {}
     if MAPPING_FILE.exists():

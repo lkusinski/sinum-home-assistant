@@ -8,6 +8,7 @@ Type=simple
 User=homeassistant
 WorkingDirectory=/opt/sinum-z2m
 EnvironmentFile=/etc/sinum-z2m.env
+# SINUM_BRIDGE_LABEL=sinumbridge (legacy 'sinum' is also accepted)
 # WRITE_BACK=1 enables Sinum -> Z2M relay commands
 ExecStart=/usr/bin/python3 /opt/sinum-z2m/z2m_to_sinum.py --interval 300
 # Real-time push is handled by sinum-z2m-events.service.

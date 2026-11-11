@@ -35,6 +35,7 @@ export SINUM_EMAIL='...'
 export SINUM_PASSWORD='...'
 export SINUM_DEVICE_ID='...'
 export SINUM_ROOM_ID=11
+export SINUM_BRIDGE_LABEL=sinumbridge
 export STATE_FILE=/var/lib/sinum-z2m/state.json
 export SINUM_STATE_FILE=/var/lib/sinum-z2m/sinum_state.json
 python3 z2m_to_sinum.py --once
@@ -46,6 +47,8 @@ Set `WRITE_BACK=0` to disable Sinum → HA commands.
 
 ## Mapping policy
 
+Selection is label-based. `SINUM_BRIDGE_LABEL` defaults to the target label
+`sinumbridge`; the legacy LAB label `sinum` is still accepted for compatibility.
 All bridge-created devices carry `integration_uid: z2m-bridge` so the
 integration can skip them and avoid feedback loops. The current test mapping
 uses 97 mapping entries: relays, two-state

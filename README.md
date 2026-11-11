@@ -172,6 +172,7 @@ Więcej: [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md).
 - [Prywatność](docs/PRIVACY.md)
 - [Most Z2M → Sinum](docs/BRIDGE-Z2M.md)
 - [Moduły Lua Sinum](docs/SINUM-LUA-MODULES.md)
+- [Stan projektu i plan refactoru](docs/PROJECT-STATE.md)
 
 ## Prawa autorskie i znaki towarowe
 
@@ -240,6 +241,7 @@ firmware updates. The repository also contains an optional event-driven
 - [Privacy](docs/PRIVACY.md)
 - [Z2M → Sinum bridge](docs/BRIDGE-Z2M.md)
 - [Sinum Lua modules](docs/SINUM-LUA-MODULES.md)
+- [Project state and refactor plan](docs/PROJECT-STATE.md)
 
 ### Copyright and trademarks
 
