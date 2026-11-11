@@ -40,16 +40,18 @@
   "name": "HA · Garaż Wiśniowa taras kontaktron zamknięta Drzwi"
  },
  "light.lewa": {
-  "id": 33,
-  "variant": "relay",
+  "id": 148,
+  "variant": "light",
+  "element": "light",
   "field": "state",
   "scale": null,
   "unit": "",
   "name": "HA · Lewa"
  },
  "light.prawa": {
-  "id": 34,
-  "variant": "relay",
+  "id": 149,
+  "variant": "light",
+  "element": "light",
   "field": "state",
   "scale": null,
   "unit": "",
@@ -64,32 +66,36 @@
   "name": "HA · Nad wejściem"
  },
  "light.wisniowa_dom_prawa": {
-  "id": 36,
-  "variant": "relay",
+  "id": 150,
+  "variant": "light",
+  "element": "light",
   "field": "state",
   "scale": null,
   "unit": "",
   "name": "HA · Wiśniowa dom prawa"
  },
  "light.wisniowa_dom_lewa": {
-  "id": 37,
-  "variant": "relay",
+  "id": 151,
+  "variant": "light",
+  "element": "light",
   "field": "state",
   "scale": null,
   "unit": "",
   "name": "HA · Wiśniowa dom lewa"
  },
  "light.wisniowa_taras_prawa": {
-  "id": 38,
-  "variant": "relay",
+  "id": 152,
+  "variant": "light",
+  "element": "light",
   "field": "state",
   "scale": null,
   "unit": "",
   "name": "HA · Wiśniowa taras prawa"
  },
  "light.wisniowa_taras_lewa": {
-  "id": 39,
-  "variant": "relay",
+  "id": 153,
+  "variant": "light",
+  "element": "light",
   "field": "state",
   "scale": null,
   "unit": "",
