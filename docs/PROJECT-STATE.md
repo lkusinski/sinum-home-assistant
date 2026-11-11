@@ -11,7 +11,7 @@ planned refactor. No credentials belong in this file.
 ### Home Assistant integration
 
 - Domain: `sinum_home_assistant`
-- Manifest version: `1.1.10`
+- Manifest version: `1.1.11`
 - Source: `custom_components/sinum_home_assistant/`
 - Direction: **Sinum → Home Assistant** (cloud polling, one coordinator).
 - Main building blocks:
