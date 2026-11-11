@@ -429,7 +429,7 @@
   "field": "temperature",
   "scale": 10,
   "unit": "°C",
-  "name": "HA · Salon Temperatura Temperatura"
+  "name": "HA · Salon · Temperatura"
  },
  "sensor.salon_temperatura_humidity": {
   "id": 84,
@@ -437,7 +437,7 @@
   "field": "humidity",
   "scale": 10,
   "unit": "%",
-  "name": "HA · Salon Temperatura Wilgotność"
+  "name": "HA · Salon · Wilgotność"
  },
  "sensor.salon_temperatura_pressure": {
   "id": 85,
@@ -469,7 +469,7 @@
   "field": "temperature",
   "scale": 10,
   "unit": "°C",
-  "name": "HA · Łukasz PIR Temperatura"
+  "name": "HA · Łukasz PIR · Temperatura"
  },
  "sensor.lukasz_pir_humidity": {
   "id": 89,
@@ -477,7 +477,7 @@
   "field": "humidity",
   "scale": 10,
   "unit": "%",
-  "name": "HA · Łukasz PIR Wilgotność"
+  "name": "HA · Łukasz PIR · Wilgotność"
  },
  "sensor.lukasz_pir_battery": {
   "id": 90,
@@ -533,7 +533,7 @@
   "field": "temperature",
   "scale": 10,
   "unit": "°C",
-  "name": "HA · Biuro temperatura Temperatura"
+  "name": "HA · Biuro · Temperatura"
  },
  "sensor.biuro_temperatura_humidity": {
   "id": 97,
@@ -541,7 +541,7 @@
   "field": "humidity",
   "scale": 10,
   "unit": "%",
-  "name": "HA · Biuro temperatura Wilgotność"
+  "name": "HA · Biuro · Wilgotność"
  },
  "sensor.biuro_temperatura_voltage": {
   "id": 98,
