@@ -131,6 +131,30 @@ class SinumClient:
         response.raise_for_status()
         return response.json()["data"]
 
+    def get_module(self, module_id: int) -> dict[str, Any]:
+        self.ensure_token()
+        response = self.session.get(
+            f"{SINUM_BASE}/proxy/devices/custom-device-module/{module_id}",
+            headers={**self.headers, "Authorization": "Bearer " + self.token},
+            timeout=30,
+        )
+        response.raise_for_status()
+        return response.json()["data"]
+
+    def patch_module(self, module_id: int, payload: dict[str, Any]) -> None:
+        self.ensure_token()
+        response = self.session.patch(
+            f"{SINUM_BASE}/proxy/devices/custom-device-module/{module_id}",
+            headers={**self.headers, "Authorization": "Bearer " + self.token},
+            json=payload,
+            timeout=30,
+        )
+        if response.status_code not in (200, 204, 304):
+            raise RuntimeError(
+                f"Sinum module PATCH {module_id} HTTP {response.status_code}: "
+                f"{response.text[:200]}"
+            )
+
     def set_relay_switch(self, device_id: int, element: str, value: bool) -> None:
         try:
             self.element(device_id, element, "set_value", {"set_value": bool(value)})
@@ -332,6 +356,61 @@ def sinum_ac_values(device: dict[str, Any]) -> dict[str, Any]:
         "temperature": elements.get("target", {}).get("value"),
         "current_temperature": current,
     }
+
+
+def _ac_module_mode_to_ha(mode: str) -> str:
+    return {
+        "off": "off",
+        "automatic": "auto",
+        "cooling": "cool",
+        "heating": "heat",
+        "fan": "fan_only",
+        "drying": "dry",
+    }.get(mode, "off")
+
+
+def _ac_module_mode_to_sinum(mode: str) -> str:
+    return {
+        "off": "off",
+        "auto": "automatic",
+        "cool": "cooling",
+        "heat": "heating",
+        "fan_only": "fan",
+        "dry": "drying",
+    }.get(mode, "off")
+
+
+def sinum_ac_module_values(module: dict[str, Any]) -> dict[str, Any]:
+    mode = str(module.get("mode") or "off")
+    target = module.get("target_temperature")
+    room = module.get("room_temperature")
+    return {
+        "state": mode != "off",
+        "hvac_mode": _ac_module_mode_to_ha(mode),
+        "temperature": round(float(target) / 10, 1) if isinstance(target, (int, float)) else None,
+        "current_temperature": round(float(room) / 10, 1)
+        if isinstance(room, (int, float))
+        else None,
+        "fan_speed": module.get("fan_speed"),
+    }
+
+
+def apply_ha_ac_module(
+    sinum: "SinumClient", entry: dict[str, Any], state: dict[str, Any], old: Any
+) -> dict[str, Any]:
+    desired = ha_ac_values(state)
+    module = sinum.get_module(int(entry["id"]))
+    patch: dict[str, Any] = {}
+    desired_mode = _ac_module_mode_to_sinum(str(desired["hvac_mode"]))
+    if module.get("mode") != desired_mode:
+        patch["mode"] = desired_mode
+    if desired["temperature"] is not None:
+        raw = int(round(float(desired["temperature"]) * 10))
+        if module.get("target_temperature") != raw:
+            patch["target_temperature"] = raw
+    if patch:
+        sinum.patch_module(int(entry["id"]), patch)
+    return desired
 
 
 def apply_ha_ac(
@@ -554,6 +633,21 @@ def main() -> None:
                 continue
             state = states.get(entity_id)
             if state is None or state.get("state") in ("unavailable", "unknown"):
+                continue
+            if entry["variant"] == "ac_module":
+                desired = ha_ac_values(state)
+                old_value = previous.get(entity_id)
+                if old_value == desired:
+                    continue
+                try:
+                    apply_ha_ac_module(sinum, entry, state, old_value)
+                except Exception as err:  # noqa: BLE001
+                    print(f"ERROR {entity_id}: {err}", flush=True)
+                    continue
+                previous[entity_id] = desired
+                sinum_previous[entity_id] = desired
+                updates += 1
+                print(f"PATCH {entry['name']}: {desired}", flush=True)
                 continue
             if entry["variant"] == "ac":
                 desired = ha_ac_values(state)

@@ -40,6 +40,11 @@ def _load_mapping() -> tuple[dict[str, dict[str, Any]], dict[int, tuple[str, dic
 
 
 MAPPING, BY_ID = _load_mapping()
+MODULES = {
+    int(entry["id"]): (entity_id, entry)
+    for entity_id, entry in MAPPING.items()
+    if entry.get("class") == "custom_device_module"
+}
 LAST_REFRESH = [0.0]
 
 
@@ -70,6 +75,59 @@ def _ha_light_call(entity_id: str, current: dict[str, Any]) -> None:
     z._ha_call("light", service, data)
 
 
+def _set_ac_ha_helpers(current: dict[str, Any]) -> None:
+    z._ha_call(
+        "input_boolean",
+        "turn_on" if current["state"] else "turn_off",
+        {"entity_id": "input_boolean.sinum_lab_ac_power"},
+    )
+    z._ha_call(
+        "input_select",
+        "select_option",
+        {
+            "entity_id": "input_select.sinum_lab_ac_mode",
+            "option": current["hvac_mode"],
+        },
+    )
+    if current.get("temperature") is not None:
+        z._ha_call(
+            "input_number",
+            "set_value",
+            {
+                "entity_id": "input_number.sinum_lab_ac_target",
+                "value": float(current["temperature"]),
+            },
+        )
+    if current.get("current_temperature") is not None:
+        z._ha_call(
+            "input_number",
+            "set_value",
+            {
+                "entity_id": "input_number.sinum_lab_ac_room_temp",
+                "value": float(current["current_temperature"]),
+            },
+        )
+
+
+def _handle_ac_module(entity_id: str, entry: dict[str, Any]) -> None:
+    try:
+        module = SINUM.get_module(int(entry["id"]))
+    except Exception as err:  # noqa: BLE001
+        print(f"ERROR module AC {entity_id}: {err}", flush=True)
+        return
+    current = z.sinum_ac_module_values(module)
+    if z.read_json(z.SINUM_STATE_FILE).get(entity_id) == current:
+        return
+    _update_one(entity_id, current, current)
+    _suppress(entity_id, 1.0)
+    try:
+        _set_ac_ha_helpers(current)
+    except Exception as err:  # noqa: BLE001
+        print(f"ERROR module AC→HA {entity_id}: {err}", flush=True)
+        return
+    print(f"EVENT MODULE→HA AC {entity_id}: {current}", flush=True)
+
+
 def _refresh_integration() -> None:
     if time.time() - LAST_REFRESH[0] < 0.5:
         return
@@ -93,6 +151,10 @@ def handle_event(event: dict[str, Any]) -> None:
     except (KeyError, TypeError, ValueError):
         return
     if event_type == "device_state_changed":
+        if payload.get("class") == "custom_device_module" and device_id in MODULES:
+            entity_id, entry = MODULES[device_id]
+            _handle_ac_module(entity_id, entry)
+            return
         if payload.get("class") == "virtual" and device_id not in BY_ID:
             _refresh_integration()
         return
@@ -215,15 +277,15 @@ def _is_recent(entity_id: str, value: Any) -> bool:
     return bool(entry and entry[0] == value and time.time() - entry[1] < 15)
 
 
-def _suppress(entity_id: str) -> None:
+def _suppress(entity_id: str, duration: float = 3.0) -> None:
     with STATE_LOCK:
-        SUPPRESS[entity_id] = time.time()
+        SUPPRESS[entity_id] = time.time() + duration
 
 
 def _is_suppressed(entity_id: str) -> bool:
     with STATE_LOCK:
-        stamp = SUPPRESS.get(entity_id, 0.0)
-    return time.time() - stamp < 3.0
+        until = SUPPRESS.get(entity_id, 0.0)
+    return time.time() < until
 
 
 def apply_ha_state(entity_id: str, new_state: dict[str, Any] | None) -> None:
@@ -235,6 +297,20 @@ def apply_ha_state(entity_id: str, new_state: dict[str, Any] | None) -> None:
     if _is_suppressed(entity_id):
         return
     variant = entry.get("variant")
+    if variant == "ac_module":
+        desired = z.ha_ac_values(new_state)
+        old = z.read_json(z.STATE_FILE).get(entity_id)
+        if old == desired:
+            _update_one(entity_id, desired, desired)
+            return
+        _update_one(entity_id, desired, desired)
+        try:
+            z.apply_ha_ac_module(SINUM_HA, entry, new_state, old)
+        except Exception as err:  # noqa: BLE001
+            print(f"ERROR HA→Sinum AC module {entity_id}: {err}", flush=True)
+            return
+        print(f"EVENT HA→SINUM AC module {entity_id}: {desired}", flush=True)
+        return
     if variant == "ac":
         desired = z.ha_ac_values(new_state)
         old = z.read_json(z.STATE_FILE).get(entity_id)

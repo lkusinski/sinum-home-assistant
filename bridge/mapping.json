@@ -780,8 +780,9 @@
   "name": "TEST · Wilgotność"
  },
  "climate.sinum_lab_klimatyzator": {
-  "id": 141,
-  "variant": "ac",
-  "name": "TEST · Klimatyzator symulacja"
+  "id": 1,
+  "class": "custom_device_module",
+  "variant": "ac_module",
+  "name": "TEST · Klima Moduł AC"
  }
 }

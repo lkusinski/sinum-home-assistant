@@ -59,9 +59,9 @@ does not store custom-device statistics by default. Relays get a `switcher` elem
 `Otwarte`/`Zamknięte`). A mapping entry can set `"invert": true` plus
 `text_true`/`text_false`; this is required for a native Sinum `gate`
 `close_status_sensor`, which treats `true` as **closed** (HA door contacts
-usually use `on` = open). Covers are not mirrored. The AC simulation uses a `climate` mapping with
-`variant: ac`: HA climate mode/target/current temperature map to the Sinum
-`power`/`mode`/`target`/`room_temp` elements, both directions.
+usually use `on` = open). Covers are not mirrored. The AC simulation used a `climate` mapping with `variant: ac`; the active LAB
+mapping now uses `variant: ac_module` / `class: custom_device_module` (module 1)
+and maps HA climate mode/target to the real Sinum air-conditioner module.
 
 The garage gate `switch.garaz_agrestowa` is a pulse-style output: each `turn_on`
 pulse toggles open/close, while `turn_off` only releases the relay. The bridge

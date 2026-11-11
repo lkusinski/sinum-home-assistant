@@ -127,6 +127,13 @@ Wirtualna ławka: brama, lampa, kontaktron, temperatura i wilgotność w
 Nie używamy produkcyjnego discovery MQTT — fałszywe urządzenia nie trafiają do
 produkcyjnego HA.
 
+## Moduły w moście
+
+Most obsługuje teraz także `class: custom_device_module`, `variant: ac_module`
+dla modułu AC w LAB Wirtualne (moduł 1): HA climate ↔ Sinum module przez
+`PATCH /devices/custom-device-module/1` i zdarzenia `device_state_changed`.
+Inne moduły nie są mapowane, żeby nie ruszać urządzeń poza LAB.
+
 ## Symulacja klimatyzatora
 
 Sinum nie ma wirtualnego typu AC; w LAB Wirtualne działa `generic` (141) z
