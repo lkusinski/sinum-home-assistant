@@ -92,6 +92,26 @@ native 133: zamknięta → otwarta → `closing` → zamknięta.
 4. Uruchomienie: `sinum-z2m.service` (reconciliation) i
    `sinum-z2m-events.service` (push) na CT310; konfiguracja poza produkcyjnym HA.
 
+## Statystyki LAB
+
+Sinum **nie zapisuje statystyk custom devices domyślnie**. Dla sensorów
+temperatury/wilgotności bridge dodaje Lua:
+
+```lua
+function CustomDevice:onEvent(event)
+  self:setValue("status", "online")
+  if self:changedVariantDeviceValue("temperature") then
+    statistics:addPoint("temperature", self:getVariantDeviceValue("temperature"), unit.celsius_x10)
+  end
+end
+```
+
+Dzięki temu pojawiają się punkty w `/influx/query`; trzeba jeszcze dodać
+zapytanie statystyczne w UI Sinum. Nowe sensory z `map_z2m.py` dostają ten kod
+automatycznie; istniejące 83/84/88/89/96/97 zostały zmigrowane ręcznie.
+Światła i przekaźniki nadal nie mają statystyk — można dodać je później przez
+`statistics:addPoint` (np. jasność jako `unit.percent`).
+
 ## Pomiary push
 
 Na wirtualnej ławce **LAB Wirtualne** (pokój 13): brama ~0,45 s, lampa

@@ -52,7 +52,9 @@ lights use `generic` custom devices with a `color_picker` element, so on/off,
 brightness, RGB and color temperature work in both directions. Temperature and
 humidity sensors get a `text` element (`21.1 °C` / `52.6 %`) because Sinum does
 not render the custom sensor variant value on its own; the stock value stays in
-`variant_device` for other consumers. Relays get a `switcher` element
+`variant_device` for other consumers. New temp/humidity sensors also receive Lua
+code that sets `status=online` and calls `statistics:addPoint`, because Sinum
+does not store custom-device statistics by default. Relays get a `switcher` element
 (`relay_switch`) and contacts get a text element (`contact_state`,
 `Otwarte`/`Zamknięte`). A mapping entry can set `"invert": true` plus
 `text_true`/`text_false`; this is required for a native Sinum `gate`

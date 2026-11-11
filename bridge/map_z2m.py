@@ -215,6 +215,12 @@ def main() -> None:
             layout, widget = sensor_text_layout(field, text)
             payload["elements"] = [layout]
             payload["widget"] = widget
+            stats_unit = (
+                "unit.celsius_x10"
+                if variant == "temperature_sensor"
+                else "unit.relative_humidity_x10"
+            )
+            payload["lua"] = _sensor_stats_lua(field, stats_unit)
         elif variant == "relay":
             layout, widget = relay_switch_layout("relay_switch", bool(initial.get(field)))
             payload["elements"] = [layout]
@@ -330,6 +336,23 @@ def relay_switch_layout(element: str, value: bool) -> tuple[dict[str, Any], dict
 def _format_sensor_text(value: Any, scale: Any, unit: Any) -> str:
     number = float(value or 0) / float(scale or 1)
     return f"{number:.1f} {str(unit or '').strip()}".strip()
+
+
+def _sensor_stats_lua(field: str, unit_name: str) -> str:
+    return (
+        'function CustomDevice:onInit(reason)\n'
+        '  self:setValue("status", "online")\n'
+        'end\n'
+        'function CustomDevice:onEvent(event)\n'
+        '  self:setValue("status", "online")\n'
+        f'  if self:changedVariantDeviceValue("{field}") then\n'
+        f'    local v = self:getVariantDeviceValue("{field}")\n'
+        '    if v ~= nil then\n'
+        f'      statistics:addPoint("{field}", v, {unit_name})\n'
+        '    end\n'
+        '  end\n'
+        'end\n'
+    )
 
 
 def _initial_value(
