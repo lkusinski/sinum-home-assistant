@@ -1,7 +1,8 @@
 # Z2M → Sinum bridge
 
 Bridge between Home Assistant Zigbee2MQTT devices and Sinum virtual custom
-devices in the private rooms **LAB Lukasz** (11) and **LAB Działające** (12).
+devices in the private rooms **LAB Lukasz** (11), **LAB Działające** (12) and
+**LAB Wirtualne** (13).
 
 ## Direction
 
@@ -46,10 +47,9 @@ Set `WRITE_BACK=0` to disable Sinum → HA commands.
 
 All bridge-created devices carry `integration_uid: z2m-bridge` so the
 integration can skip them and avoid feedback loops. The current test mapping
-uses 91 functional endpoints: relays, two-state
-contacts, temperature/humidity, analog values, energy and battery. The two E27
-lights use `generic` custom devices with a `color_picker` element, so on/off,
-brightness, RGB and color temperature work in both directions. Temperature and
+uses 97 mapping entries: relays, two-state
+contacts, temperature/humidity, lights, analog values, energy and battery. All LAB lights use `generic` custom devices with a `color_picker` element, so
+on/off, brightness, RGB and color temperature work in both directions. Temperature and
 humidity sensors get a `text` element (`21.1 °C` / `52.6 %`) because Sinum does
 not render the custom sensor variant value on its own; the stock value stays in
 `variant_device` for other consumers. New temp/humidity sensors also receive Lua
@@ -59,9 +59,9 @@ does not store custom-device statistics by default. Relays get a `switcher` elem
 `Otwarte`/`Zamknięte`). A mapping entry can set `"invert": true` plus
 `text_true`/`text_false`; this is required for a native Sinum `gate`
 `close_status_sensor`, which treats `true` as **closed** (HA door contacts
-usually use `on` = open). Covers are not mirrored. The AC simulation used a `climate` mapping with `variant: ac`; the active LAB
-mapping now uses `variant: ac_module` / `class: custom_device_module` (module 1)
-and maps HA climate mode/target to the real Sinum air-conditioner module.
+usually use `on` = open). Covers are not mirrored. The active AC mapping uses `variant: ac_module` / `class:
+custom_device_module` (module 1) and maps HA climate mode/target to the real
+Sinum air-conditioner module; the old generic AC (141) is only a bench.
 
 The garage gate `switch.garaz_agrestowa` is a pulse-style output: each `turn_on`
 pulse toggles open/close, while `turn_off` only releases the relay. The bridge
@@ -87,5 +87,5 @@ linkquality, last_seen and config switches are skipped.
 
 - Secrets belong in an environment file with mode 600; never commit them.
 - Write-back can physically change Z2M devices. Test only with devices you own.
-- Sinum side is limited to the private rooms **LAB Lukasz** and
-  **LAB Działające**.
+- Sinum side is limited to **LAB Lukasz**, **LAB Działające** and
+  **LAB Wirtualne**; devices outside LAB are not touched.

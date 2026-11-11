@@ -1,8 +1,8 @@
-# Bridge HA / Zigbee2MQTT → Sinum — plan
+# Bridge HA / Zigbee2MQTT → Sinum — wdrożenie LAB
 
 Cel: pokazać wybrane urządzenia z produkcyjnego HA (Zigbee2MQTT) w Sinum,
-w pokojach **LAB Lukasz** (11) i **LAB Działające** (12), bez modyfikowania
-produkcyjnego HA.
+w pokojach **LAB Lukasz** (11), **LAB Działające** (12) i
+**LAB Wirtualne** (13), bez modyfikowania produkcyjnego HA.
 
 ## Bezpieczeństwo
 
@@ -10,8 +10,8 @@ produkcyjnego HA.
 - Nie tworzymy encji, automatyzacji ani integracji w produkcyjnym HA.
 - Opcjonalne `zigbee2mqtt/<friendly_name>/get` służy tylko do pobrania bieżącego
   stanu; nie zmienia urządzenia.
-- Sinum: wyłącznie prywatne pokoje **LAB Lukasz** (id 11) i
-  **LAB Działające** (id 12) oraz wirtualne urządzenia.
+- Sinum: wyłącznie prywatne pokoje **LAB Lukasz** (11),
+  **LAB Działające** (12) i **LAB Wirtualne** (13) oraz wirtualne urządzenia.
 
 ## Wybór urządzeń
 
@@ -73,11 +73,13 @@ native 133: zamknięta → otwarta → `closing` → zamknięta.
 | humidity | `humidity_sensor` |
 | pressure, illuminance, voltage, current, linkquality, battery % | `analog_input` |
 | power / energy | `energy_meter` |
-| switch, plug, light (on/off) | `relay` |
+| switch, plug | `relay` |
 | contact, motion, battery_low | `two_state_input_sensor` |
+| light (on/off/brightness/RGB/temperature) | `generic` + `color_picker` |
 | climate / TRV | `temperature_regulator` (do walidacji) |
-| action/button | `generic` elementy (później) |
-| light brightness/color, cover | brak natywnego wariantu — `generic` lub pominięte |
+| gate | native virtual `gate` + odwrócony `close_status_sensor` |
+| AC | `custom_device_module` / `variant: ac_module` |
+| cover | brak natywnego wariantu — pominięte |
 
 ## Architektura
 
@@ -95,7 +97,7 @@ native 133: zamknięta → otwarta → `closing` → zamknięta.
 ## Statystyki LAB
 
 Sinum **nie zapisuje statystyk custom devices domyślnie**. Dla sensorów
-temperatury/wilgotności bridge dodaje Lua:
+temperatury/wilgotności, świateł i kontaktronów bridge dodaje Lua:
 
 ```lua
 function CustomDevice:onEvent(event)
@@ -109,8 +111,8 @@ end
 Dzięki temu pojawiają się punkty w `/influx/query`; trzeba jeszcze dodać
 zapytanie statystyczne w UI Sinum. Nowe sensory z `map_z2m.py` dostają ten kod
 automatycznie; istniejące 83/84/88/89/96/97 zostały zmigrowane ręcznie.
-Światła i przekaźniki nadal nie mają statystyk — można dodać je później przez
-`statistics:addPoint` (np. jasność jako `unit.percent`).
+Światła mają `state` i `brightness`, kontaktrony `state`; relay 121 zarządzany
+przez bramę nie wygenerował punktu (ograniczenie).
 
 ## Pomiary push
 
@@ -119,10 +121,10 @@ Na wirtualnej ławce **LAB Wirtualne** (pokój 13): brama ~0,45 s, lampa
 tekstu po zmianie stanu). Wcześniejszy polling 30 s nie jest potrzebny do
 reakcji UI → HA; pozostał tylko jako 300-sekundowy fallback.
 
-Stan realny: 91 endpointów, dwa światła E27 i sześć czujników
-temperatury/wilgotności w **LAB Działające**; pozostałe w **LAB Lukasz**.
-Wirtualna ławka: brama, lampa, kontaktron, temperatura i wilgotność w
-**LAB Wirtualne** (13), oparte na lokalnych helperach B7
+Stan realny: 97 wpisów mapowania; **LAB Działające** ma światła, kontaktrony
+i działające przekaźniki, **LAB Lukasz** diagnostykę analog/energy/battery
+(plus stary `Nad wejściem`), a **LAB Wirtualne** (13) ma 32 moduły testowe
+i lokalne helpery B7
 (`input_boolean.sinum_lab_*`, `input_number.sinum_lab_*`, `light.sinum_lab_lampa`).
 Nie używamy produkcyjnego discovery MQTT — fałszywe urządzenia nie trafiają do
 produkcyjnego HA.
@@ -134,17 +136,20 @@ dla modułu AC w LAB Wirtualne (moduł 1): HA climate ↔ Sinum module przez
 `PATCH /devices/custom-device-module/1` i zdarzenia `device_state_changed`.
 Inne moduły nie są mapowane, żeby nie ruszać urządzeń poza LAB.
 
-## Symulacja klimatyzatora
+## AC: moduł zamiast symulacji
 
-Sinum nie ma wirtualnego typu AC; w LAB Wirtualne działa `generic` (141) z
-elementami `power`/`mode`/`target`/`room_temp`. HA ma `climate.sinum_lab_klimatyzator`
-na helperach (`input_boolean`, `input_number`, `input_select`). Most obsługuje
-`variant: ac` w obie strony: zmiana w HA ustawia elementy Sinum, a zdarzenia
-elementów Sinum aktualizują helpery HA. Test: ~0,4 s w obie strony.
+Aktywne mapowanie `climate.sinum_lab_klimatyzator` używa modułu
+`custom_device_module` ID 1 (`variant: ac_module`). Most robi
+`PATCH /devices/custom-device-module/1` i nasłuchuje `device_state_changed`.
+Stary `generic` 141 zostaje tylko jako bench, nie jest mapowany.
 
 ## Ograniczenia
 
-- Brak natywnego `light`/`cover` w wirtualnych urządzeniach Sinum.
+- Brak natywnego `light`/`cover` w wirtualnych urządzeniach Sinum; światła
+  używają `generic` + `color_picker`.
+- Most modułów obsługuje obecnie tylko moduł AC w LAB; inne moduły nie są
+  mapowane, żeby nie ruszać urządzeń poza LAB.
+- Relay 121 zarządzany przez bramę nie generuje statystyk.
 - Grupy Z2M, bridge, repeater i diagnostyka (`linkquality`, battery_low) nie
   powinny być osobnymi urządzeniami w Sinum; można je pominąć.
 - Tag `#sinum` wymaga read-only tokena HA albo allowlisty w bridge’u.

@@ -10,7 +10,9 @@ grzewczych i automatyki domowej **Sinum** firmy **Tech Sterowniki**.
 
 Integracja łączy się bezpośrednio z chmurą Sinum, automatycznie mapuje pokoje
 i urządzenia oraz tworzy natywne encje Home Assistant do sterowania klimatem,
-pogodą, przekaźnikami, diagnostyką i aktualizacjami firmware.
+pogodą, przekaźnikami, diagnostyką i aktualizacjami firmware. Repozytorium
+zawiera też opcjonalny, event-driven most **Zigbee2MQTT/HA ↔ Sinum** dla
+prywatnych pokoi LAB.
 
 ![Sinum Home Assistant](assets/banner.png)
 
@@ -33,9 +35,14 @@ pogodą, przekaźnikami, diagnostyką i aktualizacjami firmware.
 - **Konfiguracja przez UI** — bez YAML.
 - **Uwierzytelnianie refresh tokenem** — hasło jest używane tylko podczas
   konfiguracji lub ponownego uwierzytelnienia i nie jest zapisywane.
-- **Oszczędne odpytywanie chmury** — jeden cykl aktualizacji co 30 sekund.
+- **Oszczędne odpytywanie chmury** — jeden cykl aktualizacji co 30 sekund
+  (integracja); most LAB działa event-driven, a 300 s to tylko reconciliation.
 - **Automatyczne wykrywanie nowych urządzeń** — dodanie urządzenia lub harmonogramu
   w Sinum przeładowuje integrację i tworzy nowe encje.
+- **Most LAB Z2M → Sinum** — HA WebSocket `state_changed` i Sinum STOMP/SockJS,
+  światła z `color_picker`, kontaktrony, bramy, moduł AC i statystyki Lua.
+- **Bezpieczny test bench** — LAB Lukasz (11), LAB Działające (12) i
+  LAB Wirtualne (13); urządzenia spoza LAB nie są modyfikowane.
 
 ## Podgląd
 
@@ -104,6 +111,25 @@ chmura Sinum nie pozwala sterować nimi bezpośrednio. Są widoczne jako
 Identyfikatory encji tworzone są z nazwy pokoju, urządzenia i właściwości.
 Obszary i urządzenia są tworzone automatycznie.
 
+## Most Z2M → Sinum (LAB)
+
+Repozytorium zawiera także most dla prywatnych pokoi LAB:
+
+- `bridge/event_worker.py` — push HA → Sinum i Sinum → HA przez WebSocket/STOMP.
+- `bridge/z2m_to_sinum.py` — reconciliation co 300 s.
+- `bridge/map_z2m.py` — tworzenie urządzeń dla encji oznaczonych etykietą `sinum`.
+- `bridge/mapping.json` — mapowanie HA → Sinum.
+
+Most obsługuje światła `generic` + `color_picker` (on/off, jasność, RGB,
+temperatura barwowa), kontaktrony, przekaźniki/bramy, sensory temperatury i
+wilgotności oraz moduł AC `custom_device_module`. Szczegóły:
+[docs/BRIDGE-Z2M.md](docs/BRIDGE-Z2M.md) i
+[docs/SINUM-LUA-MODULES.md](docs/SINUM-LUA-MODULES.md).
+
+Test bench i most dotyczą wyłącznie pokoi **LAB Lukasz (11)**,
+**LAB Działające (12)** i **LAB Wirtualne (13)**. Produkcyjne HA Wiśniowa 9
+jest tylko źródłem odczytu.
+
 ## Wymagania
 
 - Home Assistant **2026.11** lub nowszy.
@@ -141,6 +167,8 @@ Więcej: [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md).
 - [Etykiety i klasyfikacja](docs/LABELS.md)
 - [Usługi](docs/SERVICES.md)
 - [Prywatność](docs/PRIVACY.md)
+- [Most Z2M → Sinum](docs/BRIDGE-Z2M.md)
+- [Moduły Lua Sinum](docs/SINUM-LUA-MODULES.md)
 
 ## Prawa autorskie i znaki towarowe
 
@@ -162,7 +190,8 @@ heating and home automation systems by **Tech Sterowniki**.
 
 It connects directly to the Sinum cloud, discovers rooms and devices, and creates
 native Home Assistant entities for climate, weather, relays, diagnostics and
-firmware updates.
+firmware updates. The repository also contains an optional event-driven
+**Zigbee2MQTT/HA ↔ Sinum bridge** for private LAB rooms.
 
 ### Highlights
 
@@ -175,8 +204,11 @@ firmware updates.
 - Switches for free relays and read-only state sensors for thermostat-managed relays.
 - Config flow and options flow — no YAML required.
 - Refresh-token authentication; the password is never stored.
-- Conservative cloud polling every 30 seconds.
+- Conservative cloud polling every 30 seconds for the integration; the LAB
+  bridge is event-driven with a 300 s reconciliation fallback.
 - Automatic reload when new devices, parents or schedules are added.
+- LAB bridge: lights with `color_picker`, contacts, gates, AC module and Lua
+  statistics, limited to LAB rooms 11–13.
 
 ### Installation
 
@@ -202,6 +234,8 @@ firmware updates.
 - [Labels and classification](docs/LABELS.md)
 - [Services](docs/SERVICES.md)
 - [Privacy](docs/PRIVACY.md)
+- [Z2M → Sinum bridge](docs/BRIDGE-Z2M.md)
+- [Sinum Lua modules](docs/SINUM-LUA-MODULES.md)
 
 ### Copyright and trademarks
 
