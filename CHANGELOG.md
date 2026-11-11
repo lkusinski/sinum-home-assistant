@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.1.7 — 2026-11-11
+
+- Add `services.yaml` for `set_virtual_temperature` so hassfest accepts the
+  integration and Home Assistant loads the service description.
+
 ## 1.1.6 — 2026-11-11
 
 - Support virtual custom `temperature_sensor` devices created in Sinum.
