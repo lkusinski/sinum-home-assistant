@@ -88,3 +88,27 @@ All 32 modules can be created through Lua `onInit` without hardware.
   step is an explicit `custom_device_module` mapping path so AC, valves and
   meters can be exposed to Home Assistant without the generic element
   workaround.
+
+## Property update and command matrix
+
+Tested on the 32-module bench (Sinum 144–147):
+
+- **Direct `PATCH` works for writable properties:** analog output `value`,
+  blind `target_opening`, DHW `target_temperature`, radiator `opening`,
+  temperature regulator `target_temperature`, valve `target_temperature` and
+  `enabled`.
+- **Read-only measurements reject `PATCH` with 422:** temperature, humidity,
+  battery SOC, energy/water/gas/heat meters, AQ/CO2/IAQ/light/motion/opening/
+  pressure/flood/smoke values. Those are updated from Lua with
+  `getModule(uuid):updateProperties({...})`.
+- **Commands verified:** AC `turn_on/off`, relay/dimmer/RGB `turn_on/off/
+  toggle`, dimmer `set_level`/`stop`, RGB `set_color`/`set_temperature`,
+  blind `calibration`/`stop`, car charger `start_charge`/`stop_charge`,
+  inverter `turn_on/off`/`limit_active_power`, radiator `open`/`calibration`,
+  smoke `test`/`reset`, battery `charge`/`stop`, valve
+  `set_target_temperature`/`set_enabled`/`set_work_mode`.
+- **DHW** `set_target_temperature_mode` needs an associated heating curve.
+- **Valve** `set_hysteresis` remains inconsistent in the cloud API validation;
+  direct property update target temperature/enabled works.
+- **Car charger / battery** accept charge commands, but `charge_power` and
+  energy counters stay at 0 until the Lua module callback updates them.
