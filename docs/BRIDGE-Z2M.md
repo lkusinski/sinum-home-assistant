@@ -53,6 +53,12 @@ Uwaga: `switch.garaz_agrestowa` to wyjście impulsowe — każde `turn_on`
 przełącza bramę (otwórz/zamknij), a `turn_off` tylko zwalnia przekaźnik.
 Zamknięcie bramy wymaga drugiego impulsu, nie wyłączenia przełącznika.
 
+Dla natywnego wirtualnego `gate` czujnik `close_status_sensor` ma odwrotną
+logikę niż typowy kontaktron HA: `true` = **zamknięta**. W mapowaniu użyj
+`"invert": true` i opcjonalnie `text_true`/`text_false` (np. `Zamknięta` /
+`Otwarta`). Przetestowano na `TEST · Brama zamknięta` (Sinum 143) i bramie
+native 133: zamknięta → otwarta → `closing` → zamknięta.
+
 ## Mapowanie klas
 
 | HA / Z2M | Sinum variant |

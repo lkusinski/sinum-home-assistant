@@ -282,7 +282,7 @@ def apply_ha_state(entity_id: str, new_state: dict[str, Any] | None) -> None:
             SINUM_HA.set_relay_switch(device_id, "relay_switch", bool(value))
         elif variant == "two_state_input_sensor":
             SINUM_HA.set_sensor_text(
-                device_id, "contact_state", "Otwarte" if value else "Zamknięte"
+                device_id, "contact_state", z.two_state_text(entry, value)
             )
         elif variant in ("temperature_sensor", "humidity_sensor"):
             SINUM_HA.set_sensor_text(

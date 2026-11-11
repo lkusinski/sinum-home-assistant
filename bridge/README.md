@@ -54,7 +54,10 @@ humidity sensors get a `text` element (`21.1 °C` / `52.6 %`) because Sinum does
 not render the custom sensor variant value on its own; the stock value stays in
 `variant_device` for other consumers. Relays get a `switcher` element
 (`relay_switch`) and contacts get a text element (`contact_state`,
-`Otwarte`/`Zamknięte`). Covers are not mirrored. The AC simulation uses a `climate` mapping with
+`Otwarte`/`Zamknięte`). A mapping entry can set `"invert": true` plus
+`text_true`/`text_false`; this is required for a native Sinum `gate`
+`close_status_sensor`, which treats `true` as **closed** (HA door contacts
+usually use `on` = open). Covers are not mirrored. The AC simulation uses a `climate` mapping with
 `variant: ac`: HA climate mode/target/current temperature map to the Sinum
 `power`/`mode`/`target`/`room_temp` elements, both directions.
 

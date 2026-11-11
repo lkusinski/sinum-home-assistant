@@ -738,12 +738,15 @@
   "name": "TEST · Brama"
  },
  "input_boolean.sinum_lab_brama_kontaktron": {
-  "id": 122,
+  "id": 143,
   "variant": "two_state_input_sensor",
   "field": "state",
   "scale": null,
   "unit": "",
-  "name": "TEST · Brama kontaktron"
+  "name": "TEST · Brama zamknięta",
+  "invert": true,
+  "text_true": "Zamknięta",
+  "text_false": "Otwarta"
  },
  "light.sinum_lab_lampa": {
   "id": 123,

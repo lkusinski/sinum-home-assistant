@@ -372,13 +372,22 @@ def sinum_relay_values(device: dict[str, Any]) -> bool:
     return bool((device.get("variant_device") or {}).get("state"))
 
 
+def two_state_text(entry: dict[str, Any], value: Any) -> str:
+    if value:
+        return str(entry.get("text_true") or "Otwarte")
+    return str(entry.get("text_false") or "Zamknięte")
+
+
 def value_for(entry: dict[str, Any], state: dict[str, Any]) -> Any | None:
     raw = state.get("state")
     if raw in (None, "unavailable", "unknown"):
         return None
     variant = entry["variant"]
     if variant in ("relay", "two_state_input_sensor"):
-        return raw in ("on", "open", "True", "true", True)
+        value = raw in ("on", "open", "True", "true", True)
+        if entry.get("invert"):
+            value = not value
+        return value
     try:
         number = float(raw)
     except (TypeError, ValueError):
@@ -593,7 +602,7 @@ def main() -> None:
                     sinum.set_sensor_text(
                         device_id,
                         "contact_state",
-                        "Otwarte" if value else "Zamknięte",
+                        two_state_text(entry, value),
                     )
             except Exception as err:  # noqa: BLE001
                 print(f"ERROR {entity_id}: {err}", flush=True)
