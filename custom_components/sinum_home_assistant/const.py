@@ -22,8 +22,12 @@ CONF_SCAN_INTERVAL = "scan_interval"
 CONF_ENABLE_WEATHER = "enable_weather"
 CONF_ENABLE_SYSTEM_MODULES = "enable_system_modules"
 CONF_ENABLE_SCHEDULES = "enable_schedules"
+CONF_BRIDGE_ENABLED = "bridge_enabled"
+CONF_BRIDGE_LABEL = "bridge_label"
+CONF_BRIDGE_ROOM_ID = "bridge_room_id"
 
 DEFAULT_SCAN_INTERVAL = 30
+DEFAULT_BRIDGE_LABEL = "sinumbridge"
 MIN_SCAN_INTERVAL = 15
 MAX_SCAN_INTERVAL = 300
 

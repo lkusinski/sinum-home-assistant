@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.1.11 — 2026-11-12
+
+- Add integration options for the optional HA/Z2M bridge: enable, selection
+  label (`sinumbridge` by default, legacy `sinum` accepted), and target Sinum
+  room.
+- Publish a diagnostic bridge configuration sensor consumed by the external
+  bridge mapper.
+- Document config schema and the project refactor state.
+
 ## 1.1.10 — 2026-11-11
 
 - Add `sinum_home_assistant.refresh` service to force an immediate coordinator

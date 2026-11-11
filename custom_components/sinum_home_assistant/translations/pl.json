@@ -37,7 +37,10 @@
           "scan_interval": "Interwał odpytywania (sekundy)",
           "enable_weather": "Włącz pogodę i prognozę",
           "enable_system_modules": "Włącz moduły systemowe",
-          "enable_schedules": "Włącz harmonogramy"
+          "enable_schedules": "Włącz harmonogramy",
+          "bridge_enabled": "Eksponuj wybrane urządzenia HA do Sinum",
+          "bridge_label": "Etykieta wyboru w HA",
+          "bridge_room_id": "Docelowy pokój Sinum (0 = domyślny)"
         }
       }
     }

@@ -23,8 +23,13 @@ Open **Settings → Devices & Services → Sinum Home Assistant → Configure**.
 | Enable weather | on | — | Adds the weather entity and forecast. |
 | Enable system modules | on | — | Adds extenders, transceivers and their diagnostics. |
 | Enable schedules | on | — | Adds thermal schedules and their activity state. |
+| Expose to Sinum | on | — | Enables the optional HA/Z2M bridge selection. |
+| HA selection label | `sinumbridge` | text | Devices/entities with this HA label are exposed by the bridge. Legacy `sinum` is accepted for LAB compatibility. |
+| Target Sinum room | `0` | 0+ | Room ID used when the bridge creates new virtual devices; `0` keeps the bridge default. |
 
-Changing options reloads the config entry. Disabling weather or system modules
+Changing options reloads the config entry. The bridge reads a diagnostic
+`sensor.sinum_home_assistant_bridge_configuration` and uses the selected label;
+the external worker still needs to be running. Disabling weather or system modules
 removes their entities from the registry; enabling them again recreates the
 entities with the same unique IDs. Entity history is preserved.
 

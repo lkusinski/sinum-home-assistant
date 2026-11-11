@@ -33,7 +33,7 @@ etykietą w integracji.
 - **Przełączniki wolnych przekaźników**, encje stanu przekaźników zarządzanych
   przez termostat oraz szeroki zestaw diagnostyki: sygnał, bateria, czas pracy,
   adres IP, opóźnienie i kanał sieci.
-- **Konfiguracja przez UI** — bez YAML.
+- **Konfiguracja przez UI** — bez YAML; opcje mostu: ekspozycja, etykieta `sinumbridge`, docelowy pokój Sinum.
 - **Uwierzytelnianie refresh tokenem** — hasło jest używane tylko podczas
   konfiguracji lub ponownego uwierzytelnienia i nie jest zapisywane.
 - **Oszczędne odpytywanie chmury** — jeden cykl aktualizacji co 30 sekund

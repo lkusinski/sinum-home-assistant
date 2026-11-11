@@ -117,7 +117,22 @@ def main() -> None:
             timeout=30,
         ).json()
     }
-    # label id for `sinum`
+    bridge_cfg: dict[str, Any] = {}
+    for state in states.values():
+        attrs = state.get("attributes") or {}
+        if attrs.get("sinum_bridge_config"):
+            bridge_cfg = attrs
+            break
+    if not bridge_cfg.get("enabled", True):
+        print("Bridge disabled in integration options; nothing to map")
+        return
+    bridge_label = str(
+        bridge_cfg.get("label") or SINUM_BRIDGE_LABEL
+    )
+    room_id = int(bridge_cfg.get("room_id") or SINUM_ROOM)
+    label_fallbacks = {bridge_label, "sinum"}
+
+    # label id for bridge selection
     ws = websocket.create_connection(
         HA_URL.replace("http://", "ws://") + "/api/websocket", timeout=60
     )
@@ -132,11 +147,11 @@ def main() -> None:
             break
     ws.close()
     label_ids = {
-        x["label_id"] for x in labels if x["name"] in LABEL_FALLBACKS
+        x["label_id"] for x in labels if x["name"] in label_fallbacks
     }
     if not label_ids:
         raise SystemExit(
-            f"B7 label '{SINUM_BRIDGE_LABEL}' (or legacy 'sinum') does not exist"
+            f"B7 label '{bridge_label}' (or legacy 'sinum') does not exist"
         )
     zdev = {
         d["id"]: d
@@ -247,7 +262,7 @@ def main() -> None:
         data = response.json()["data"]
         sinum.request(
             "POST",
-            f"rooms/{SINUM_ROOM}/add-devices",
+            f"rooms/{room_id}/add-devices",
             json={"devices": [{"class": "virtual", "id": data["id"]}]},
         )
         mapping[eid] = {

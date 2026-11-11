@@ -28,7 +28,13 @@ from homeassistant.const import (
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from .const import TEMP_SCALE
+from .const import (
+    CONF_BRIDGE_ENABLED,
+    CONF_BRIDGE_LABEL,
+    CONF_BRIDGE_ROOM_ID,
+    DEFAULT_BRIDGE_LABEL,
+    TEMP_SCALE,
+)
 from .coordinator import SinumHomeAssistantCoordinator
 from .data import SinumHomeAssistantData
 from .entity import (
@@ -322,6 +328,35 @@ class SinumDeviceSensor(SinumDeviceEntity, SensorEntity):
         return self._value_fn(self._device())
 
 
+class SinumBridgeConfigSensor(SinumHomeAssistantEntity, SensorEntity):
+    """Expose the bridge selection settings for the external worker."""
+
+    _attr_name = "Bridge configuration"
+    _attr_icon = "mdi:bridge"
+    _attr_entity_category = EntityCategory.DIAGNOSTIC
+
+    def _options(self) -> dict[str, Any]:
+        return self.coordinator.config_entry.options
+
+    @property
+    def native_value(self) -> str:
+        return str(
+            self._options().get(CONF_BRIDGE_LABEL, DEFAULT_BRIDGE_LABEL)
+        )
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        options = self._options()
+        return {
+            "sinum_bridge_config": True,
+            "enabled": bool(options.get(CONF_BRIDGE_ENABLED, True)),
+            "label": str(
+                options.get(CONF_BRIDGE_LABEL, DEFAULT_BRIDGE_LABEL)
+            ),
+            "room_id": int(options.get(CONF_BRIDGE_ROOM_ID, 0) or 0),
+        }
+
+
 class SinumScheduleSensor(SinumHomeAssistantEntity, SensorEntity):
     """Read-only thermal schedule value."""
 
@@ -421,6 +456,7 @@ async def async_setup_entry(
                 icon="mdi:ip-network",
                 entity_category=EntityCategory.DIAGNOSTIC,
             ),
+            SinumBridgeConfigSensor(coordinator, hub_info, "hub_bridge"),
         ]
     )
 

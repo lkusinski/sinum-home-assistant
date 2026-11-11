@@ -24,6 +24,9 @@ from .api import (
     SinumHomeAssistantError,
 )
 from .const import (
+    CONF_BRIDGE_ENABLED,
+    CONF_BRIDGE_LABEL,
+    CONF_BRIDGE_ROOM_ID,
     CONF_DEVICE_ID,
     CONF_EMAIL,
     CONF_ENABLE_SCHEDULES,
@@ -33,6 +36,7 @@ from .const import (
     CONF_PASSWORD,
     CONF_REFRESH_TOKEN,
     CONF_SCAN_INTERVAL,
+    DEFAULT_BRIDGE_LABEL,
     DEFAULT_SCAN_INTERVAL,
     DOMAIN,
     MAX_SCAN_INTERVAL,
@@ -219,6 +223,20 @@ class SinumHomeAssistantOptionsFlow(OptionsFlow):
                         CONF_ENABLE_SCHEDULES,
                         default=options.get(CONF_ENABLE_SCHEDULES, True),
                     ): bool,
+                    vol.Optional(
+                        CONF_BRIDGE_ENABLED,
+                        default=options.get(CONF_BRIDGE_ENABLED, True),
+                    ): bool,
+                    vol.Optional(
+                        CONF_BRIDGE_LABEL,
+                        default=options.get(
+                            CONF_BRIDGE_LABEL, DEFAULT_BRIDGE_LABEL
+                        ),
+                    ): TextSelector(TextSelectorConfig(type=TextSelectorType.TEXT)),
+                    vol.Optional(
+                        CONF_BRIDGE_ROOM_ID,
+                        default=options.get(CONF_BRIDGE_ROOM_ID, 0),
+                    ): vol.All(vol.Coerce(int), vol.Range(min=0)),
                 }
             ),
         )

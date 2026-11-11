@@ -37,7 +37,10 @@
           "scan_interval": "Polling interval (seconds)",
           "enable_weather": "Enable weather and forecast",
           "enable_system_modules": "Enable system modules",
-          "enable_schedules": "Enable schedules"
+          "enable_schedules": "Enable schedules",
+          "bridge_enabled": "Expose selected HA devices to Sinum",
+          "bridge_label": "HA selection label",
+          "bridge_room_id": "Target Sinum room ID (0 = default)"
         }
       }
     }

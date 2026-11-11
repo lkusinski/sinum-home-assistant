@@ -125,12 +125,17 @@ explicit shared source; duplicating options in two UIs is not acceptable.
 - README/bridge docs updated to present LAB as a test deployment.
 - Project state and target plan recorded here.
 
-### Phase 1 — configurable selection (in progress)
+### Phase 1 — configurable selection (implemented, live in B7)
 
-- Added `SINUM_BRIDGE_LABEL` (default `sinumbridge`) with legacy `sinum`
-  fallback in `map_z2m.py`; deployment example documents it.
-- Still to do: expose the label/room/direction in the HA integration options
-  flow and make that the single source of truth.
+- Integration options now expose `bridge_enabled`, `bridge_label` (default
+  `sinumbridge`), and `bridge_room_id`.
+- The integration publishes a diagnostic
+  `sensor.sinum_home_assistant_bridge_configuration` with
+  `sinum_bridge_config: true`, `enabled`, `label`, and `room_id`.
+- `map_z2m.py` reads that diagnostic sensor and falls back to the legacy
+  `sinum` label and `SINUM_BRIDGE_LABEL` env for compatibility.
+- The external worker still needs restarting after a label/room option change;
+  the next phase is to move it into the integration lifecycle.
 - Introduce a shared bridge config model:
   - label name (default `sinumbridge`, legacy `sinum` accepted),
   - target room fallback,
