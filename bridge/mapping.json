@@ -1,0 +1,730 @@
+{
+ "binary_sensor.garaz_wisniowa_dom_kontaktron_zamknieta_contact": {
+  "id": 28,
+  "variant": "two_state_input_sensor",
+  "field": "state",
+  "scale": null,
+  "unit": "",
+  "name": "HA Garaż Wiśniowa dom kontaktron zamknięta Drzwi"
+ },
+ "binary_sensor.garaz_agrestowa_kontaktron_contact": {
+  "id": 29,
+  "variant": "two_state_input_sensor",
+  "field": "state",
+  "scale": null,
+  "unit": "",
+  "name": "HA Garaż Agrestowa kontaktron Drzwi"
+ },
+ "binary_sensor.garaz_wisniowa_dom_kontaktron_otwarty_contact": {
+  "id": 30,
+  "variant": "two_state_input_sensor",
+  "field": "state",
+  "scale": null,
+  "unit": "",
+  "name": "HA Garaż Wiśniowa dom kontaktron otwarty Drzwi"
+ },
+ "binary_sensor.garaz_wisniowa_taras_kontaktron_otwarta_contact": {
+  "id": 31,
+  "variant": "two_state_input_sensor",
+  "field": "state",
+  "scale": null,
+  "unit": "",
+  "name": "HA Garaż Wiśniowa taras kontaktron otwarta Drzwi"
+ },
+ "binary_sensor.garaz_wisniowa_taras_kontaktron_zamknieta_contact": {
+  "id": 32,
+  "variant": "two_state_input_sensor",
+  "field": "state",
+  "scale": null,
+  "unit": "",
+  "name": "HA Garaż Wiśniowa taras kontaktron zamknięta Drzwi"
+ },
+ "light.lewa": {
+  "id": 33,
+  "variant": "relay",
+  "field": "state",
+  "scale": null,
+  "unit": "",
+  "name": "HA Lewa lewa"
+ },
+ "light.prawa": {
+  "id": 34,
+  "variant": "relay",
+  "field": "state",
+  "scale": null,
+  "unit": "",
+  "name": "HA Prawa prawa"
+ },
+ "light.nad_wejsciem": {
+  "id": 35,
+  "variant": "relay",
+  "field": "state",
+  "scale": null,
+  "unit": "",
+  "name": "HA Nad wejściem nad_wejsciem"
+ },
+ "light.wisniowa_dom_prawa": {
+  "id": 36,
+  "variant": "relay",
+  "field": "state",
+  "scale": null,
+  "unit": "",
+  "name": "HA Wiśniowa dom prawa wisniowa_dom_prawa"
+ },
+ "light.wisniowa_dom_lewa": {
+  "id": 37,
+  "variant": "relay",
+  "field": "state",
+  "scale": null,
+  "unit": "",
+  "name": "HA Wiśniowa dom lewa wisniowa_dom_lewa"
+ },
+ "light.wisniowa_taras_prawa": {
+  "id": 38,
+  "variant": "relay",
+  "field": "state",
+  "scale": null,
+  "unit": "",
+  "name": "HA Wiśniowa taras prawa wisniowa_taras_prawa"
+ },
+ "light.wisniowa_taras_lewa": {
+  "id": 39,
+  "variant": "relay",
+  "field": "state",
+  "scale": null,
+  "unit": "",
+  "name": "HA Wiśniowa taras lewa wisniowa_taras_lewa"
+ },
+ "light.e27_lukasz_gorna": {
+  "id": 40,
+  "variant": "relay",
+  "field": "state",
+  "scale": null,
+  "unit": "",
+  "name": "HA E27 Łukasz górna e27_lukasz_gorna"
+ },
+ "light.e27_lukasz_dolna": {
+  "id": 41,
+  "variant": "relay",
+  "field": "state",
+  "scale": null,
+  "unit": "",
+  "name": "HA E27 Łukasz dolna e27_lukasz_dolna"
+ },
+ "sensor.garaz_wisniowa_dom_kontaktron_zamknieta_battery": {
+  "id": 42,
+  "variant": "battery",
+  "field": "soc",
+  "scale": null,
+  "unit": "%",
+  "name": "HA Garaż Wiśniowa dom kontaktron zamknięta Bateria"
+ },
+ "sensor.garaz_wisniowa_dom_kontaktron_zamknieta_voltage": {
+  "id": 43,
+  "variant": "analog_input",
+  "field": "value",
+  "scale": null,
+  "unit": "mV",
+  "name": "HA Garaż Wiśniowa dom kontaktron zamknięta Napięcie"
+ },
+ "sensor.wtyczka_salon_power": {
+  "id": 44,
+  "variant": "energy_meter",
+  "field": "total_active_power",
+  "scale": 1000,
+  "unit": "W",
+  "name": "HA Wtyczka Salon Moc"
+ },
+ "sensor.wtyczka_salon_current": {
+  "id": 45,
+  "variant": "analog_input",
+  "field": "value",
+  "scale": null,
+  "unit": "A",
+  "name": "HA Wtyczka Salon Natężenie prądu"
+ },
+ "sensor.wtyczka_salon_voltage": {
+  "id": 46,
+  "variant": "analog_input",
+  "field": "value",
+  "scale": null,
+  "unit": "V",
+  "name": "HA Wtyczka Salon Napięcie"
+ },
+ "sensor.wtyczka_salon_energy": {
+  "id": 47,
+  "variant": "energy_meter",
+  "field": "energy_sum_total",
+  "scale": 1000,
+  "unit": "kWh",
+  "name": "HA Wtyczka Salon Energia"
+ },
+ "sensor.wtyczka_biuro_power": {
+  "id": 48,
+  "variant": "energy_meter",
+  "field": "total_active_power",
+  "scale": 1000,
+  "unit": "W",
+  "name": "HA Wtyczka Biuro Moc"
+ },
+ "sensor.wtyczka_biuro_current": {
+  "id": 49,
+  "variant": "analog_input",
+  "field": "value",
+  "scale": null,
+  "unit": "A",
+  "name": "HA Wtyczka Biuro Natężenie prądu"
+ },
+ "sensor.wtyczka_biuro_voltage": {
+  "id": 50,
+  "variant": "analog_input",
+  "field": "value",
+  "scale": null,
+  "unit": "V",
+  "name": "HA Wtyczka Biuro Napięcie"
+ },
+ "sensor.wtyczka_biuro_energy": {
+  "id": 51,
+  "variant": "energy_meter",
+  "field": "energy_sum_total",
+  "scale": 1000,
+  "unit": "kWh",
+  "name": "HA Wtyczka Biuro Energia"
+ },
+ "sensor.garaz_agrestowa_kontaktron_battery": {
+  "id": 52,
+  "variant": "battery",
+  "field": "soc",
+  "scale": null,
+  "unit": "%",
+  "name": "HA Garaż Agrestowa kontaktron Bateria"
+ },
+ "sensor.garaz_agrestowa_kontaktron_voltage": {
+  "id": 53,
+  "variant": "analog_input",
+  "field": "value",
+  "scale": null,
+  "unit": "mV",
+  "name": "HA Garaż Agrestowa kontaktron Napięcie"
+ },
+ "sensor.wtyczka_taras_power": {
+  "id": 54,
+  "variant": "energy_meter",
+  "field": "total_active_power",
+  "scale": 1000,
+  "unit": "W",
+  "name": "HA Wtyczka taras Moc"
+ },
+ "sensor.wtyczka_taras_current": {
+  "id": 55,
+  "variant": "analog_input",
+  "field": "value",
+  "scale": null,
+  "unit": "A",
+  "name": "HA Wtyczka taras Natężenie prądu"
+ },
+ "sensor.wtyczka_taras_voltage": {
+  "id": 56,
+  "variant": "analog_input",
+  "field": "value",
+  "scale": null,
+  "unit": "V",
+  "name": "HA Wtyczka taras Napięcie"
+ },
+ "sensor.wtyczka_taras_energy": {
+  "id": 57,
+  "variant": "energy_meter",
+  "field": "energy_sum_total",
+  "scale": 1000,
+  "unit": "kWh",
+  "name": "HA Wtyczka taras Energia"
+ },
+ "sensor.pilot_lukasz_battery": {
+  "id": 58,
+  "variant": "battery",
+  "field": "soc",
+  "scale": null,
+  "unit": "%",
+  "name": "HA Pilot Łukasz Bateria"
+ },
+ "sensor.pilot_lukasz_voltage": {
+  "id": 59,
+  "variant": "analog_input",
+  "field": "value",
+  "scale": null,
+  "unit": "mV",
+  "name": "HA Pilot Łukasz Napięcie"
+ },
+ "sensor.wtyczka_lukasz_power": {
+  "id": 60,
+  "variant": "energy_meter",
+  "field": "total_active_power",
+  "scale": 1000,
+  "unit": "W",
+  "name": "HA Wtyczka Łukasz Moc"
+ },
+ "sensor.wtyczka_lukasz_current": {
+  "id": 61,
+  "variant": "analog_input",
+  "field": "value",
+  "scale": null,
+  "unit": "A",
+  "name": "HA Wtyczka Łukasz Natężenie prądu"
+ },
+ "sensor.wtyczka_lukasz_voltage": {
+  "id": 62,
+  "variant": "analog_input",
+  "field": "value",
+  "scale": null,
+  "unit": "V",
+  "name": "HA Wtyczka Łukasz Napięcie"
+ },
+ "sensor.wtyczka_lukasz_energy": {
+  "id": 63,
+  "variant": "energy_meter",
+  "field": "energy_sum_total",
+  "scale": 1000,
+  "unit": "kWh",
+  "name": "HA Wtyczka Łukasz Energia"
+ },
+ "sensor.suszarka_do_ubran_power": {
+  "id": 64,
+  "variant": "energy_meter",
+  "field": "total_active_power",
+  "scale": 1000,
+  "unit": "W",
+  "name": "HA Suszarka do ubrań Moc"
+ },
+ "sensor.suszarka_do_ubran_current": {
+  "id": 65,
+  "variant": "analog_input",
+  "field": "value",
+  "scale": null,
+  "unit": "A",
+  "name": "HA Suszarka do ubrań Natężenie prądu"
+ },
+ "sensor.suszarka_do_ubran_voltage": {
+  "id": 66,
+  "variant": "analog_input",
+  "field": "value",
+  "scale": null,
+  "unit": "V",
+  "name": "HA Suszarka do ubrań Napięcie"
+ },
+ "sensor.suszarka_do_ubran_energy": {
+  "id": 67,
+  "variant": "energy_meter",
+  "field": "energy_sum_total",
+  "scale": 1000,
+  "unit": "kWh",
+  "name": "HA Suszarka do ubrań Energia"
+ },
+ "sensor.letnia_kuchnia_testowa_power": {
+  "id": 68,
+  "variant": "energy_meter",
+  "field": "total_active_power",
+  "scale": 1000,
+  "unit": "W",
+  "name": "HA Letnia kuchnia testowa Moc"
+ },
+ "sensor.letnia_kuchnia_testowa_current": {
+  "id": 69,
+  "variant": "analog_input",
+  "field": "value",
+  "scale": null,
+  "unit": "A",
+  "name": "HA Letnia kuchnia testowa Natężenie prądu"
+ },
+ "sensor.letnia_kuchnia_testowa_voltage": {
+  "id": 70,
+  "variant": "analog_input",
+  "field": "value",
+  "scale": null,
+  "unit": "V",
+  "name": "HA Letnia kuchnia testowa Napięcie"
+ },
+ "sensor.letnia_kuchnia_testowa_energy": {
+  "id": 71,
+  "variant": "energy_meter",
+  "field": "energy_sum_total",
+  "scale": 1000,
+  "unit": "kWh",
+  "name": "HA Letnia kuchnia testowa Energia"
+ },
+ "sensor.laptop_malgorzata_power": {
+  "id": 72,
+  "variant": "energy_meter",
+  "field": "total_active_power",
+  "scale": 1000,
+  "unit": "W",
+  "name": "HA Laptop Małgorzata Moc"
+ },
+ "sensor.laptop_malgorzata_current": {
+  "id": 73,
+  "variant": "analog_input",
+  "field": "value",
+  "scale": null,
+  "unit": "A",
+  "name": "HA Laptop Małgorzata Natężenie prądu"
+ },
+ "sensor.laptop_malgorzata_voltage": {
+  "id": 74,
+  "variant": "analog_input",
+  "field": "value",
+  "scale": null,
+  "unit": "V",
+  "name": "HA Laptop Małgorzata Napięcie"
+ },
+ "sensor.laptop_malgorzata_energy": {
+  "id": 75,
+  "variant": "energy_meter",
+  "field": "energy_sum_total",
+  "scale": 1000,
+  "unit": "kWh",
+  "name": "HA Laptop Małgorzata Energia"
+ },
+ "sensor.wtyczka_garderoba_power": {
+  "id": 76,
+  "variant": "energy_meter",
+  "field": "total_active_power",
+  "scale": 1000,
+  "unit": "W",
+  "name": "HA Wtyczka Garderoba Moc"
+ },
+ "sensor.wtyczka_garderoba_current": {
+  "id": 77,
+  "variant": "analog_input",
+  "field": "value",
+  "scale": null,
+  "unit": "A",
+  "name": "HA Wtyczka Garderoba Natężenie prądu"
+ },
+ "sensor.wtyczka_garderoba_voltage": {
+  "id": 78,
+  "variant": "analog_input",
+  "field": "value",
+  "scale": null,
+  "unit": "V",
+  "name": "HA Wtyczka Garderoba Napięcie"
+ },
+ "sensor.wtyczka_garderoba_energy": {
+  "id": 79,
+  "variant": "energy_meter",
+  "field": "energy_sum_total",
+  "scale": 1000,
+  "unit": "kWh",
+  "name": "HA Wtyczka Garderoba Energia"
+ },
+ "sensor.garaz_wisniowa_dom_kontaktron_otwarty_battery": {
+  "id": 80,
+  "variant": "battery",
+  "field": "soc",
+  "scale": null,
+  "unit": "%",
+  "name": "HA Garaż Wiśniowa dom kontaktron otwarty Bateria"
+ },
+ "sensor.garaz_wisniowa_dom_kontaktron_otwarty_voltage": {
+  "id": 81,
+  "variant": "analog_input",
+  "field": "value",
+  "scale": null,
+  "unit": "mV",
+  "name": "HA Garaż Wiśniowa dom kontaktron otwarty Napięcie"
+ },
+ "sensor.salon_temperatura_battery": {
+  "id": 82,
+  "variant": "battery",
+  "field": "soc",
+  "scale": null,
+  "unit": "%",
+  "name": "HA Salon Temperatura Bateria"
+ },
+ "sensor.salon_temperatura_temperature": {
+  "id": 83,
+  "variant": "temperature_sensor",
+  "field": "temperature",
+  "scale": 10,
+  "unit": "°C",
+  "name": "HA Salon Temperatura Temperatura"
+ },
+ "sensor.salon_temperatura_humidity": {
+  "id": 84,
+  "variant": "humidity_sensor",
+  "field": "humidity",
+  "scale": 10,
+  "unit": "%",
+  "name": "HA Salon Temperatura Wilgotność"
+ },
+ "sensor.salon_temperatura_pressure": {
+  "id": 85,
+  "variant": "analog_input",
+  "field": "value",
+  "scale": null,
+  "unit": "hPa",
+  "name": "HA Salon Temperatura Ciśnienie atmosferyczne"
+ },
+ "sensor.salon_temperatura_voltage": {
+  "id": 86,
+  "variant": "analog_input",
+  "field": "value",
+  "scale": null,
+  "unit": "mV",
+  "name": "HA Salon Temperatura Napięcie"
+ },
+ "sensor.lukasz_pir_illuminance": {
+  "id": 87,
+  "variant": "analog_input",
+  "field": "value",
+  "scale": null,
+  "unit": "lx",
+  "name": "HA Łukasz PIR Natężenie oświetlenia"
+ },
+ "sensor.lukasz_pir_temperature": {
+  "id": 88,
+  "variant": "temperature_sensor",
+  "field": "temperature",
+  "scale": 10,
+  "unit": "°C",
+  "name": "HA Łukasz PIR Temperatura"
+ },
+ "sensor.lukasz_pir_humidity": {
+  "id": 89,
+  "variant": "humidity_sensor",
+  "field": "humidity",
+  "scale": 10,
+  "unit": "%",
+  "name": "HA Łukasz PIR Wilgotność"
+ },
+ "sensor.lukasz_pir_battery": {
+  "id": 90,
+  "variant": "battery",
+  "field": "soc",
+  "scale": null,
+  "unit": "%",
+  "name": "HA Łukasz PIR Bateria"
+ },
+ "sensor.garaz_wisniowa_taras_kontaktron_otwarta_battery": {
+  "id": 91,
+  "variant": "battery",
+  "field": "soc",
+  "scale": null,
+  "unit": "%",
+  "name": "HA Garaż Wiśniowa taras kontaktron otwarta Bateria"
+ },
+ "sensor.garaz_wisniowa_taras_kontaktron_otwarta_voltage": {
+  "id": 92,
+  "variant": "analog_input",
+  "field": "value",
+  "scale": null,
+  "unit": "mV",
+  "name": "HA Garaż Wiśniowa taras kontaktron otwarta Napięcie"
+ },
+ "sensor.garaz_wisniowa_taras_kontaktron_zamknieta_battery": {
+  "id": 93,
+  "variant": "battery",
+  "field": "soc",
+  "scale": null,
+  "unit": "%",
+  "name": "HA Garaż Wiśniowa taras kontaktron zamknięta Bateria"
+ },
+ "sensor.garaz_wisniowa_taras_kontaktron_zamknieta_voltage": {
+  "id": 94,
+  "variant": "analog_input",
+  "field": "value",
+  "scale": null,
+  "unit": "mV",
+  "name": "HA Garaż Wiśniowa taras kontaktron zamknięta Napięcie"
+ },
+ "sensor.biuro_temperatura_battery": {
+  "id": 95,
+  "variant": "battery",
+  "field": "soc",
+  "scale": null,
+  "unit": "%",
+  "name": "HA Biuro temperatura Bateria"
+ },
+ "sensor.biuro_temperatura_temperature": {
+  "id": 96,
+  "variant": "temperature_sensor",
+  "field": "temperature",
+  "scale": 10,
+  "unit": "°C",
+  "name": "HA Biuro temperatura Temperatura"
+ },
+ "sensor.biuro_temperatura_humidity": {
+  "id": 97,
+  "variant": "humidity_sensor",
+  "field": "humidity",
+  "scale": 10,
+  "unit": "%",
+  "name": "HA Biuro temperatura Wilgotność"
+ },
+ "sensor.biuro_temperatura_voltage": {
+  "id": 98,
+  "variant": "analog_input",
+  "field": "value",
+  "scale": null,
+  "unit": "mV",
+  "name": "HA Biuro temperatura Napięcie"
+ },
+ "switch.ogrodzenie_wisniowa_l1": {
+  "id": 99,
+  "variant": "relay",
+  "field": "state",
+  "scale": null,
+  "unit": "",
+  "name": "HA Ogrodzenie Wiśniowa L1"
+ },
+ "switch.ogrodzenie_wisniowa_l2": {
+  "id": 100,
+  "variant": "relay",
+  "field": "state",
+  "scale": null,
+  "unit": "",
+  "name": "HA Ogrodzenie Wiśniowa L2"
+ },
+ "switch.ogrodzenie_wisniowa_l3": {
+  "id": 101,
+  "variant": "relay",
+  "field": "state",
+  "scale": null,
+  "unit": "",
+  "name": "HA Ogrodzenie Wiśniowa L3"
+ },
+ "switch.ogrodzenie_wisniowa_l4": {
+  "id": 102,
+  "variant": "relay",
+  "field": "state",
+  "scale": null,
+  "unit": "",
+  "name": "HA Ogrodzenie Wiśniowa L4"
+ },
+ "switch.garaz_agrestowa": {
+  "id": 103,
+  "variant": "relay",
+  "field": "state",
+  "scale": null,
+  "unit": "",
+  "name": "HA Garaż Agrestowa garaz_agrestowa"
+ },
+ "switch.garaz_wisniowa_dom": {
+  "id": 104,
+  "variant": "relay",
+  "field": "state",
+  "scale": null,
+  "unit": "",
+  "name": "HA Garaż Wiśniowa dom garaz_wisniowa_dom"
+ },
+ "switch.garaz_wisniowa_taras": {
+  "id": 105,
+  "variant": "relay",
+  "field": "state",
+  "scale": null,
+  "unit": "",
+  "name": "HA Garaż Wiśniowa taras garaz_wisniowa_taras"
+ },
+ "switch.wtyczka_salon": {
+  "id": 106,
+  "variant": "relay",
+  "field": "state",
+  "scale": null,
+  "unit": "",
+  "name": "HA Wtyczka Salon wtyczka_salon"
+ },
+ "switch.wtyczka_biuro": {
+  "id": 107,
+  "variant": "relay",
+  "field": "state",
+  "scale": null,
+  "unit": "",
+  "name": "HA Wtyczka Biuro wtyczka_biuro"
+ },
+ "switch.ogrodzenie_agrestowa_dom": {
+  "id": 108,
+  "variant": "relay",
+  "field": "state",
+  "scale": null,
+  "unit": "",
+  "name": "HA Ogrodzenie Agrestowa dom ogrodzenie_agrestowa_dom"
+ },
+ "switch.wtyczka_taras": {
+  "id": 109,
+  "variant": "relay",
+  "field": "state",
+  "scale": null,
+  "unit": "",
+  "name": "HA Wtyczka taras wtyczka_taras"
+ },
+ "switch.agrestowa_ogrodzenie_garaz_l1": {
+  "id": 110,
+  "variant": "relay",
+  "field": "state",
+  "scale": null,
+  "unit": "",
+  "name": "HA Agrestowa Ogrodzenie garaż L1"
+ },
+ "switch.agrestowa_ogrodzenie_garaz_l2": {
+  "id": 111,
+  "variant": "relay",
+  "field": "state",
+  "scale": null,
+  "unit": "",
+  "name": "HA Agrestowa Ogrodzenie garaż L2"
+ },
+ "switch.agrestowa_ogrodzenie_garaz_l3": {
+  "id": 112,
+  "variant": "relay",
+  "field": "state",
+  "scale": null,
+  "unit": "",
+  "name": "HA Agrestowa Ogrodzenie garaż L3"
+ },
+ "switch.agrestowa_ogrodzenie_garaz_l4": {
+  "id": 113,
+  "variant": "relay",
+  "field": "state",
+  "scale": null,
+  "unit": "",
+  "name": "HA Agrestowa Ogrodzenie garaż L4"
+ },
+ "switch.wtyczka_lukasz": {
+  "id": 114,
+  "variant": "relay",
+  "field": "state",
+  "scale": null,
+  "unit": "",
+  "name": "HA Wtyczka Łukasz wtyczka_lukasz"
+ },
+ "switch.suszarka_do_ubran": {
+  "id": 115,
+  "variant": "relay",
+  "field": "state",
+  "scale": null,
+  "unit": "",
+  "name": "HA Suszarka do ubrań suszarka_do_ubran"
+ },
+ "switch.letnia_kuchnia_testowa": {
+  "id": 116,
+  "variant": "relay",
+  "field": "state",
+  "scale": null,
+  "unit": "",
+  "name": "HA Letnia kuchnia testowa letnia_kuchnia_testowa"
+ },
+ "switch.laptop_malgorzata": {
+  "id": 117,
+  "variant": "relay",
+  "field": "state",
+  "scale": null,
+  "unit": "",
+  "name": "HA Laptop Małgorzata laptop_malgorzata"
+ },
+ "switch.wtyczka_garderoba": {
+  "id": 118,
+  "variant": "relay",
+  "field": "state",
+  "scale": null,
+  "unit": "",
+  "name": "HA Wtyczka Garderoba wtyczka_garderoba"
+ }
+}
