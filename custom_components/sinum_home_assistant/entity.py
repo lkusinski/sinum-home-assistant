@@ -225,9 +225,15 @@ class SinumDeviceEntity(SinumHomeAssistantEntity):
 
     @property
     def available(self) -> bool:
+        device = self._device()
+        if not self.coordinator.last_update_success:
+            return False
+        if device.get("status") == "online":
+            return True
         return (
-            self.coordinator.last_update_success
-            and self._device().get("status") == "online"
+            self._store == "virtual"
+            and device.get("type") == "custom_device"
+            and device.get("variant") == "temperature_sensor"
         )
 
     @property
@@ -383,7 +389,9 @@ def async_remove_deprecated_entities(
     for parent_id in data.parents_wtp:
         obsolete.add(f"{entry.entry_id}_wtp_parent_{parent_id}_signal")
         obsolete.add(f"{entry.entry_id}_wtp_parent_{parent_id}_battery")
-    for device_id in data.virtual:
+    for device_id, device in data.virtual.items():
+        if device.get("type") != "thermostat":
+            continue
         obsolete.add(f"{entry.entry_id}_virtual_{device_id}_temperature")
         obsolete.add(f"{entry.entry_id}_virtual_{device_id}_humidity")
     for schedule_id in data.schedules:

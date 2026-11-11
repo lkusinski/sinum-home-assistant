@@ -112,6 +112,13 @@ The fallback temperature, associated devices, modes and intervals are available
 as attributes of the target-temperature sensor.
 Schedules are read-only in Home Assistant; edit them in the Sinum app.
 
+## Virtual temperature sensors
+
+A Sinum custom virtual device with `variant: temperature_sensor` is exposed as a
+normal temperature sensor. The integration can write values to it through the
+`sinum_home_assistant.set_virtual_temperature` service. See
+[SERVICES.md](SERVICES.md).
+
 ## Areas and devices
 
 - Room areas are created or matched by name.

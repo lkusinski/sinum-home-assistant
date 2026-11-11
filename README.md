@@ -139,6 +139,7 @@ Więcej: [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md).
 - [Rozwiązywanie problemów](docs/TROUBLESHOOTING.md)
 - [Rozwój integracji](docs/DEVELOPMENT.md)
 - [Etykiety i klasyfikacja](docs/LABELS.md)
+- [Usługi](docs/SERVICES.md)
 - [Prywatność](docs/PRIVACY.md)
 
 ## Prawa autorskie i znaki towarowe
@@ -199,6 +200,7 @@ firmware updates.
 - [Troubleshooting](docs/TROUBLESHOOTING.md)
 - [Development](docs/DEVELOPMENT.md)
 - [Labels and classification](docs/LABELS.md)
+- [Services](docs/SERVICES.md)
 - [Privacy](docs/PRIVACY.md)
 
 ### Copyright and trademarks

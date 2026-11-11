@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.1.6 — 2026-11-11
+
+- Support virtual custom `temperature_sensor` devices created in Sinum.
+- Add `sinum_home_assistant.set_virtual_temperature` service for pushing values
+  from Home Assistant into a Sinum virtual temperature sensor.
+- Keep dynamically created virtual sensors available even when Sinum reports
+  their status as `unknown`.
+- Document service and automation examples.
+
 ## 1.1.5 — 2026-11-10
 
 - Reassign areas after newly discovered devices appear, not only during the

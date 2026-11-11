@@ -607,6 +607,29 @@ async def async_setup_entry(
             if group == "virtual" and device.get("type") == "thermostat":
                 continue
             info = generic_device_info(entry.entry_id, group, device, data)
+            if (
+                group == "virtual"
+                and device.get("variant") == "temperature_sensor"
+                and (device.get("variant_device") or {}).get("temperature")
+                is not None
+            ):
+                entities.append(
+                    SinumDeviceSensor(
+                        coordinator,
+                        info,
+                        f"{group}_{device_id}_temperature",
+                        device_id,
+                        group,
+                        TEMPERATURE,
+                        lambda d: _scale(
+                            (d.get("variant_device") or {}).get("temperature")
+                        ),
+                        device_class=SensorDeviceClass.TEMPERATURE,
+                        state_class=SensorStateClass.MEASUREMENT,
+                        unit=UnitOfTemperature.CELSIUS,
+                        precision=1,
+                    )
+                )
             for key, name, device_class, unit, factor, precision, state_class in (
                 WTP_SENSOR_SPECS.get(device.get("type"), [])
             ):
