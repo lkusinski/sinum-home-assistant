@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Read-only Zigbee2MQTT values mirrored from Home Assistant to Sinum.
 
-The script polls Home Assistant entities (already discovered via MQTT) and
-updates pre-created Sinum virtual custom devices. It never writes to the
-production Home Assistant.
+The script polls Home Assistant entities already discovered from MQTT and
+updates pre-created Sinum virtual custom devices. It never modifies the
+production Home Assistant configuration. Relay/light write-back is optional.
 """
 
 from __future__ import annotations
@@ -92,6 +92,23 @@ class SinumClient:
                 f"{response.text[:200]}"
             )
 
+    def element(
+        self, device_id: int, element: str, command: str, payload: dict[str, Any]
+    ) -> None:
+        self.ensure_token()
+        response = self.session.post(
+            f"{SINUM_BASE}/proxy/devices/virtual/{device_id}/element/"
+            f"{element}/command/{command}",
+            headers={**self.headers, "Authorization": "Bearer " + self.token},
+            json=payload,
+            timeout=30,
+        )
+        if response.status_code not in (200, 204, 304):
+            raise RuntimeError(
+                f"Sinum {command} {device_id} HTTP {response.status_code}: "
+                f"{response.text[:200]}"
+            )
+
 
 def ha_states() -> dict[str, dict[str, Any]]:
     response = requests.get(
@@ -101,6 +118,42 @@ def ha_states() -> dict[str, dict[str, Any]]:
     )
     response.raise_for_status()
     return {item["entity_id"]: item for item in response.json()}
+
+
+def _hex_to_rgb(value: str) -> list[int]:
+    value = value.lstrip("#")
+    return [int(value[index : index + 2], 16) for index in (0, 2, 4)]
+
+
+def ha_light_values(state: dict[str, Any]) -> dict[str, Any]:
+    attrs = state.get("attributes") or {}
+    brightness = attrs.get("brightness")
+    rgb = attrs.get("rgb_color")
+    color = None
+    if isinstance(rgb, list) and len(rgb) == 3:
+        color = "#{:02x}{:02x}{:02x}".format(*[int(value) for value in rgb])
+    return {
+        "state": state.get("state") == "on",
+        "brightness": round(brightness * 100 / 255)
+        if isinstance(brightness, (int, float))
+        else None,
+        "color_mode": attrs.get("color_mode"),
+        "temperature": attrs.get("color_temp_kelvin"),
+        "color": color,
+    }
+
+
+def sinum_light_values(device: dict[str, Any]) -> dict[str, Any] | None:
+    for element in device.get("elements") or []:
+        if element.get("name") == "light":
+            return {
+                "state": bool(element.get("state")),
+                "brightness": element.get("brightness"),
+                "color_mode": element.get("color_mode"),
+                "temperature": element.get("temperature"),
+                "color": element.get("color"),
+            }
+    return None
 
 
 def value_for(entry: dict[str, Any], state: dict[str, Any]) -> Any | None:
@@ -129,6 +182,58 @@ def payload_for(entry: dict[str, Any], value: Any) -> dict[str, Any] | None:
     return {field: value}
 
 
+def _ha_call(domain: str, service: str, data: dict[str, Any]) -> None:
+    response = requests.post(
+        HA_URL + f"/api/services/{domain}/{service}",
+        headers={"Authorization": "Bearer " + HA_TOKEN},
+        json=data,
+        timeout=30,
+    )
+    response.raise_for_status()
+
+
+def _sync_light_from_ha(
+    sinum: SinumClient, entry: dict[str, Any], desired: dict[str, Any], old: Any
+) -> None:
+    element = entry.get("element", "light")
+    device_id = int(entry["id"])
+    if old is None or old.get("state") != desired["state"]:
+        sinum.element(device_id, element, "set_state", {"set_state": desired["state"]})
+    if not desired["state"]:
+        return
+    if desired["brightness"] is not None and (
+        old is None or old.get("brightness") != desired["brightness"]
+    ):
+        sinum.element(
+            device_id,
+            element,
+            "set_brightness",
+            {"set_brightness": max(1, min(100, desired["brightness"]))},
+        )
+    if (
+        desired.get("color_mode") == "color_temp"
+        and desired.get("temperature") is not None
+        and (old is None or old.get("temperature") != desired["temperature"])
+    ):
+        sinum.element(
+            device_id,
+            element,
+            "set_temperature",
+            {"set_temperature": desired["temperature"]},
+        )
+    elif (
+        desired.get("color_mode") in ("rgb", "xy")
+        and desired.get("color") is not None
+        and (old is None or old.get("color") != desired["color"])
+    ):
+        sinum.element(
+            device_id,
+            element,
+            "set_color",
+            {"set_color": desired["color"]},
+        )
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--once", action="store_true")
@@ -145,7 +250,7 @@ def main() -> None:
     except (OSError, json.JSONDecodeError):
         previous = {}
     try:
-        sinum_previous: dict[str, bool] = json.loads(SINUM_STATE_FILE.read_text())
+        sinum_previous: dict[str, Any] = json.loads(SINUM_STATE_FILE.read_text())
     except (OSError, json.JSONDecodeError):
         sinum_previous = {}
 
@@ -159,35 +264,59 @@ def main() -> None:
                 print(f"ERROR reading Sinum virtual devices: {err}", flush=True)
                 virtual = {}
             for entity_id, entry in mapping.items():
-                if entry["variant"] != "relay":
-                    continue
                 device = virtual.get(int(entry["id"]))
                 if not device:
                     continue
-                current = bool((device.get("variant_device") or {}).get("state"))
-                if entity_id not in sinum_previous:
+                if entry["variant"] == "relay":
+                    current = bool((device.get("variant_device") or {}).get("state"))
+                    if entity_id not in sinum_previous:
+                        sinum_previous[entity_id] = current
+                        continue
+                    if current == sinum_previous[entity_id]:
+                        continue
+                    domain = entity_id.split(".", 1)[0]
+                    if domain not in ("switch", "light"):
+                        sinum_previous[entity_id] = current
+                        continue
+                    action = "turn_on" if current else "turn_off"
+                    try:
+                        _ha_call(domain, action, {"entity_id": entity_id})
+                        print(f"SINUM→HA {entity_id}: {action}", flush=True)
+                    except Exception as err:  # noqa: BLE001
+                        print(f"ERROR {entity_id} {action}: {err}", flush=True)
                     sinum_previous[entity_id] = current
-                    continue
-                if current == sinum_previous[entity_id]:
-                    continue
-                domain = entity_id.split(".", 1)[0]
-                if domain not in ("switch", "light"):
+                    skip_ha.add(entity_id)
+                elif entry["variant"] == "light":
+                    current = sinum_light_values(device)
+                    if current is None:
+                        continue
+                    if not isinstance(sinum_previous.get(entity_id), dict):
+                        sinum_previous[entity_id] = current
+                        continue
+                    if current == sinum_previous[entity_id]:
+                        continue
+                    data: dict[str, Any] = {"entity_id": entity_id}
+                    if current["state"]:
+                        if current.get("brightness") is not None:
+                            data["brightness_pct"] = current["brightness"]
+                        if current.get("color_mode") == "color_temp" and current.get(
+                            "temperature"
+                        ):
+                            data["color_temp_kelvin"] = current["temperature"]
+                        elif current.get("color_mode") == "rgb" and current.get(
+                            "color"
+                        ):
+                            data["rgb_color"] = _hex_to_rgb(current["color"])
+                        service = "turn_on"
+                    else:
+                        service = "turn_off"
+                    try:
+                        _ha_call("light", service, data)
+                        print(f"SINUM→HA {entity_id}: {service}", flush=True)
+                    except Exception as err:  # noqa: BLE001
+                        print(f"ERROR {entity_id} {service}: {err}", flush=True)
                     sinum_previous[entity_id] = current
-                    continue
-                action = "turn_on" if current else "turn_off"
-                try:
-                    response = requests.post(
-                        HA_URL + f"/api/services/{domain}/{action}",
-                        headers={"Authorization": "Bearer " + HA_TOKEN},
-                        json={"entity_id": entity_id},
-                        timeout=30,
-                    )
-                    response.raise_for_status()
-                    print(f"SINUM→HA {entity_id}: {action}", flush=True)
-                except Exception as err:  # noqa: BLE001
-                    print(f"ERROR {entity_id} {action}: {err}", flush=True)
-                sinum_previous[entity_id] = current
-                skip_ha.add(entity_id)
+                    skip_ha.add(entity_id)
             SINUM_STATE_FILE.write_text(
                 json.dumps(sinum_previous, ensure_ascii=False, indent=1)
             )
@@ -198,7 +327,24 @@ def main() -> None:
             if entity_id in skip_ha:
                 continue
             state = states.get(entity_id)
-            if state is None:
+            if state is None or state.get("state") in ("unavailable", "unknown"):
+                continue
+            if entry["variant"] == "light":
+                desired = ha_light_values(state)
+                old_value = previous.get(entity_id)
+                if not isinstance(old_value, dict):
+                    old_value = None
+                if old_value == desired:
+                    continue
+                try:
+                    _sync_light_from_ha(sinum, entry, desired, old_value)
+                except Exception as err:  # noqa: BLE001
+                    print(f"ERROR {entity_id}: {err}", flush=True)
+                    continue
+                previous[entity_id] = desired
+                sinum_previous[entity_id] = desired
+                updates += 1
+                print(f"PATCH {entry['name']}: {desired}", flush=True)
                 continue
             value = value_for(entry, state)
             if value is None:
@@ -223,7 +369,6 @@ def main() -> None:
             SINUM_STATE_FILE.write_text(
                 json.dumps(sinum_previous, ensure_ascii=False, indent=1)
             )
-
         print(f"cycle done: {updates} updates", flush=True)
         if args.once:
             break

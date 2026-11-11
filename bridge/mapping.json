@@ -95,22 +95,6 @@
   "unit": "",
   "name": "HA · Wiśniowa taras lewa"
  },
- "light.e27_lukasz_gorna": {
-  "id": 40,
-  "variant": "relay",
-  "field": "state",
-  "scale": null,
-  "unit": "",
-  "name": "HA · E27 Łukasz górna"
- },
- "light.e27_lukasz_dolna": {
-  "id": 41,
-  "variant": "relay",
-  "field": "state",
-  "scale": null,
-  "unit": "",
-  "name": "HA · E27 Łukasz dolna"
- },
  "sensor.garaz_wisniowa_dom_kontaktron_zamknieta_battery": {
   "id": 42,
   "variant": "battery",
@@ -726,5 +710,23 @@
   "scale": null,
   "unit": "",
   "name": "HA · Wtyczka Garderoba"
+ },
+ "light.e27_lukasz_gorna": {
+  "id": 119,
+  "variant": "light",
+  "element": "light",
+  "field": "state",
+  "scale": null,
+  "unit": "",
+  "name": "HA E27 Lukasz gorna swiatlo"
+ },
+ "light.e27_lukasz_dolna": {
+  "id": 120,
+  "variant": "light",
+  "element": "light",
+  "field": "state",
+  "scale": null,
+  "unit": "",
+  "name": "HA E27 Lukasz dolna swiatlo"
  }
 }
