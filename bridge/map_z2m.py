@@ -25,7 +25,9 @@ SINUM_PASSWORD = os.environ.get("SINUM_PASSWORD", "")
 SINUM_DEVICE = os.environ.get("SINUM_DEVICE_ID", "")
 SINUM_ROOM = int(os.environ.get("SINUM_ROOM_ID", "11"))
 SINUM_BASE = "https://backend.prd.sinum24.com"
-MAPPING_FILE = Path(os.environ.get("MAPPING_FILE", Path(__file__).with_name("mapping.json")))
+MAPPING_FILE = Path(
+    os.environ.get("MAPPING_FILE", Path(__file__).with_name("mapping.json"))
+)
 
 
 def ha_registry() -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
@@ -36,6 +38,7 @@ def ha_registry() -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
     ws.send(json.dumps({"type": "auth", "access_token": HA_TOKEN}))
     ws.recv()
     ids = [1]
+
     def cmd(typ: str) -> list[dict[str, Any]]:
         i = ids[0]
         ids[0] += 1
@@ -44,6 +47,7 @@ def ha_registry() -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
             msg = json.loads(ws.recv())
             if msg.get("id") == i:
                 return msg["result"]
+
     devices = cmd("config/device_registry/list")
     entities = cmd("config/entity_registry/list")
     ws.close()
@@ -97,7 +101,9 @@ class Sinum:
 
 def main() -> None:
     if not HA_TOKEN or not SINUM_EMAIL or not SINUM_PASSWORD or not SINUM_DEVICE:
-        raise SystemExit("Set B7_TOKEN, SINUM_EMAIL, SINUM_PASSWORD and SINUM_DEVICE_ID")
+        raise SystemExit(
+            "Set B7_TOKEN, SINUM_EMAIL, SINUM_PASSWORD and SINUM_DEVICE_ID"
+        )
 
     devices, entities = ha_registry()
     states = {
@@ -112,7 +118,9 @@ def main() -> None:
     ws = websocket.create_connection(
         HA_URL.replace("http://", "ws://") + "/api/websocket", timeout=60
     )
-    ws.recv(); ws.send(json.dumps({"type": "auth", "access_token": HA_TOKEN})); ws.recv()
+    ws.recv()
+    ws.send(json.dumps({"type": "auth", "access_token": HA_TOKEN}))
+    ws.recv()
     ws.send(json.dumps({"id": 999, "type": "config/label_registry/list"}))
     while True:
         msg = json.loads(ws.recv())
@@ -149,8 +157,16 @@ def main() -> None:
         if domain in ("switch", "light"):
             variant, field = "relay", "state"
         elif domain == "binary_sensor" and device_class in (
-            "door", "window", "motion", "presence", "opening",
-            "moisture", "smoke", "gas", "safety", "tamper",
+            "door",
+            "window",
+            "motion",
+            "presence",
+            "opening",
+            "moisture",
+            "smoke",
+            "gas",
+            "safety",
+            "tamper",
         ):
             variant, field = "two_state_input_sensor", "state"
         elif domain == "sensor":
@@ -165,9 +181,15 @@ def main() -> None:
             elif unit == "%":
                 variant = "battery" if device_class == "battery" else "analog_input"
                 field = "soc" if device_class == "battery" else "value"
-            elif unit in ("lx", "hPa", "V", "A", "mV", "s", "minutes") or device_class in (
-                "illuminance", "pressure", "voltage", "current"
-            ):
+            elif unit in (
+                "lx",
+                "hPa",
+                "V",
+                "A",
+                "mV",
+                "s",
+                "minutes",
+            ) or device_class in ("illuminance", "pressure", "voltage", "current"):
                 variant, field = "analog_input", "value"
         if not variant:
             continue
@@ -211,14 +233,21 @@ def main() -> None:
     print(collections.Counter(v["variant"] for v in mapping.values()))
 
 
-def _initial_value(variant: str, field: str, state: dict[str, Any], scale: Any, unit: Any) -> dict[str, Any]:
+def _initial_value(
+    variant: str, field: str, state: dict[str, Any], scale: Any, unit: Any
+) -> dict[str, Any]:
     raw = state.get("state")
     if raw in (None, "unavailable", "unknown"):
-        return {
-            "state": False,
-        } if variant in ("relay", "two_state_input_sensor") else (
-            {"unit": unit or "", "value": 0} if variant == "analog_input" else
-            {field: 0}
+        return (
+            {
+                "state": False,
+            }
+            if variant in ("relay", "two_state_input_sensor")
+            else (
+                {"unit": unit or "", "value": 0}
+                if variant == "analog_input"
+                else {field: 0}
+            )
         )
     if variant in ("relay", "two_state_input_sensor"):
         return {field: raw in ("on", "open", "True", "true", True)}

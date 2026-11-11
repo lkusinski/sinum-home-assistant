@@ -24,8 +24,14 @@ SINUM_PASSWORD = os.environ.get("SINUM_PASSWORD", "")
 SINUM_DEVICE = os.environ.get("SINUM_DEVICE_ID", "")
 SINUM_BASE = "https://backend.prd.sinum24.com"
 SINUM_BASIC = "ZWhvbWU6dG9wX3NlY3JldA=="
-MAPPING_FILE = Path(os.environ.get("MAPPING_FILE", Path(__file__).with_name("mapping.json")))
+MAPPING_FILE = Path(
+    os.environ.get("MAPPING_FILE", Path(__file__).with_name("mapping.json"))
+)
 STATE_FILE = Path(os.environ.get("STATE_FILE", "/tmp/opencode/z2m_sinum_state.json"))
+SINUM_STATE_FILE = Path(
+    os.environ.get("SINUM_STATE_FILE", "/tmp/opencode/z2m_sinum_sinum_state.json")
+)
+WRITE_BACK = os.environ.get("WRITE_BACK", "1") not in ("0", "false", "False")
 
 
 class SinumClient:
@@ -51,13 +57,26 @@ class SinumClient:
                 "device_info": "Home Assistant / Sinum Z2M bridge",
                 "os_info": "Linux",
             },
-            headers={"Authorization": "Basic " + SINUM_BASIC, "Accept": "application/json"},
+            headers={
+                "Authorization": "Basic " + SINUM_BASIC,
+                "Accept": "application/json",
+            },
             timeout=30,
         )
         response.raise_for_status()
         data = response.json()
         self.token = data["access_token"]
         self.expires = time.time() + int(data.get("expires_in", 599)) - 45
+
+    def virtual_devices(self) -> dict[int, dict[str, Any]]:
+        self.ensure_token()
+        response = self.session.get(
+            SINUM_BASE + "/proxy/devices/virtual",
+            headers={**self.headers, "Authorization": "Bearer " + self.token},
+            timeout=30,
+        )
+        response.raise_for_status()
+        return {int(item["id"]): item for item in response.json().get("data", [])}
 
     def patch(self, device_id: int, payload: dict[str, Any]) -> None:
         self.ensure_token()
@@ -68,7 +87,10 @@ class SinumClient:
             timeout=30,
         )
         if response.status_code not in (200, 204, 304):
-            raise RuntimeError(f"Sinum PATCH {device_id} HTTP {response.status_code}: {response.text[:200]}")
+            raise RuntimeError(
+                f"Sinum PATCH {device_id} HTTP {response.status_code}: "
+                f"{response.text[:200]}"
+            )
 
 
 def ha_states() -> dict[str, dict[str, Any]]:
@@ -113,19 +135,68 @@ def main() -> None:
     parser.add_argument("--interval", type=int, default=30)
     args = parser.parse_args()
     if not HA_TOKEN or not SINUM_EMAIL or not SINUM_PASSWORD or not SINUM_DEVICE:
-        raise SystemExit("Set B7_TOKEN, SINUM_EMAIL, SINUM_PASSWORD and SINUM_DEVICE_ID")
+        raise SystemExit(
+            "Set B7_TOKEN, SINUM_EMAIL, SINUM_PASSWORD and SINUM_DEVICE_ID"
+        )
 
     mapping: dict[str, dict[str, Any]] = json.loads(MAPPING_FILE.read_text())
     try:
         previous: dict[str, Any] = json.loads(STATE_FILE.read_text())
     except (OSError, json.JSONDecodeError):
         previous = {}
+    try:
+        sinum_previous: dict[str, bool] = json.loads(SINUM_STATE_FILE.read_text())
+    except (OSError, json.JSONDecodeError):
+        sinum_previous = {}
 
     sinum = SinumClient()
     while True:
+        skip_ha: set[str] = set()
+        if WRITE_BACK:
+            try:
+                virtual = sinum.virtual_devices()
+            except Exception as err:  # noqa: BLE001
+                print(f"ERROR reading Sinum virtual devices: {err}", flush=True)
+                virtual = {}
+            for entity_id, entry in mapping.items():
+                if entry["variant"] != "relay":
+                    continue
+                device = virtual.get(int(entry["id"]))
+                if not device:
+                    continue
+                current = bool((device.get("variant_device") or {}).get("state"))
+                if entity_id not in sinum_previous:
+                    sinum_previous[entity_id] = current
+                    continue
+                if current == sinum_previous[entity_id]:
+                    continue
+                domain = entity_id.split(".", 1)[0]
+                if domain not in ("switch", "light"):
+                    sinum_previous[entity_id] = current
+                    continue
+                action = "turn_on" if current else "turn_off"
+                try:
+                    response = requests.post(
+                        HA_URL + f"/api/services/{domain}/{action}",
+                        headers={"Authorization": "Bearer " + HA_TOKEN},
+                        json={"entity_id": entity_id},
+                        timeout=30,
+                    )
+                    response.raise_for_status()
+                    print(f"SINUM→HA {entity_id}: {action}", flush=True)
+                except Exception as err:  # noqa: BLE001
+                    print(f"ERROR {entity_id} {action}: {err}", flush=True)
+                sinum_previous[entity_id] = current
+                skip_ha.add(entity_id)
+            SINUM_STATE_FILE.write_text(
+                json.dumps(sinum_previous, ensure_ascii=False, indent=1)
+            )
+
         states = ha_states()
         updates = 0
         for entity_id, entry in mapping.items():
+            if entity_id in skip_ha:
+                continue
             state = states.get(entity_id)
             if state is None:
                 continue
@@ -143,9 +214,16 @@ def main() -> None:
                 print(f"ERROR {entity_id}: {err}", flush=True)
                 continue
             previous[entity_id] = value
+            if entry["variant"] == "relay":
+                sinum_previous[entity_id] = bool(value)
             updates += 1
             print(f"PATCH {entry['name']}: {value}", flush=True)
         STATE_FILE.write_text(json.dumps(previous, ensure_ascii=False, indent=1))
+        if WRITE_BACK:
+            SINUM_STATE_FILE.write_text(
+                json.dumps(sinum_previous, ensure_ascii=False, indent=1)
+            )
+
         print(f"cycle done: {updates} updates", flush=True)
         if args.once:
             break
