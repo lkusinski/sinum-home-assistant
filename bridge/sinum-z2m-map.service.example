@@ -1,0 +1,11 @@
+[Unit]
+Description=Map newly selected HA devices to Sinum (Z2M bridge)
+After=network-online.target sinum-z2m.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=dev
+WorkingDirectory=/home/dev/homeassistant-b7/github/sinum-home-assistant/bridge
+EnvironmentFile=/home/dev/.config/sinum-z2m.env
+ExecStart=/usr/bin/python3 /home/dev/homeassistant-b7/github/sinum-home-assistant/bridge/map_z2m.py

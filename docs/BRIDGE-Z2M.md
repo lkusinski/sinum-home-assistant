@@ -107,8 +107,11 @@ Obecny most jest prototypem tej logiki; `sinum` to tymczasowa etykieta testowa.
    Echo jest tłumione znacznikiem czasu (`SUPPRESS`).
 3. **Reconciliation** (`z2m_to_sinum.py`) — pełny przebieg co 300 s jako
    fallback i do naprawy rozjazdów.
-4. Uruchomienie: `sinum-z2m.service` (reconciliation) i
-   `sinum-z2m-events.service` (push) na CT310; konfiguracja poza produkcyjnym HA.
+4. Uruchomienie: `sinum-z2m.service` (reconciliation),
+   `sinum-z2m-events.service` (push) i opcjonalny
+   `sinum-z2m-map.timer` (mapowanie nowych etykiet co minutę) na CT310.
+   Konfiguracja poza produkcyjnym HA. Worker przeładowuje mapping co 5 s,
+   reconciliation co 300 s.
 
 ## Statystyki LAB
 

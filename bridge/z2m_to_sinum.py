@@ -553,9 +553,9 @@ def main() -> None:
             "Set B7_TOKEN, SINUM_EMAIL, SINUM_PASSWORD and SINUM_DEVICE_ID"
         )
 
-    mapping: dict[str, dict[str, Any]] = json.loads(MAPPING_FILE.read_text())
     sinum = SinumClient()
     while True:
+        mapping: dict[str, dict[str, Any]] = json.loads(MAPPING_FILE.read_text())
         previous: dict[str, Any] = read_json(STATE_FILE)
         sinum_previous: dict[str, Any] = read_json(SINUM_STATE_FILE)
         skip_ha: set[str] = set()

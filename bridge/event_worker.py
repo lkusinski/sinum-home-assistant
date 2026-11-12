@@ -45,7 +45,30 @@ MODULES = {
     for entity_id, entry in MAPPING.items()
     if entry.get("class") == "custom_device_module"
 }
+MAPPING_MTIME = z.MAPPING_FILE.stat().st_mtime
+LAST_MAP_CHECK = 0.0
 LAST_REFRESH = [0.0]
+
+
+def _reload_mapping_if_needed() -> None:
+    global MAPPING, BY_ID, MODULES, MAPPING_MTIME, LAST_MAP_CHECK
+    if time.time() - LAST_MAP_CHECK < 5:
+        return
+    LAST_MAP_CHECK = time.time()
+    try:
+        mtime = z.MAPPING_FILE.stat().st_mtime
+    except OSError:
+        return
+    if mtime == MAPPING_MTIME:
+        return
+    MAPPING, BY_ID = _load_mapping()
+    MODULES = {
+        int(entry["id"]): (entity_id, entry)
+        for entity_id, entry in MAPPING.items()
+        if entry.get("class") == "custom_device_module"
+    }
+    MAPPING_MTIME = mtime
+    print("Bridge mapping reloaded", flush=True)
 
 
 def _update_state(entity_id: str, value: Any, sinum_value: Any) -> None:
@@ -139,6 +162,7 @@ def _refresh_integration() -> None:
 
 
 def handle_event(event: dict[str, Any]) -> None:
+    _reload_mapping_if_needed()
     data = event.get("data") or {}
     if not isinstance(data, dict):
         return
@@ -289,6 +313,7 @@ def _is_suppressed(entity_id: str) -> bool:
 
 
 def apply_ha_state(entity_id: str, new_state: dict[str, Any] | None) -> None:
+    _reload_mapping_if_needed()
     if not new_state:
         return
     entry = MAPPING.get(entity_id)

@@ -145,14 +145,14 @@ explicit shared source; duplicating options in two UIs is not acceptable.
 - Keep a compatibility mode for the current LAB so existing mappings continue
   to work until migration is complete.
 
-### Phase 2 — integration-owned bridge
+### Phase 2 — integration-owned bridge (partial)
 
-- Move bridge selection and lifecycle into the integration options flow.
-- Persist bridge-owned virtual device IDs and ownership markers.
-- Keep an explicit “bridge owns these devices” filter so integration does not
-  import them.
-- Add migration from the external service (read `mapping.json`, mark devices,
-  then disable the external service).
+- Integration options and diagnostic config sensor are implemented.
+- `sinum-z2m-map.timer` runs the label/room mapper every minute; the event
+  worker and reconciliation worker reload `mapping.json` automatically.
+- Existing 97 mappings are migrated and remain owned by the bridge.
+- Still to do: move the bridge event loop itself into the integration lifecycle
+  so the external systemd services are no longer required for normal operation.
 
 ### Phase 3 — module and protocol expansion
 

@@ -26,6 +26,8 @@ The current test deployment targets **LAB Lukasz** (11), **LAB Działające**
 - `map_z2m.py` — creates missing devices from B7 devices labelled `sinum`.
 - `sinum-z2m.service.example` — systemd unit for the periodic worker.
 - `sinum-z2m-events.service.example` — systemd unit for the push worker.
+- `sinum-z2m-map.service.example` + `.timer.example` — label/room mapper
+  reconciliation every minute.
 
 ## Run
 
@@ -41,6 +43,7 @@ export SINUM_STATE_FILE=/var/lib/sinum-z2m/sinum_state.json
 python3 z2m_to_sinum.py --once
 python3 z2m_to_sinum.py --interval 300
 python3 event_worker.py
+# optional timer: map_z2m.py every minute
 ```
 
 Set `WRITE_BACK=0` to disable Sinum → HA commands.
