@@ -262,6 +262,7 @@ Więcej informacji technicznych i poradników znajduje się w katalogu `docs/`:
 - [Stan techniczny projektu i roadmapa](docs/PROJECT-STATE.md)
 - [Lokalne API Sinum — analiza i roadmapa](docs/API-LOCAL.md)
 - [Źródła i projekty pokrewne](docs/SOURCES.md)
+- [Test i ograniczenia kamer](docs/CAMERA.md)
 
 ---
 
@@ -311,7 +312,7 @@ It connects directly to the Sinum Cloud API, maps rooms 1:1 to Home Assistant Ar
 | **32 Sinum Lua Modules** | 🧪 LAB Bench | Virtual testbed | Validated modules for dimmers, meters, pumps, inverters, and EV chargers. |
 | **11 Sinum UI Element Types** | 🧪 LAB Bench | Virtual testbed | All custom UI controls rendered and tested against cloud REST endpoints. |
 | **InfluxDB Statistics Injection** | 🧪 LAB Bench | Virtual testbed | Lua `statistics:addPoint` scripts generate historical graphs in Sinum. |
-| **Local LAN Connection** | ℹ️ Untested | Out of current scope | Home Assistant and the Sinum hub reside in separate subnets/locations. The integration is designed and verified against the official Sinum Cloud API, enabling reliable remote operation without requiring a shared local LAN. |
+| **Local LAN Connection** | ℹ️ Untested | Out of current scope | The hub reports LAN `192.168.1.16`, but its local API ports are closed from B7/CT310. The integration remains cloud-first; local API is documented in `docs/API-LOCAL.md`. |
 | **RTSP / NVR Video in Sinum** | ❌ Unsupported | Cloud API limitation | Cloud API returns `422 NvrDeviceNotFound` for virtual generic RTSP cameras. |
 | **Covers / Blinds from HA to Sinum** | ❌ Unsupported | Virtual device limitation | Sinum has no virtual variant for covers or blinds. |
 | **Online Status on Custom Sensors** | ⚠️ Cosmetic | Sinum UI behavior | Virtual custom sensors report `unknown` status in Sinum UI, though values work. |

@@ -58,9 +58,10 @@ community implementation; the official Go process exposes `/ws`) with
 
 The cloud `/proxy/info` response reports the central LAN address
 `192.168.1.16`, firmware `1.25.1`, `device_type: sinum_lite`, and the `video`
-label. From CT310 and from B7 HA, `GET http://192.168.1.16/api/v1/info`
-failed to connect (2026-11-12). The central is in a different network segment,
-so the local transport cannot be validated from the current test environment.
+label. From CT310 and from B7 HA, TCP ports 80, 443, 8080 and 8000 on
+`192.168.1.16` are closed and `GET /api/v1/info` cannot connect (2026-11-12).
+The address is not reachable as a local API from the current hosts, so the local
+transport cannot be validated from this environment.
 
 **Decision:** keep the verified cloud path as the default. Do not claim local
 support until it can be probed against a reachable hub.

@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.2.3 — 2026-11-13
+
+- Document camera verification for B7 (`camera.kamera_230_prod`): snapshot
+  640×360, HEVC RTSP 2560×1920/15 fps, and a successful 5-second HA recording.
+- Document that the Sinum cloud has no visible video devices and the local API
+  video endpoints are unreachable from the current network.
+- Correct the local API reachability notes.
+
 ## 1.2.2 — 2026-11-12
 
 - Add config-entry diagnostics with redacted credentials, coordinator counts,
