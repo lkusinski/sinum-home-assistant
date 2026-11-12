@@ -6,6 +6,7 @@ import logging
 from typing import Any
 
 from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import EVENT_HOMEASSISTANT_STOP
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryAuthFailed, ConfigEntryNotReady
 from homeassistant.helpers import config_validation as cv
@@ -100,6 +101,15 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             _LOGGER.exception("Cannot start Sinum bridge")
             await bridge.async_stop()
             coordinator.bridge = None
+        else:
+            entry.async_on_unload(
+                hass.bus.async_listen_once(
+                    EVENT_HOMEASSISTANT_STOP,
+                    lambda _event: hass.async_create_task(
+                        bridge.async_stop(), "sinum bridge shutdown"
+                    ),
+                )
+            )
 
     def _handle_area_update() -> None:
         nonlocal area_signature

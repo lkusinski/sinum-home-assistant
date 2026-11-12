@@ -773,7 +773,7 @@ class SinumBridge:
             self._mark_recent(entity_id, current)
             await self._async_apply_ac_to_ha(entity_id, current)
 
-    def _async_create_payload(
+    def _create_payload(
         self,
         variant: str,
         field: str,
@@ -985,7 +985,11 @@ class SinumBridge:
             if entity.device_id not in mapped_devices:
                 continue
             eid = entity.entity_id
-            if eid in mapping:
+            if (
+                eid in mapping
+                or entity.disabled_by is not None
+                or entity.hidden_by is not None
+            ):
                 continue
             state = self.hass.states.get(eid)
             if state is None:
@@ -1060,7 +1064,7 @@ class SinumBridge:
                 entity.original_name or eid.split(".", 1)[1]
             ).strip()
             name = ("HA " + devname + " " + orig).strip()[:64].rstrip()
-            payload = self._async_create_payload(
+            payload = self._create_payload(
                 variant, field, name, state, scale, unit
             )
             try:
@@ -1138,6 +1142,7 @@ class SinumBridge:
         async with self._lock:
             self._set_mapping(mapping)
             self._subscribe_ha_states()
+        await self._store.async_save({"mapping": mapping})
         _LOGGER.info(
             "Sinum bridge mapping reloaded (%s entities)", len(self._mapping)
         )
@@ -1253,8 +1258,14 @@ class SinumBridge:
                     )
                 except TimeoutError:
                     continue
-                if message.type == aiohttp.WSMsgType.TEXT:
-                    self._parse_stomp(str(message.data))
+                if message.type in (
+                    aiohttp.WSMsgType.TEXT,
+                    aiohttp.WSMsgType.BINARY,
+                ):
+                    raw = message.data
+                    if isinstance(raw, bytes):
+                        raw = raw.decode("utf-8", "replace")
+                    self._parse_stomp(str(raw))
                 elif message.type in (
                     aiohttp.WSMsgType.CLOSED,
                     aiohttp.WSMsgType.CLOSE,
@@ -1349,6 +1360,14 @@ class SinumBridge:
             await self._async_call_ha(
                 entity_id, "turn_on" if current else "turn_off"
             )
+            try:
+                await self._async_patch_virtual(device_id, {"state": current})
+            except SinumHomeAssistantError as err:
+                _LOGGER.debug(
+                    "Sinum bridge relay state sync failed for %s: %s",
+                    entity_id,
+                    err,
+                )
         elif variant == "light" and payload.get("name") == "light":
             try:
                 device = await self._async_get_virtual()

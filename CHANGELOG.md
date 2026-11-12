@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.2.1 — 2026-11-12
+
+- Cancel bridge tasks cleanly on Home Assistant shutdown to avoid delayed
+  shutdown warnings.
+- Persist mapping reloads back into HA storage, so a changed mapping file is not
+  lost after restart.
+- Skip disabled and hidden entities in the internal mapper.
+- Sync the Sinum relay state after a Sinum-originated HA command.
+- Accept binary WebSocket frames from the Sinum event stream.
+- Tidy the bridge payload helper name and update the repository description.
+
 ## 1.2.0 — 2026-11-12
 
 - Move the HA/Z2M bridge into the integration lifecycle as native async code.
