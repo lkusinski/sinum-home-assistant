@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.2.0 — 2026-11-12
+
+- Move the HA/Z2M bridge into the integration lifecycle as native async code.
+- Add an internal label/room mapper and bridge event processing; existing
+  external systemd workers are no longer required for normal operation.
+- Keep the existing `bridge/mapping.json` mapping as an import source for the
+  first start; mappings are then persisted in HA storage.
+- Support the same LAB variants: relays, lights (`color_picker`), contacts,
+  temperature/humidity, analog values, energy, battery and the AC module.
+- Add bridge start/stop handling on config-entry unload and options reload.
+
 ## 1.1.11 — 2026-11-12
 
 - Add integration options for the optional HA/Z2M bridge: enable, selection

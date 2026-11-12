@@ -1,6 +1,6 @@
 # Project state and refactor plan
 
-Last updated: 2026-11-12 (Europe/Warsaw)
+Last updated: 2026-11-12 17:40 CET (Europe/Warsaw)
 
 This document is the hand-off snapshot for the current work. It separates the
 Home Assistant integration from the experimental Z2M/HA bridge and records the
@@ -11,7 +11,7 @@ planned refactor. No credentials belong in this file.
 ### Home Assistant integration
 
 - Domain: `sinum_home_assistant`
-- Manifest version: `1.1.11`
+- Manifest version: `1.2.0`
 - Source: `custom_components/sinum_home_assistant/`
 - Direction: **Sinum → Home Assistant** (cloud polling, one coordinator).
 - Main building blocks:
@@ -23,24 +23,21 @@ planned refactor. No credentials belong in this file.
     `update.py`, `weather.py` — entity platforms.
   - `services.py` — `set_virtual_temperature`, `refresh`.
   - `entity.py` — device hierarchy, area assignment, cleanup.
+  - `bridge.py` — native async bridge: mapper, HA event bus, Sinum REST and
+    STOMP/SockJS stream, echo suppression, reconciliation.
+- Direction: **Sinum → Home Assistant** (polling) and optional bidirectional
+  **HA/Z2M ↔ Sinum** bridge.
 
-### Z2M/HA bridge (experimental, currently LAB)
+### Z2M/HA bridge (integration-owned)
 
-- Source: `bridge/`
-- Direction: **HA/Z2M → Sinum**, with optional **Sinum → HA** write-back.
-- `map_z2m.py` — creates missing virtual devices for B7 devices selected by a
-  label.
-- `z2m_to_sinum.py` — full reconciliation (currently 300 s) and initial
-  migration.
-- `event_worker.py` — push:
-  - HA WebSocket `state_changed` → Sinum PATCH,
-  - Sinum STOMP/SockJS `/topic/<deviceId>` → HA service call,
-  - echo suppression and short burst protection.
-- `mapping.json` — HA entity ↔ Sinum object mapping; 97 entries in the current
-  LAB deployment.
-- Systemd examples:
-  - `sinum-z2m.service.example` (reconciliation),
-  - `sinum-z2m-events.service.example` (push).
+- Runtime source: `custom_components/sinum_home_assistant/bridge.py`.
+- Direction: **HA/Z2M → Sinum** and **Sinum → HA**.
+- Mapper uses the configured HA label (default `sinumbridge`, legacy `sinum`)
+  and optional Sinum room. Mapping is persisted in HA storage; the first start
+  imports `bridge/mapping.json` if present.
+- Legacy/reference only: `bridge/map_z2m.py`, `bridge/z2m_to_sinum.py`,
+  `bridge/event_worker.py`, systemd examples. They are no longer required.
+- `bridge/mapping.json` remains the current LAB mapping snapshot (97 entries).
 
 ### Sinum-side test assets
 
@@ -61,8 +58,9 @@ planned refactor. No credentials belong in this file.
   by this project.
 - **Sinum:** cloud API `https://backend.prd.sinum24.com`; local API is not
   reachable from CT310 at the moment.
-- **CT310:** `192.168.1.123`, runs the two bridge services. Secrets live in
-  `/home/dev/.config/sinum-z2m.env` (600).
+- **CT310:** `192.168.1.123`, legacy bridge host. The systemd services are
+  stopped/disabled after the integration-owned bridge went live; secrets remain
+  in `/home/dev/.config/sinum-z2m.env` (600) as reference.
 
 ## Current LAB rooms and ownership
 
@@ -75,9 +73,9 @@ planned refactor. No credentials belong in this file.
 
 ## Current bridge behavior
 
-- Selection is currently hard-coded to the HA label `sinum` (legacy LAB
-  choice) and to LAB room IDs.
-- HA→Sinum is event-driven; 300 s reconciliation is only a fallback.
+- Selection uses the integration option label (currently `sinumbridge`), with
+  legacy `sinum` accepted for existing LAB devices.
+- HA→Sinum is event-driven; reconciliation runs every 60 s as a fallback.
 - Sinum→HA handles:
   - relays (`relay_switch`),
   - lights (`color_picker`; RGB/color-temperature normalization),
@@ -111,11 +109,10 @@ must be applied only to the devices/entities the user wants in Sinum.
 
 ### Architecture target
 
-The external systemd bridge is a prototype. The preferred target is to make the
-bridge an optional part of the integration (one config entry), so the options
-flow is authoritative and there is no separate configuration file to keep in
-sync. If the bridge remains external, it must read its configuration from an
-explicit shared source; duplicating options in two UIs is not acceptable.
+The external systemd bridge was a prototype. It is now implemented as an
+optional part of the integration (one config entry), so the options flow is
+authoritative and mapping/config are owned by Home Assistant. The scripts in
+`bridge/` remain only as a reference implementation.
 
 ## Refactor phases
 
@@ -132,10 +129,10 @@ explicit shared source; duplicating options in two UIs is not acceptable.
 - The integration publishes a diagnostic
   `sensor.sinum_home_assistant_bridge_configuration` with
   `sinum_bridge_config: true`, `enabled`, `label`, and `room_id`.
-- `map_z2m.py` reads that diagnostic sensor and falls back to the legacy
-  `sinum` label and `SINUM_BRIDGE_LABEL` env for compatibility.
-- The external worker still needs restarting after a label/room option change;
-  the next phase is to move it into the integration lifecycle.
+- The legacy `map_z2m.py` read that diagnostic sensor and fell back to the
+  legacy `sinum` label for compatibility; the internal mapper now reads the
+  options directly.
+- Phase 2 moved label/room changes into the integration lifecycle.
 - Introduce a shared bridge config model:
   - label name (default `sinumbridge`, legacy `sinum` accepted),
   - target room fallback,
@@ -145,16 +142,19 @@ explicit shared source; duplicating options in two UIs is not acceptable.
 - Keep a compatibility mode for the current LAB so existing mappings continue
   to work until migration is complete.
 
-### Phase 2 — integration-owned bridge (partial)
+### Phase 2 — integration-owned bridge (done)
 
 - Integration options and diagnostic config sensor are implemented.
-- `sinum-z2m-map.timer` runs the label/room mapper every minute; the event
-  worker and reconciliation worker reload `mapping.json` automatically.
-- Existing 97 mappings are migrated and remain owned by the bridge.
-- Still to do: move the bridge event loop itself into the integration lifecycle
-  so the external systemd services are no longer required for normal operation.
+- The bridge event loop is native async code in `bridge.py`: HA state events,
+  Sinum STOMP/SockJS events, REST commands and reconciliation all run in the
+  Home Assistant event loop.
+- Existing 97 mappings were imported from `mapping.json` into HA storage.
+- Bridge start/stop is tied to config-entry setup/unload and options reload.
+- External systemd services are no longer required for normal operation.
+- Remaining hardening: tests for selection/mapping and long-run reconnect
+  scenarios; optional bridge service for manual remap.
 
-### Phase 3 — module and protocol expansion
+### Phase 3 — module and protocol expansion (next)
 
 - Generalize `custom_device_module` beyond the AC module: modules, sensors,
   meters, valves.

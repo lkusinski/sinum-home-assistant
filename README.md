@@ -11,9 +11,9 @@ grzewczych i automatyki domowej **Sinum** firmy **Tech Sterowniki**.
 Integracja łączy się bezpośrednio z chmurą Sinum, automatycznie mapuje pokoje
 i urządzenia oraz tworzy natywne encje Home Assistant do sterowania klimatem,
 pogodą, przekaźnikami, diagnostyką i aktualizacjami firmware. Repozytorium
-zawiera też opcjonalny, event-driven most **Zigbee2MQTT/HA ↔ Sinum**. Pokoje
-LAB to obecne środowisko testowe; docelowo wybór urządzeń ma być konfigurowalny
-etykietą w integracji.
+zawiera też opcjonalny, event-driven most **Zigbee2MQTT/HA ↔ Sinum**,
+uruchamiany przez integrację. Wybór urządzeń odbywa się etykietą HA, a nie przez
+sztywne pokoje LAB.
 
 ![Sinum Home Assistant](assets/banner.png)
 
@@ -34,13 +34,14 @@ etykietą w integracji.
   przez termostat oraz szeroki zestaw diagnostyki: sygnał, bateria, czas pracy,
   adres IP, opóźnienie i kanał sieci.
 - **Konfiguracja przez UI** — bez YAML; opcje mostu: ekspozycja, etykieta `sinumbridge`, docelowy pokój Sinum.
+- **Most w integracji** — async HA event bus + Sinum REST/STOMP, bez zewnętrznych usług systemd.
 - **Uwierzytelnianie refresh tokenem** — hasło jest używane tylko podczas
   konfiguracji lub ponownego uwierzytelnienia i nie jest zapisywane.
 - **Oszczędne odpytywanie chmury** — jeden cykl aktualizacji co 30 sekund
   (integracja); most LAB działa event-driven, a 300 s to tylko reconciliation.
 - **Automatyczne wykrywanie nowych urządzeń** — dodanie urządzenia lub harmonogramu
   w Sinum przeładowuje integrację i tworzy nowe encje.
-- **Most LAB Z2M → Sinum** — HA WebSocket `state_changed` i Sinum STOMP/SockJS,
+- **Most HA/Z2M → Sinum** — HA `state_changed` i Sinum STOMP/SockJS,
   światła z `color_picker`, kontaktrony, bramy, moduł AC i statystyki Lua.
 - **Test bench LAB** — LAB Lukasz (11), LAB Działające (12) i LAB Wirtualne
   (13) służą do walidacji; nie są docelowym ograniczeniem produktu.
@@ -114,24 +115,25 @@ Obszary i urządzenia są tworzone automatycznie.
 
 ## Most Z2M → Sinum
 
-Repozytorium zawiera także most HA/Z2M → Sinum. Obecnie jest wdrażany w pokojach
-LAB, ale architektura jest docelowo ogólna:
+Most jest częścią integracji i działa w jej lifecycle:
 
-- `bridge/event_worker.py` — push HA → Sinum i Sinum → HA przez WebSocket/STOMP.
-- `bridge/z2m_to_sinum.py` — reconciliation co 300 s.
-- `bridge/map_z2m.py` — tworzenie urządzeń dla encji oznaczonych etykietą `sinum`.
-- `bridge/mapping.json` — mapowanie HA → Sinum.
+- `custom_components/sinum_home_assistant/bridge.py` — async mapper, HA event
+  bus, Sinum REST oraz strumień STOMP/SockJS w obie strony.
+- Mapowanie jest zapisywane w HA storage i może zostać zaimportowane z
+  `bridge/mapping.json` przy pierwszym uruchomieniu.
+- Skrypty `bridge/event_worker.py`, `bridge/z2m_to_sinum.py` i
+  `bridge/map_z2m.py` pozostają jako legacy/reference; nie są wymagane.
 
 Most obsługuje światła `generic` + `color_picker` (on/off, jasność, RGB,
 temperatura barwowa), kontaktrony, przekaźniki/bramy, sensory temperatury i
-wilgotności oraz moduł AC `custom_device_module`. Szczegóły:
+wilgotności, wartości analogowe, energię, baterię oraz moduł AC
+`custom_device_module`. Szczegóły:
 [docs/BRIDGE-Z2M.md](docs/BRIDGE-Z2M.md) i
 [docs/SINUM-LUA-MODULES.md](docs/SINUM-LUA-MODULES.md).
 
-W obecnym wdrożeniu testowym most dotyczy pokoi **LAB Lukasz (11)**,
-**LAB Działające (12)** i **LAB Wirtualne (13)**. Produkcyjne HA Wiśniowa 9
-jest tylko źródłem odczytu. Docelowo wybór encji/urządzeń do ekspozycji ma
-odbywać się przez etykietę HA — proponowana nazwa: **`sinumbridge`**.
+Wybór odbywa się etykietą HA (domyślnie **`sinumbridge`**, legacy `sinum`).
+Obecny test używa pokoi **LAB Lukasz (11)**, **LAB Działające (12)** i
+**LAB Wirtualne (13)**; produkcyjne HA Wiśniowa 9 jest tylko źródłem odczytu.
 
 ## Wymagania
 

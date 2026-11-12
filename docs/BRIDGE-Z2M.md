@@ -85,33 +85,37 @@ native 133: zamknięta → otwarta → `closing` → zamknięta.
 | AC | `custom_device_module` / `variant: ac_module` |
 | cover | brak natywnego wariantu — pominięte |
 
-## Docelowy model konfiguracji
+## Konfiguracja
 
-W integracji HA powinna być opcja:
+W integracji HA są opcje:
 
 - **Eksponuj do Sinum** (włącz/wyłącz),
-- **Etykieta urządzeń** — domyślnie `sinumbridge`,
-- **Kierunek** — HA→Sinum / dwukierunkowo,
-- ewentualnie **docelowy pokój Sinum**.
+- **Etykieta urządzeń** — domyślnie `sinumbridge` (legacy `sinum`),
+- **Docelowy pokój Sinum** — opcjonalny; `0` pomija przypisanie.
 
 Bridge wybiera encje/urządzenia po etykiecie, a nie po sztywnych pokojach LAB.
-Obecny most jest prototypem tej logiki; `sinum` to tymczasowa etykieta testowa.
+Obecny test używa etykiety `sinum` i pokoi 11–13; produkcyjny wybór to
+`sinumbridge` na wybranych urządzeniach.
 
 ## Architektura
 
-1. **Mapper** — czyta rejestr HA, wybiera urządzenia z etykietą `sinum`, tworzy
-   wirtualne urządzenia w Sinum i zapisuje mapowanie (JSON).
-2. **Push worker** (`event_worker.py`) — dwa strumienie zdarzeń:
-   - HA WebSocket `state_changed` → natychmiastowy PATCH Sinum;
-   - Sinum STOMP/SockJS `/topic/<deviceId>` → natychmiastowa akcja w HA.
-   Echo jest tłumione znacznikiem czasu (`SUPPRESS`).
-3. **Reconciliation** (`z2m_to_sinum.py`) — pełny przebieg co 300 s jako
-   fallback i do naprawy rozjazdów.
-4. Uruchomienie: `sinum-z2m.service` (reconciliation),
-   `sinum-z2m-events.service` (push) i opcjonalny
-   `sinum-z2m-map.timer` (mapowanie nowych etykiet co minutę) na CT310.
-   Konfiguracja poza produkcyjnym HA. Worker przeładowuje mapping co 5 s,
-   reconciliation co 300 s.
+Most jest **częścią integracji** (`custom_components/sinum_home_assistant/bridge.py`)
+i działa w lifecycle config entry. Nie wymaga zewnętrznych usług systemd.
+
+1. **Mapper** — czyta rejestr HA, wybiera urządzenia z etykietą (`sinumbridge`,
+   legacy `sinum`), tworzy wirtualne urządzenia w Sinum i zapisuje mapowanie
+   w HA storage. Przy pierwszym uruchomieniu importuje istniejący
+   `bridge/mapping.json`.
+2. **HA → Sinum** — `async_track_state_change_event` reaguje na `state_changed`
+   i wysyła PATCH/element commands do Sinum.
+3. **Sinum → HA** — async klient STOMP/SockJS (`/topic/<deviceId>`) odbiera
+   zdarzenia i wywołuje usługi HA. Echo jest tłumione przez `_recent` i
+   porównanie ostatniego stanu.
+4. **Reconciliation** — co 60 s odświeża mapping i stan wirtualnych urządzeń
+   jako fallback po reconnectach.
+5. **Legacy** — `event_worker.py`, `z2m_to_sinum.py`, `map_z2m.py` i przykłady
+   systemd pozostają w repozytorium jako referencja; nie są uruchamiane w
+   docelowym wdrożeniu.
 
 ## Statystyki LAB
 

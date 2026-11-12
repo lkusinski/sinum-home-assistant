@@ -1,4 +1,9 @@
-# Z2M → Sinum bridge
+# Z2M → Sinum bridge (legacy reference)
+
+> **Status:** the bridge now runs inside the integration
+> (`custom_components/sinum_home_assistant/bridge.py`). The scripts in this
+> directory are kept as a legacy/reference implementation and are not required
+> for normal operation. See `../docs/BRIDGE-Z2M.md`.
 
 Bridge between Home Assistant Zigbee2MQTT devices and Sinum virtual devices.
 The current test deployment targets **LAB Lukasz** (11), **LAB Działające**

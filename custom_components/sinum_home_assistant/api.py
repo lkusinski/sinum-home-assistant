@@ -200,6 +200,9 @@ class SinumHomeAssistantClient:
     async def async_patch(self, path: str, payload: dict[str, Any]) -> Any:
         return await self._async_request("PATCH", path, payload=payload)
 
+    async def async_post(self, path: str, payload: dict[str, Any]) -> Any:
+        return await self._async_request("POST", path, payload=payload)
+
     async def async_get_info(self) -> dict[str, Any]:
         data = await self.async_get("info")
         return data.get("data", {}) if isinstance(data, dict) else {}

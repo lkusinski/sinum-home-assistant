@@ -12,7 +12,15 @@ from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 from .api import SinumAuthError, SinumHomeAssistantClient, SinumHomeAssistantError
-from .const import CONF_DEVICE_ID, CONF_EMAIL, CONF_REFRESH_TOKEN, DOMAIN, PLATFORMS
+from .bridge import SinumBridge
+from .const import (
+    CONF_BRIDGE_ENABLED,
+    CONF_DEVICE_ID,
+    CONF_EMAIL,
+    CONF_REFRESH_TOKEN,
+    DOMAIN,
+    PLATFORMS,
+)
 from .coordinator import SinumHomeAssistantCoordinator
 from .entity import (
     async_assign_areas,
@@ -83,6 +91,16 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     await async_assign_areas(hass, entry, coordinator.data)
     area_signature = set(coordinator.data.area_names.items())
 
+    if coordinator.options.get(CONF_BRIDGE_ENABLED, True):
+        bridge = SinumBridge(hass, entry, client)
+        coordinator.bridge = bridge
+        try:
+            await bridge.async_start()
+        except Exception:
+            _LOGGER.exception("Cannot start Sinum bridge")
+            await bridge.async_stop()
+            coordinator.bridge = None
+
     def _handle_area_update() -> None:
         nonlocal area_signature
         signature = set(coordinator.data.area_names.items())
@@ -101,6 +119,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Unload a Sinum Home Assistant config entry."""
 
+    coordinator: SinumHomeAssistantCoordinator | None = entry.runtime_data
+    bridge = getattr(coordinator, "bridge", None)
+    if bridge is not None:
+        await bridge.async_stop()
     unloaded = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
     if unloaded:
         entry.runtime_data = None
