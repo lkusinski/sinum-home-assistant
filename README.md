@@ -1,257 +1,323 @@
 # Sinum Home Assistant
 
+<p align="center">
+  <img src="assets/banner.png" alt="Sinum Home Assistant Banner" width="800">
+</p>
+
 [![HACS Custom](https://img.shields.io/badge/HACS-Custom-41BDF5.svg)](https://hacs.xyz)
 [![Home Assistant](https://img.shields.io/badge/Home%20Assistant-2026.11%2B-18BCEE.svg)](https://www.home-assistant.io)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Validate](https://github.com/lkusinski/sinum-home-assistant/actions/workflows/validate.yml/badge.svg)](https://github.com/lkusinski/sinum-home-assistant/actions/workflows/validate.yml)
 
-**Sinum Home Assistant** to natywna integracja Home Assistant dla systemów
-grzewczych i automatyki domowej **Sinum** firmy **Tech Sterowniki**.
+**Sinum Home Assistant** to niezależna, zaawansowana integracja dla central i automatyki domowej **Sinum** firmy **TECH Sterowniki**.
 
-Integracja łączy się bezpośrednio z chmurą Sinum, automatycznie mapuje pokoje
-i urządzenia oraz tworzy natywne encje Home Assistant do sterowania klimatem,
-pogodą, przekaźnikami, diagnostyką i aktualizacjami firmware. Repozytorium
-zawiera też opcjonalny, event-driven most **Zigbee2MQTT/HA ↔ Sinum**,
-uruchamiany przez integrację. Wybór urządzeń odbywa się etykietą HA, a nie przez
-sztywne pokoje LAB.
+Integracja komunikuje się bezpośrednio z chmurą Sinum Cloud API, automatycznie mapuje pokoje 1:1 na obszary Home Assistant i udostępnia natywne encje klimatu, pogody, przekaźników, harmonogramów, diagnostyki oraz aktualizacji oprogramowania. Zawiera także wbudowany, działający asynchronicznie dwukierunkowy most **Home Assistant / Zigbee2MQTT ↔ Sinum** (`SinumBridge`), który pozwala prezentować i sterować urządzeniami z Home Assistant bezpośrednio w aplikacji i ekosystemie Sinum.
 
-![Sinum Home Assistant](assets/banner.png)
+---
 
-## Najważniejsze cechy
+## Spis treści
 
-- **Natywne encje klimatu** dla termostatów Sinum i regulatorów temperatury WTP.
-- **Temperatura bieżąca, temperatura docelowa i `hvac_action`** zgodne
-  ze standardowym modelem klimatu Home Assistant.
-- **Encja pogody z prognozą godzinną i dzienną** — temperatura, wilgotność,
-  ciśnienie, wiatr, indeks UV i irradiancja słoneczna.
-- **Encje aktualizacji firmware**, również dla urządzeń, których aktualizacja
-  jest dostępna w chmurze, ale nie jest widoczna w aplikacji.
-- **Obszary 1:1 z pokojami Sinum** — automatyczne przypisywanie pokoi,
-  kontrolerów, czujników, przekaźników i modułów systemowych.
-- **Harmonogramy termiczne** — temperatura docelowa i informacja o aktywnym
-  przedziale; temperatura zapasowa i liczba urządzeń w atrybutach.
-- **Przełączniki wolnych przekaźników**, encje stanu przekaźników zarządzanych
-  przez termostat oraz szeroki zestaw diagnostyki: sygnał, bateria, czas pracy,
-  adres IP, opóźnienie i kanał sieci.
-- **Konfiguracja przez UI** — bez YAML; opcje mostu: ekspozycja, etykieta `sinumbridge`, docelowy pokój Sinum.
-- **Most w integracji** — async HA event bus + Sinum REST/STOMP, bez zewnętrznych usług systemd.
-- **Uwierzytelnianie refresh tokenem** — hasło jest używane tylko podczas
-  konfiguracji lub ponownego uwierzytelnienia i nie jest zapisywane.
-- **Oszczędne odpytywanie chmury** — jeden cykl aktualizacji co 30 sekund
-  (integracja); most LAB działa event-driven, a 300 s to tylko reconciliation.
-- **Automatyczne wykrywanie nowych urządzeń** — dodanie urządzenia lub harmonogramu
-  w Sinum przeładowuje integrację i tworzy nowe encje.
-- **Most HA/Z2M → Sinum** — HA `state_changed` i Sinum STOMP/SockJS,
-  światła z `color_picker`, kontaktrony, bramy, moduł AC i statystyki Lua.
-- **Test bench LAB** — LAB Lukasz (11), LAB Działające (12) i LAB Wirtualne
-  (13) służą do walidacji; nie są docelowym ograniczeniem produktu.
+- [Główne możliwości](#główne-możliwości)
+- [Szczery stan integracji (Co działa, a czego brakuje)](#szczery-stan-integracji)
+- [Architektura integracji i mostu](#architektura-integracji-i-mostu)
+- [Instalacja](#instalacja)
+- [Konfiguracja](#konfiguracja)
+- [Encje i platformy](#encje-i-platformy)
+- [Dostępne usługi](#dostępne-usługi)
+- [Wbudowany most HA / Z2M ↔ Sinum](#wbudowany-most-ha--z2m--sinum)
+- [Dokumentacja szczegółowa](#dokumentacja-szczegółowa)
+- [Prawa autorskie i znaki towarowe](#prawa-autorskie-i-znaki-towarowe)
+- [English Documentation](#english)
 
-## Podgląd
+---
 
-![Podgląd dashboardu](assets/dashboard-preview.png)
+## Główne możliwości
+
+- **Natywne encje klimatu (`climate`)**: Pełna obsługa termostatów pokojowych i regulatorów WTP. Odczyt temperatury bieżącej, nastawa temperatury zadanej z krokiem 0.5 °C, tryby pracy HVAC oraz stan aktywności (`hvac_action`: grzanie / chłodzenie / bezczynność / wyłączone).
+- **Automatyczne obszary 1:1 z pokojami Sinum**: Każdy pokój zdefiniowany w centrali Sinum staje się obszarem (Area) w Home Assistant z automatycznie przypisanymi encjami temperatury i wilgotności.
+- **Kompletna stacja pogodowa (`weather` + sensory)**: Warunki bieżące oraz prognoza godzinowa i dzienna z centrali Sinum (temperatura, wilgotność, ciśnienie, prędkość wiatru, indeks UV, promieniowanie słoneczne).
+- **Bezpieczne sterowanie przekaźnikami**:
+  - Wolne wyjścia przekaźnikowe centrali jako przełączniki (`switch`).
+  - Przekaźniki przypisane do stref termostatów są bezpiecznie wystawiane jako sensory dwustanowe (`binary_sensor`) i atrybuty diagnostyczne (`relay_ids`, `relay_states`, `relay_last_changes`), chroniąc instalację przed konfliktami ze sterownikiem Sinum.
+- **Monitoring aktualizacji firmware (`update`)**: Encje aktualizacji dla centrali, sterowników, transceiverów i modułów rozszerzeń (wykrywa również wersje dostępne w chmurze, niewidoczne jeszcze w aplikacji mobilnej).
+- **Harmonogramy termiczne**: Odczyt aktualnej nastawy z aktywnego harmonogramu, stan aktywności oraz temperatura zapasowa w atrybutach.
+- **Wbudowany most dwukierunkowy (`SinumBridge`)**: Działa wewnątrz integracji na pętli zdarzeń Home Assistant. Umożliwia wystawienie żarówek (włącz/wyłącz, jasność, RGB, barwa biała Kelvin), kontaktronów, bram, czujników temp/wilgotności oraz klimatyzacji AC do aplikacji Sinum.
+- **Komunikacja push w czasie rzeczywistym**: Most wykorzystuje strumień WebSocket STOMP/SockJS w chmurze Sinum — zmiany z aplikacji Sinum trafiają do Home Assistant w ułamku sekundy (< 1 s).
+- **Bezpieczne uwierzytelnianie**: Hasło do konta Sinum jest używane wyłącznie jednorazowo podczas konfiguracji do pobrania tokenów. W konfiguracji zapisywany jest wyłącznie `refresh_token`, a tokeny dostępowe odnawiają się automatycznie w pamięci.
+
+---
+
+## Szczery stan integracji
+
+Poniższa macierz przedstawia rzeczywisty, rzetelny stan wdrożenia — bez koloryzowania. Rozróżniamy to, co zostało zweryfikowane na fizycznym sprzęcie w działającej instalacji domowej, co sprawdzono na laboratoryjnej ławce testowej, a co stanowi ograniczenie lub plan na przyszłość.
+
+| Funkcja / Komponent | Status | Środowisko weryfikacji | Szczegóły i uwagi |
+|---|:---:|---|---|
+| **Chmura Sinum Cloud API & OAuth2** | ✅ Przetestowane | Fizyczny sprzęt (Bursztynowa 7) | Logowanie, odnawianie `refresh_token`, obsługa błędów sieci i restartów. |
+| **Obszary (Areas) 1:1 z pokojami Sinum** | ✅ Przetestowane | Fizyczny sprzęt (Bursztynowa 7) | 9 pokoi zmapowanych automatycznie, przypięte sensory temp/wilgotności. |
+| **Termostaty pokojowe i WTP (`climate`)** | ✅ Przetestowane | Fizyczny sprzęt (Bursztynowa 7) | Odczyt temp, nastawa zadana (krok 0.5 °C), `hvac_action` (heating/idle/off). |
+| **Stacja pogodowa & prognoza (`weather`)** | ✅ Przetestowane | Fizyczny sprzęt (Bursztynowa 7) | Warunki bieżące, prognoza godzinowa i dzienna, indeks UV, ciśnienie, wiatr. |
+| **Wolne przekaźniki centrali (`switch`)** | ✅ Przetestowane | Fizyczny sprzęt (Bursztynowa 7) | Sterowanie ON/OFF wolnymi wyjściami przekaźnikowymi centrali. |
+| **Przekaźniki termostatów (strefowe)** | ✅ Przetestowane | Fizyczny sprzęt (Bursztynowa 7) | Wyłącznie odczyt jako `binary_sensor` + atrybuty. Chmura Sinum odrzuca bezpośrednie przełączanie. |
+| **Aktualizacje firmware (`update`)** | ✅ Przetestowane | Fizyczny sprzęt (Bursztynowa 7) | Odczyt wersji zainstalowanej i najnowszej w chmurze. Fizyczna instalacja z aplikacji Sinum. |
+| **Harmonogramy termiczne** | ✅ Przetestowane | Fizyczny sprzęt (Bursztynowa 7) | Encje sensora temperatury harmonogramu i binary_sensor aktywności. |
+| **Most: Żarówki Z2M/HA (`color_picker`)** | ✅ Przetestowane | Fizyczny sprzęt (Wiśniowa 9 / B7) | Dwukierunkowe sterowanie: on/off, jasność, kolor RGB, temperatura barwowa (Kelvin). |
+| **Most: Kontaktrony drzwi/okien** | ✅ Przetestowane | Fizyczny sprzęt (Wiśniowa 9 / B7) | Zmiana stanu w HA aktualizuje widget tekstowy w Sinum (`Otwarte`/`Zamknięte`). |
+| **Most: Brama garażowa (impulsowa)** | ✅ Przetestowane | Fizyczny sprzęt (Wiśniowa 9 / B7) | Sterowanie impulsem, obsługa odwróconego czujnika zamknięcia (`invert: true`). |
+| **Most: Sensory temperatury i wilgotności** | ✅ Przetestowane | Fizyczny sprzęt (Wiśniowa 9 / B7) | Wartość numeryczna w chmurze + formatowany element tekstowy w UI Sinum. |
+| **Most: Push WebSocket STOMP/SockJS** | ✅ Przetestowane | Fizyczny sprzęt (Bursztynowa 7) | Zdarzenia z Sinum trafiają do HA w ~0.45–0.9 s; eliminacja pętli zwrotnych (echo). |
+| **Wirtualne urządzenia natywne Sinum** | 🧪 LAB Bench | Wirtualna centrala / LAB | Wirtualny termostat, brama, furtka, heat pump manager, integratory rolet i dimmerów. |
+| **Moduł klimatyzacji AC (`ac_module`)** | 🧪 LAB Bench | Moduł Lua w LAB Wirtualne | Dwukierunkowe mapowanie z encją `climate` w HA (tryby auto/cool/heat/fan/dry, nastawa). |
+| **32 moduły rozszerzeń Lua Sinum** | 🧪 LAB Bench | Moduły Lua w LAB Wirtualne | Moduły przekaźników, ściemniaczy, RGB, liczników energii/wody, czujników CO2/IAQ/jakości powietrza. |
+| **Wszystkie 11 kontrolek UI Sinum** | 🧪 LAB Bench | Wirtualna centrala / LAB | `text`, `switcher`, `progress_bar`, `slider`, `button`, `combo_box`, `device_selector`, `schedule_selector`, `time_picker`, `date_picker`, `color_picker`. |
+| **Statystyki InfluxDB dla custom devices** | 🧪 LAB Bench | Wirtualna centrala / LAB | Wstrzykiwanie kodu Lua `statistics:addPoint` generuje punkty pomiarowe dla wykresów w Sinum. |
+| **Lokalne API LAN centrali Sinum** | ❌ Brak w API | Ograniczenie producenta | Centrala Sinum nie udostępnia lokalnego portu REST API w LAN. Integracja działa w 100% przez chmurę. |
+| **Kamery RTSP / NVR w Sinum** | ❌ Nieobsługiwane | Ograniczenie chmury Sinum | API chmury Sinum zwraca błąd `422 NvrDeviceNotFound` przy próbie dodania wirtualnego strumienia RTSP. |
+| **Rolety i żaluzje (Cover) z HA w Sinum** | ❌ Brak typu | Ograniczenie wirtualnych urządzeń | Sinum nie posiada wariantu wirtualnego urządzenia dla rolet. Integrator rolet działa tylko ze sprzętem TECH. |
+| **Status online dla custom sensorów** | ⚠️ Ograniczenie UI | Kosmetyczne zachowanie Sinum | Wirtualne sensory w Sinum zgłaszają stan `unknown` na liście urządzeń, mimo że ich widgety i wartości działają. |
+| **Bramy jako przycisk monostabilny** | ⚠️ Do ulepszenia | Wdrożone jako switch | Most symuluje przycisk poprzez przełącznik wysyłający impuls, a nie natywny momentary button. |
+
+---
+
+## Architektura integracji i mostu
+
+Integracja łączy dwie warstwy komunikacji:
+
+```mermaid
+flowchart TD
+    subgraph Home_Assistant ["Home Assistant Core (Python Async)"]
+        Coordinator["Sinum Coordinator\n(Polling 30 s)"]
+        HA_Entities["Encje HA\n(climate, weather, sensor, binary_sensor, switch, update)"]
+        HA_Bus["HA Event Bus\n(state_changed)"]
+        Bridge["SinumBridge\n(async lifecycle)"]
+    end
+
+    subgraph Sinum_Cloud ["Chmura Sinum (backend.prd.sinum24.com)"]
+        OAuth["OAuth2 Server\n(/oauth/token)"]
+        REST_API["REST Proxy API\n(/proxy/devices, /rooms, /weather)"]
+        STOMP_WS["WebSocket SockJS/STOMP\n(/topic/{deviceId})"]
+    end
+
+    subgraph Hardware ["Fizyczna Instalacja"]
+        Hub["Centrala Sinum\n(Bursztynowa 7)"]
+        Thermostats["Termostaty WTP\n& Siłowniki grzewcze"]
+        Z2M_Devices["Urządzenia Zigbee2MQTT\n(Światła, Bramy, Kontaktrony)"]
+    end
+
+    Coordinator -->|GET /rooms, /devices, /weather| REST_API
+    Coordinator --> HA_Entities
+    HA_Entities -->|PATCH zadana temperatura, switch| REST_API
+    OAuth -.->|Access & Refresh Token| Coordinator
+
+    HA_Bus -->|Etykieta sinumbridge| Bridge
+    Bridge -->|PATCH wirtualne urządzenia / elementy| REST_API
+    STOMP_WS -->|Zdarzenia w czasie rzeczywistym| Bridge
+    Bridge -->|Wywołanie usług HA| HA_Bus
+
+    REST_API <--> Hub
+    Hub <--> Thermostats
+    Z2M_Devices <--> HA_Bus
+```
+
+1. **Sinum → Home Assistant**:
+   - Coordinator odpytuje chmurę Sinum w konfigurowalnym interwale (domyślnie 30 s).
+   - Generuje i aktualizuje stan encji klimatu, pogody, przekaźników i sensorów.
+   - Odpowiedzi są filtrowane pod kątem urządzeń oznaczonych `integration_uid: z2m-bridge`, dzięki czemu wirtualne urządzenia mostu nie tworzą zapętlonych duplikatów w Home Assistant.
+2. **Home Assistant ↔ Sinum (Most `SinumBridge`)**:
+   - Wybiera encje oznaczone etykietą w Home Assistant (domyślnie **`sinumbridge`**, z zachowaniem wstecznej kompatybilności dla etykiety `sinum`).
+   - Reaguje na zdarzenia `state_changed` na magistrali Home Assistant i natychmiast wysyła polecenia REST/PATCH do wirtualnych odpowiedników w chmurze Sinum.
+   - Utrzymuje asynchroniczne połączenie WebSocket STOMP/SockJS z chmurą Sinum. Zmiany wykonane przez użytkownika w aplikacji Sinum natychmiast wywołują odpowiednie usługi w Home Assistant.
+   - Posiada mechanizm tłumienia echa (`echo suppression`), zapobiegający pętlom sprzężenia zwrotnego pomiędzy systemami.
+
+---
 
 ## Instalacja
 
-### HACS (zalecane)
+### HACS (Rekomendowane)
 
-1. Otwórz **HACS → Integracje**.
-2. Z menu wybierz **Repozytoria niestandardowe**.
-3. Dodaj `https://github.com/lkusinski/sinum-home-assistant` jako **Integrację**.
-4. Wyszukaj **Sinum Home Assistant**, zainstaluj i uruchom ponownie Home Assistant.
-5. Przejdź do **Ustawienia → Urządzenia i usługi → Dodaj integrację →
-   Sinum Home Assistant**.
+1. Upewnij się, że masz zainstalowany **HACS** w Home Assistant.
+2. Przejdź do **HACS → Integracje**.
+3. Kliknij menu w prawym górnym rogu (trzy kropki) i wybierz **Niestandardowe repozytoria**.
+4. Wklej adres repozytorium:
+   ```text
+   https://github.com/lkusinski/sinum-home-assistant
+   ```
+5. Wybierz kategorię **Integracja** i kliknij **Dodaj**.
+6. Wyszukaj **Sinum Home Assistant**, kliknij **Pobierz** i zrestartuj Home Assistant.
+7. Po restarcie przejdź do **Ustawienia → Urządzenia i usługi → Dodaj integrację** i wybierz **Sinum Home Assistant**.
 
 [![Otwórz w HACS](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=lkusinski&repository=sinum-home-assistant&category=integration)
 
 ### Instalacja ręczna
 
-Skopiuj katalog `custom_components/sinum_home_assistant` do
-`config/custom_components/` w Home Assistant, a następnie uruchom ponownie HA.
+1. Pobierz najnowsze wydanie z zakładki [Releases](https://github.com/lkusinski/sinum-home-assistant/releases).
+2. Skopiuj katalog `custom_components/sinum_home_assistant` do folderu `config/custom_components/` w Twojej instalacji Home Assistant.
+3. Zrestartuj Home Assistant.
+4. Przejdź do **Ustawienia → Urządzenia i usługi → Dodaj integrację** i wyszukaj **Sinum Home Assistant**.
+
+---
 
 ## Konfiguracja
 
-Potrzebujesz:
+W kreatorze konfiguracji (UI) podaj:
 
-- adresu e-mail i hasła do konta Sinum, do którego należy centrala;
-- **cloud device ID** (`uid`) centrali Sinum.
+1. **Adres e-mail** i **hasło** do konta w aplikacji Sinum.
+2. **Identyfikator centrali w chmurze (`uid`)** — znajdziesz go w aplikacji mobilnej Sinum w szczegółach centrali lub w menu ustawień zaawansowanych.
 
-Cloud device ID znajdziesz w aplikacji Sinum lub w ustawieniach centrali.
-Integracja zapisuje wyłącznie adres e-mail, device ID i refresh token. Hasło
-nie jest przechowywane.
+> [!NOTE]
+> Hasło jest wykorzystywane wyłącznie jednorazowo w procesie OAuth2. W konfiguracji Home Assistant przechowywany jest wyłącznie token odświeżania (`refresh_token`).
 
-### Opcje
+### Dostępne opcje integracji
 
-| Opcja | Domyślnie | Opis |
-|---|---:|---|
-| Interwał odpytywania | 30 s | Zakres 15–300 sekund. |
-| Pogoda | włączona | Dodaje encję pogody i prognozę. |
-| Moduły systemowe | włączone | Dodaje diagnostykę extenderów i transceiverów. |
-| Harmonogramy | włączone | Dodaje harmonogramy termiczne i ich stan. |
+W dowolnym momencie możesz zmienić ustawienia integracji w **Ustawienia → Urządzenia i usługi → Sinum Home Assistant → Konfiguruj**:
 
-Zmiana opcji przeładowuje integrację. Wyłączenie pogody lub modułów systemowych
-usuwa powiązane encje z rejestru; ponowne włączenie odtwarza je z tymi samymi
-identyfikatorami.
+| Opcja | Domyślnie | Zakres | Opis |
+|---|:---:|:---:|---|
+| **Interwał odpytywania chmury** | `30 s` | 15–300 s | Częstotliwość pełnego cyklu odczytu stanu urządzeń z chmury Sinum. |
+| **Włącz stację pogodową** | `Włączona` | Tak / Nie | Tworzy encję pogody oraz czujniki wiatru, ciśnienia, UV i nasłonecznienia. |
+| **Włącz moduły systemowe** | `Włączona` | Tak / Nie | Dodaje diagnostykę extenderów, transceiverów i modułów radiowych. |
+| **Włącz harmonogramy** | `Włączona` | Tak / Nie | Dodaje encje harmonogramów ogrzewania i ich bieżącego stanu. |
+| **Włącz most do Sinum** | `Włączony` | Tak / Nie | Uruchamia asynchroniczny most `SinumBridge` dla wybranych urządzeń HA. |
+| **Etykieta urządzeń mostu** | `sinumbridge` | Tekst | Urządzenia i encje HA oznaczone tą etykietą będą synchronizowane z Sinum. |
+| **Domyślny pokój Sinum dla mostu** | `0` | Liczba ID | ID pokoju Sinum, do którego trafiają nowo tworzone wirtualne urządzenia (`0` = bez przypisania). |
 
-## Encje
+---
 
-W typowej instalacji powstają:
+## Encje i platformy
 
-| Platforma | Przykłady |
-|---|---|
-| `climate` | Termostaty pokojowe i regulatory temperatury WTP |
-| `weather` | Warunki bieżące oraz prognoza godzinowa i dzienna |
-| `sensor` | Temperatura, wilgotność, bateria, sygnał, IP, opóźnienie, firmware |
-| `binary_sensor` | Kontakt okna, grzanie/chłodzenie, ostrzeżenia, stan przekaźnika |
-| `switch` | Wolne wyjścia przekaźnikowe |
-| `update` | Firmware centrali, kontrolerów, extenderów i urządzeń |
-| `sensor`/`binary_sensor` | Harmonogramy: temperatura docelowa i aktywność; zapasowa/liczba urządzeń w atrybutach |
+Integracja udostępnia następujące platformy:
 
-Przekaźniki zarządzane przez termostat wirtualny są **tylko do odczytu** —
-chmura Sinum nie pozwala sterować nimi bezpośrednio. Są widoczne jako
-`binary_sensor` „Stan przekaźnika”. Wolne przekaźniki działają jako switche.
+- **`climate`**: Termostaty pokojowe Sinum oraz regulatory WTP.
+  - Sterowanie temperaturą zadaną (krok 0.5 °C).
+  - Odczyt temperatury bieżącej.
+  - Informacja o trybie pracy (`hvac_action`: heating / cooling / idle / off).
+  - W atrybutach: przypisane przekaźniki grzewcze, ich stany oraz wiek ostatniej zmiany.
+- **`weather`**: Pełna prognoza pogody dla lokalizacji centrali.
+  - Stan bieżący, prognoza godzinowa i prognoza dzienna.
+- **`sensor`**: Temperatura, wilgotność, poziom baterii, jakość sygnału radiowego, czasy pracy centrali, adres IP, opóźnienie sieciowe, harmonogramy.
+- **`binary_sensor`**: Stan otwarcia okien (kontaktrony), stan aktywności grzania/chłodzenia, osiągnięcie temperatury docelowej, ostrzeżenia systemowe oraz bezpieczny stan przekaźników strefowych.
+- **`switch`**: Niezależne, wolne wyjścia przekaźnikowe centrali Sinum.
+- **`update`**: Dostępność aktualizacji oprogramowania dla centrali i urządzeń podrzędnych.
 
-Identyfikatory encji tworzone są z nazwy pokoju, urządzenia i właściwości.
-Obszary i urządzenia są tworzone automatycznie.
+---
 
-## Most Z2M → Sinum
+## Dostępne usługi
 
-Most jest częścią integracji i działa w jej lifecycle:
+Integracja rejestruje następujące usługi w Home Assistant:
 
-- `custom_components/sinum_home_assistant/bridge.py` — async mapper, HA event
-  bus, Sinum REST oraz strumień STOMP/SockJS w obie strony.
-- Mapowanie jest zapisywane w HA storage i może zostać zaimportowane z
-  `bridge/mapping.json` przy pierwszym uruchomieniu.
-- Skrypty `bridge/event_worker.py`, `bridge/z2m_to_sinum.py` i
-  `bridge/map_z2m.py` pozostają jako legacy/reference; nie są wymagane.
+### 1. `sinum_home_assistant.set_virtual_temperature`
+Wysyła wartość temperatury z Home Assistant do wirtualnego czujnika temperatury w Sinum. Umożliwia przekazanie pomiaru z dowolnego sensora Zigbee, BLE, ESPHome lub encji pomocniczej do sterownika Sinum.
 
-Most obsługuje światła `generic` + `color_picker` (on/off, jasność, RGB,
-temperatura barwowa), kontaktrony, przekaźniki/bramy, sensory temperatury i
-wilgotności, wartości analogowe, energię, baterię oraz moduł AC
-`custom_device_module`. Szczegóły:
-[docs/BRIDGE-Z2M.md](docs/BRIDGE-Z2M.md) i
-[docs/SINUM-LUA-MODULES.md](docs/SINUM-LUA-MODULES.md).
+```yaml
+action: sinum_home_assistant.set_virtual_temperature
+data:
+  device_id: 124
+  temperature: 21.8
+```
 
-Wybór odbywa się etykietą HA (domyślnie **`sinumbridge`**, legacy `sinum`).
-Obecny test używa pokoi **LAB Lukasz (11)**, **LAB Działające (12)** i
-**LAB Wirtualne (13)**; produkcyjne HA Wiśniowa 9 jest tylko źródłem odczytu.
+### 2. `sinum_home_assistant.refresh`
+Wymusza natychmiastowe odpytanie chmury Sinum przez koordynatora, bez oczekiwania na upływ 30-sekundowego interwału.
 
-## Wymagania
+```yaml
+action: sinum_home_assistant.refresh
+```
 
-- Home Assistant **2026.11** lub nowszy.
-- Konto Sinum z dostępem do chmury.
-- Dostęp do internetu i `backend.prd.sinum24.com`.
+---
 
-## Prywatność
+## Wbudowany most HA / Z2M ↔ Sinum
 
-Integracja komunikuje się wyłącznie z endpointami chmury Sinum potrzebnymi do
-odczytu stanu urządzeń i wysyłania poleceń sterujących. Przechowuje adres
-e-mail, cloud device ID i refresh token w config entry Home Assistant. Hasło nie
-jest zapisywane. Dane nie są wysyłane do żadnych innych usług.
+Most `SinumBridge` rozwiązuje częsty problem: jak w jednej aplikacji Sinum kontrolować zarówno ogrzewanie TECH, jak i żarówki, kontaktrony czy bramy podłączone do Home Assistant / Zigbee2MQTT.
 
-Szczegóły: [docs/PRIVACY.md](docs/PRIVACY.md).
+### Jak dodać urządzenie do mostu?
+1. Otwórz Home Assistant i przejdź do rejestru urządzeń lub encji (**Ustawienia → Urządzenia i usługi → Urządzenia/Encje**).
+2. Dodaj etykietę **`sinumbridge`** do urządzenia lub encji, którą chcesz widzieć w Sinum.
+3. Most automatycznie utworzy odpowiednie wirtualne urządzenie w chmurze Sinum i rozpocznie dwukierunkową synchronizację stanu.
 
-## Rozwiązywanie problemów
+### Obsługiwane typy urządzeń w moście:
 
-- **Nieprawidłowy e-mail lub hasło** — sprawdź dane konta Sinum.
-- **Nieprawidłowy cloud device ID** — skopiuj `uid` z aplikacji lub ustawień centrali.
-- **Brak połączenia** — sprawdź internet i dostępność chmury Sinum.
-- **Część czujników ma stan `unknown`** — puste pola sieciowe transceiverów są
-  normalne.
-- **Nazwy encji różnią się od aplikacji** — Home Assistant używa nazw pokoju
-  i urządzenia; encje można zmienić w UI.
+| Typ w HA | Wariant Sinum | Elementy UI Sinum | Obsługiwane funkcje |
+|---|---|---|---|
+| **Światło (`light`)** | `generic` | `color_picker` | Włącz/Wyłącz, Jasność (0–100%), Kolor RGB, Barwa biała (Kelvin). |
+| **Kontaktron (`binary_sensor`)** | `two_state_input_sensor` | `text` | Stan otwarcia (`Otwarte` / `Zamknięte`), obsługa inwersji. |
+| **Brama garażowa / wjazdowa** | `gate` (wirtualna) / `relay` | `switcher` / status | Impuls sterujący, monitorowanie stanu otwarcia/zamknięcia. |
+| **Temperatura (`sensor`)** | `temperature_sensor` | `text` (tekst-default) | Wartość numeryczna + czytelny format np. `21.4 °C`. |
+| **Wilgotność (`sensor`)** | `humidity_sensor` | `text` (tekst-default) | Wartość numeryczna + czytelny format np. `55.0 %`. |
+| **Wielkości analogowe (moc, energia, bateria)** | `analog_input` / `energy_meter` | Wartości wariantu | Jednostki dopasowane automatycznie (W, kWh, %, V). |
+| **Klimatyzator (`climate`)** | `custom_device_module` | Moduł AC | Tryby pracy (auto, chłodzenie, grzanie, wentylator, osuszanie), nastawa temperatury. |
 
-Więcej: [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md).
+---
 
-## Dokumentacja
+## Dokumentacja szczegółowa
 
-- [Instalacja i konfiguracja](docs/INSTALL.md)
-- [Opcje integracji](docs/CONFIGURATION.md)
-- [Opis encji](docs/ENTITIES.md)
-- [Rozwiązywanie problemów](docs/TROUBLESHOOTING.md)
-- [Rozwój integracji](docs/DEVELOPMENT.md)
-- [Etykiety i klasyfikacja](docs/LABELS.md)
-- [Usługi](docs/SERVICES.md)
-- [Prywatność](docs/PRIVACY.md)
-- [Most Z2M → Sinum](docs/BRIDGE-Z2M.md)
-- [Moduły Lua Sinum](docs/SINUM-LUA-MODULES.md)
-- [Stan projektu i plan refactoru](docs/PROJECT-STATE.md)
+Więcej informacji technicznych i poradników znajduje się w katalogu `docs/`:
+
+- [Instalacja krok po kroku](docs/INSTALL.md)
+- [Szczegółowa konfiguracja opcji](docs/CONFIGURATION.md)
+- [Katalog encji i atrybutów](docs/ENTITIES.md)
+- [Architektura mostu Z2M ↔ Sinum](docs/BRIDGE-Z2M.md)
+- [Moduły rozszerzeń Lua w Sinum](docs/SINUM-LUA-MODULES.md)
+- [Rozwiązywanie problemów (Troubleshooting)](docs/TROUBLESHOOTING.md)
+- [Polityka prywatności i bezpieczeństwa danych](docs/PRIVACY.md)
+- [Klasyfikacja encji i zalecane etykiety](docs/LABELS.md)
+- [Stan techniczny projektu i roadmapa](docs/PROJECT-STATE.md)
+
+---
 
 ## Prawa autorskie i znaki towarowe
 
-Copyright © 2026 **Tech Sterowniki**. Szczegóły: [LICENSE](LICENSE)
-i [NOTICE.md](NOTICE.md).
-
-Sinum i Tech Sterowniki są znakami towarowymi Tech Sterowniki. Pozostałe nazwy
-produktów i znaki towarowe należą do ich właścicieli.
-
-Repozytorium zawiera niezależną integrację Home Assistant. Nie jest oficjalnym
-wydaniem Tech Sterowniki, chyba że zostało opublikowane przez Tech Sterowniki.
+- Kod integracji jest udostępniany na licencji **MIT License** — Copyright © 2026 **Łukasz Kusiński**. Zobacz [LICENSE](LICENSE).
+- Nazwy **Sinum** oraz **TECH Sterowniki** są zarejestrowanymi znakami towarowymi firmy **TECH Sterowniki Sp. z o.o.**
+- Ten projekt jest niezależną, społecznościową integracją Home Assistant i nie jest oficjalnym produktem firmy TECH Sterowniki Sp. z o.o.
 
 ---
 
 ## English
 
-**Sinum Home Assistant** is a native Home Assistant integration for **Sinum**
-heating and home automation systems by **Tech Sterowniki**.
+**Sinum Home Assistant** is a native, comprehensive Home Assistant integration for **Sinum** heating and home automation systems manufactured by **TECH Sterowniki**.
 
-It connects directly to the Sinum cloud, discovers rooms and devices, and creates
-native Home Assistant entities for climate, weather, relays, diagnostics and
-firmware updates. The repository also contains an optional event-driven
-**Zigbee2MQTT/HA ↔ Sinum bridge** for private LAB rooms.
+It connects directly to the Sinum Cloud API, maps rooms 1:1 to Home Assistant Areas, and provides native entities for climate control, weather monitoring, relay management, schedules, diagnostics, and firmware updates. It also includes an asynchronous, real-time bidirectional **Home Assistant / Zigbee2MQTT ↔ Sinum bridge** (`SinumBridge`), enabling you to view and control your Home Assistant devices directly from the Sinum mobile app.
 
-### Highlights
+### Key Features
 
-- Native climate entities for Sinum thermostats and WTP temperature regulators.
-- Current temperature, target temperature and HVAC action.
-- Weather entity with hourly and daily forecasts.
-- Firmware update entities, including cloud-only updates.
-- Areas mapped 1:1 to Sinum rooms.
-- Thermal schedules with current target and activity; fallback/details in attributes.
-- Switches for free relays and read-only state sensors for thermostat-managed relays.
-- Config flow and options flow — no YAML required.
-- Refresh-token authentication; the password is never stored.
-- Conservative cloud polling every 30 seconds for the integration; the LAB
-  bridge is event-driven with a 300 s reconciliation fallback.
-- Automatic reload when new devices, parents or schedules are added.
-- Configurable bridge direction and entity selection; LAB rooms 11–13 are the
-  current test deployment, not a product limitation. Lights, contacts, gates,
-  AC module and Lua statistics are supported.
+- **Native Climate Entities**: Room thermostats and WTP temperature regulators with 0.5 °C setpoint control, current temperature tracking, HVAC modes, and heating/cooling action states (`hvac_action`).
+- **Automatic 1:1 Area Mapping**: Sinum rooms are mirrored as Home Assistant Areas with temperature and humidity entities assigned automatically.
+- **Weather Station & Forecasts**: Hourly and daily weather forecasts, solar irradiance, UV index, wind speed, atmospheric pressure, and humidity.
+- **Safe Relay Management**: Free relay outputs are exposed as switches; thermostat-controlled heating relays are exposed as read-only binary sensors and diagnostic attributes to prevent equipment damage and conflicting logic.
+- **Firmware Update Tracking**: Monitors available firmware updates for the hub, parent controllers, repeaters, and transceivers directly from the cloud.
+- **Built-in Async Bridge (`SinumBridge`)**: Bridges Zigbee2MQTT lights (RGB, color temperature in Kelvin, brightness), door/window contacts, impulse garage gates, environmental sensors, and AC modules into Sinum using standard Home Assistant device labels (default: `sinumbridge`).
+- **Real-Time Push via WebSocket**: The bridge listens to real-time Sinum cloud STOMP/SockJS events (< 1 s latency) with built-in echo suppression.
+- **Secure OAuth2 Authentication**: Passwords are used only once during initial setup; only the `refresh_token` is stored, and access tokens rotate in memory automatically.
+
+### Honest Implementation Status
+
+| Feature / Platform | Status | Verified In | Details |
+|---|:---:|---|---|
+| **Sinum Cloud API & OAuth2** | ✅ Verified | Physical hardware | Automatic token refresh, network reconnects, and session recovery. |
+| **Room 1:1 Area Mapping** | ✅ Verified | Physical hardware | 9 rooms mapped with assigned temperature/humidity sensors. |
+| **Thermostats & WTP Regulators** | ✅ Verified | Physical hardware | Setpoint adjustments (0.5 °C steps), current temperature, `hvac_action`. |
+| **Weather & Daily Forecast** | ✅ Verified | Physical hardware | Current conditions, hourly/daily forecasts, UV index, pressure, wind. |
+| **Free Relay Switches** | ✅ Verified | Physical hardware | Reliable ON/OFF switching of unassigned physical relay outputs. |
+| **Thermostat-Assigned Relays** | ✅ Verified | Physical hardware | Read-only state sensors & attributes; cloud API rejects direct overrides. |
+| **Firmware Update Sensors** | ✅ Verified | Physical hardware | Cloud version detection. Installation triggered via Sinum mobile app. |
+| **Bridge: Zigbee Lights (`color_picker`)** | ✅ Verified | Physical hardware | Bidirectional: on/off, brightness, RGB colors, Kelvin white temperatures. |
+| **Bridge: Door/Window Contacts** | ✅ Verified | Physical hardware | Real-time state updates in Sinum text elements (`Open` / `Closed`). |
+| **Bridge: Impulse Garage Gate** | ✅ Verified | Physical hardware | Pulse command triggers with inverted close-status contact support. |
+| **Bridge: Temp / Humidity Sensors** | ✅ Verified | Physical hardware | Numeric values and human-readable text representations in Sinum UI. |
+| **Bridge: Real-Time WebSocket Push** | ✅ Verified | Physical hardware | Sub-second latency (~0.45–0.9 s) with bidirectional echo suppression. |
+| **Native Virtual Devices** | 🧪 LAB Bench | Virtual testbed | Virtual thermostats, gates, wickets, heat pump managers, blind integrators. |
+| **AC Climate Module (`ac_module`)** | 🧪 LAB Bench | Virtual testbed | Bidirectional mapping to HA `climate` (auto/cool/heat/fan/dry modes). |
+| **32 Sinum Lua Modules** | 🧪 LAB Bench | Virtual testbed | Validated modules for dimmers, meters, pumps, inverters, and EV chargers. |
+| **11 Sinum UI Element Types** | 🧪 LAB Bench | Virtual testbed | All custom UI controls rendered and tested against cloud REST endpoints. |
+| **InfluxDB Statistics Injection** | 🧪 LAB Bench | Virtual testbed | Lua `statistics:addPoint` scripts generate historical graphs in Sinum. |
+| **Local LAN API** | ❌ Unavailable | Manufacturer design | The Sinum hub has no open local LAN API. Cloud connectivity is required. |
+| **RTSP / NVR Video in Sinum** | ❌ Unsupported | Cloud API limitation | Cloud API returns `422 NvrDeviceNotFound` for virtual generic RTSP cameras. |
+| **Covers / Blinds from HA to Sinum** | ❌ Unsupported | Virtual device limitation | Sinum has no virtual variant for covers or blinds. |
+| **Online Status on Custom Sensors** | ⚠️ Cosmetic | Sinum UI behavior | Virtual custom sensors report `unknown` status in Sinum UI, though values work. |
+| **Gates as Monostable Buttons** | ⚠️ Roadmap | Implemented as switch | Currently triggered via a pulse switch rather than a native monostable button. |
 
 ### Installation
 
-1. Add `https://github.com/lkusinski/sinum-home-assistant` as a custom
-   **Integration** repository in HACS.
-2. Install **Sinum Home Assistant** and restart Home Assistant.
-3. Open **Settings → Devices & Services → Add Integration → Sinum Home Assistant**.
-4. Enter the Sinum account e-mail, password and cloud device ID.
-
-### Requirements
-
-- Home Assistant **2026.11** or newer.
-- A Sinum account with cloud access.
-- Internet access to `backend.prd.sinum24.com`.
-
-### Documentation
-
-- [Installation](docs/INSTALL.md)
-- [Configuration](docs/CONFIGURATION.md)
-- [Entities](docs/ENTITIES.md)
-- [Troubleshooting](docs/TROUBLESHOOTING.md)
-- [Development](docs/DEVELOPMENT.md)
-- [Labels and classification](docs/LABELS.md)
-- [Services](docs/SERVICES.md)
-- [Privacy](docs/PRIVACY.md)
-- [Z2M → Sinum bridge](docs/BRIDGE-Z2M.md)
-- [Sinum Lua modules](docs/SINUM-LUA-MODULES.md)
-- [Project state and refactor plan](docs/PROJECT-STATE.md)
-
-### Copyright and trademarks
-
-Copyright © 2026 **Tech Sterowniki**. See [LICENSE](LICENSE) and
-[NOTICE.md](NOTICE.md).
-
-Sinum and Tech Sterowniki are trademarks of Tech Sterowniki. All other product
-names and trademarks are the property of their respective owners.
-
-This repository is an independent Home Assistant integration. It is not an
-official Tech Sterowniki release unless published by Tech Sterowniki.
+1. Add `https://github.com/lkusinski/sinum-home-assistant` as a custom repository in **HACS → Integrations**.
+2. Download **Sinum Home Assistant** and restart Home Assistant.
+3. Navigate to **Settings → Devices & Services → Add Integration** and select **Sinum Home Assistant**.
+4. Enter your Sinum account credentials and cloud device ID (`uid`).

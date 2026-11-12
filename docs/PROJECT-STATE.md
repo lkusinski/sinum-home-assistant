@@ -1,6 +1,6 @@
 # Project state and refactor plan
 
-Last updated: 2026-11-12 17:40 CET (Europe/Warsaw)
+Last updated: 2026-11-12 21:40 CET (Europe/Warsaw)
 
 This document is the hand-off snapshot for the current work. It separates the
 Home Assistant integration from the experimental Z2M/HA bridge and records the
@@ -11,7 +11,7 @@ planned refactor. No credentials belong in this file.
 ### Home Assistant integration
 
 - Domain: `sinum_home_assistant`
-- Manifest version: `1.2.0`
+- Manifest version: `1.2.1`
 - Source: `custom_components/sinum_home_assistant/`
 - Direction: **Sinum → Home Assistant** (cloud polling, one coordinator).
 - Main building blocks:

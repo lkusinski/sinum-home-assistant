@@ -1,126 +1,51 @@
-# Bridge HA / Zigbee2MQTT → Sinum — wdrożenie i model docelowy
+# Most Home Assistant / Zigbee2MQTT ↔ Sinum (SinumBridge)
 
-Cel: pokazać wybrane urządzenia z produkcyjnego HA (Zigbee2MQTT) w Sinum,
-w pokojach **LAB Lukasz** (11), **LAB Działające** (12) i **LAB Wirtualne**
-(13) jako środowisku testowym, bez modyfikowania produkcyjnego HA. Pokoje LAB
-nie są docelowym ograniczeniem architektury.
+Celem mostu jest udostępnienie wybranych urządzeń z Home Assistant (np. Zigbee2MQTT, ESPHome, Z-Wave, Shelly) w ekosystemie Sinum w sposób dwukierunkowy i w czasie rzeczywistym, bez tworzenia pętli sprzężenia zwrotnego i bez modyfikowania konfiguracji źródłowej.
 
-## Bezpieczeństwo
+Most jest **wbudowanym, asynchronicznym komponentem integracji** (`custom_components/sinum_home_assistant/bridge.py`), działającym w cyklu życia Home Assistant (bez konieczności uruchamiania zewnętrznych skryptów czy usług systemd).
 
-- Źródło: **tylko odczyt** MQTT `zigbee2mqtt/#` z brokera produkcyjnego.
-- Nie tworzymy encji, automatyzacji ani integracji w produkcyjnym HA.
-- Opcjonalne `zigbee2mqtt/<friendly_name>/get` służy tylko do pobrania bieżącego
-  stanu; nie zmienia urządzenia.
-- Sinum: obecnie testowe pokoje **LAB Lukasz** (11), **LAB Działające** (12)
-  i **LAB Wirtualne** (13); docelowo pokój/etykieta mają być konfigurowalne.
+---
 
-## Wybór urządzeń
+## Zasady działania i bezpieczeństwo
 
-Wariant docelowy: etykieta **`sinumbridge`** w HA (device/entity label).
-Bridge czyta rejestr przez read-only token HA. Obecny test używa etykiety
-`sinum`, aby nie zmieniać produkcyjnych etykiet; docelowo nazwa ma być opcją
-integracji/konfiguracji. Etykieta jest lepsza niż ręczne listy, bo pozwala
-wybierać encje/urządzenia bez edycji plików.
+1. **Źródło odczytu**: Most subskrybuje wewnętrzną magistralę zdarzeń Home Assistant (`state_changed`). Nie ingeruje w konfigurację urządzeń Zigbee ani brokera MQTT.
+2. **Kierunek dwukierunkowy w czasie rzeczywistym**:
+   - **HA → Sinum**: Zmiana stanu encji w Home Assistant natychmiast wysyła polecenie REST/PATCH do wirtualnego urządzenia w chmurze Sinum.
+   - **Sinum → HA**: Asynchroniczny klient WebSocket STOMP/SockJS subskrybuje kanał `/topic/<deviceId>`. Akcja użytkownika w aplikacji Sinum (suwak jasności, zmiana barwy, przełącznik) natychmiast wywołuje odpowiednią usługę w Home Assistant (`light.turn_on`, `switch.turn_on` itp.).
+3. **Eliminacja pętli (Echo Suppression)**: Mechanizm tłumienia echa sprawdza ostatnio wysłane stany (`_ha_last`, `_recent`) i ignoruje zdarzenia zwrotne wynikające z własnych poleceń.
+4. **Izolacja encji w HA**: Wirtualne urządzenia tworzone w chmurze Sinum są oznaczane unikalnym znacznikiem `integration_uid: z2m-bridge`. Główny koordynator integracji odfiltrowuje je, dzięki czemu nie są one ponownie importowane do Home Assistant jako zdublowane encje.
 
-Wariant startowy bez tokena: allowlista `friendly_name` w konfiguracji bridge’a
-lub prefiks `sinum_` w nazwie Z2M. Pozwala przetestować most bez zmian w prod HA.
+---
 
-## Sprawdzone warianty Sinum
+## Wybór urządzeń za pomocą etykiet
 
-`POST /proxy/devices/virtual` przyjmuje `variant`:
+Wybór urządzeń i encji do mostu odbywa się deklaratywnie w Home Assistant:
 
-- `temperature_sensor` — temperatura, ×10;
-- `humidity_sensor` — wilgotność, ×10;
-- `analog_input` — dowolna wartość liczbowa + `unit`;
-- `energy_meter` — moc, energia;
-- `battery` — SOC;
-- `relay` — on/off;
-- `two_state_input_sensor` — kontakt/ruch;
-- `temperature_regulator`;
-- `heat_pump`, `inverter`, `common_dhw_main`, `car_charger`;
-- `generic` — własne elementy (switcher, slider, text, color picker itd.).
+1. Oznacz wybrane urządzenie lub encję etykietą **`sinumbridge`** (domyślna etykieta, z możliwością zmiany w opcjach integracji; etykieta legacy `sinum` jest również akceptowana).
+2. Mapper odczytuje rejestr urządzeń i encji HA, filtruje encje wyłączone lub ukryte, a następnie automatycznie tworzy lub aktualizuje wirtualne urządzenia w chmurze Sinum.
+3. Mapowanie jest utrwalane w magazynie Home Assistant (`.storage/sinum_home_assistant.bridge`), z możliwością jednorazowego importu z pliku `mapping.json`.
 
-Testy PATCH potwierdziły aktualizację `variant_device` dla temperatury,
-wilgotności, analog input, relay, two-state, energy meter i battery.
-Wariant **`light` nie jest akceptowany** — światła są mapowane jako `generic`
-z elementem `color_picker` (`set_state`, `set_brightness`, `set_color`,
-`set_temperature`). Działa on/off, jasność, RGB i temperatura barwowa.
-Czujniki temperatury/wilgotności wymagają dodatkowego elementu `text`, bo UI
-Sinum nie pokazuje samodzielnie wartości wariantu sensor; most aktualizuje ten
-element komendą `set_value` (np. `21.1 °C`, `52.6 %`). Przekaźniki dostają
-element `switcher` (`switch-default`), a kontaktrony element `text`
-(`contact_state`, `Otwarte`/`Zamknięte`). Most czyta stan elementu
-przekaźnika i przy zmianie wykonuje akcję w HA oraz synchronizuje
-`variant_device`.
+---
 
-Kolory: Sinum używa `color_mode="temperature"`, a Home Assistant
-`"color_temp"`. Most normalizuje tę wartość w obie strony; bez tego zmiana
-RGB → białe nie wysyłała `color_temp_kelvin` do HA. Szybkie zmiany trybu nie są
-już blokowane przez 3-sekundowy `SUPPRESS` — stan jest zapisywany przed
-wysłaniem komend do Sinum.
+## Obsługiwane klasy urządzeń i warianty Sinum
 
-Uwaga: `switch.garaz_agrestowa` to wyjście impulsowe — każde `turn_on`
-przełącza bramę (otwórz/zamknij), a `turn_off` tylko zwalnia przekaźnik.
-Zamknięcie bramy wymaga drugiego impulsu, nie wyłączenia przełącznika.
+| Klasa urządzenia w HA | Wariant wirtualny Sinum | Kontrolki i elementy UI Sinum | Obsługiwane funkcje i normalizacja |
+|---|---|---|---|
+| **Oświetlenie (`light`)** | `generic` | `color_picker` | Włącz/Wyłącz, jasność (0–100%), kolor RGB (HEX), temperatura barwowa (Kelvin). Sinum używa trybu `temperature`, a HA `color_temp`; most dokonuje automatycznej normalizacji. |
+| **Kontaktrony / czujniki otwarcia** | `two_state_input_sensor` | `text` | Wyświetla `Otwarte` lub `Zamknięte`. Obsługuje odwrócenie logiki (`invert: true`). |
+| **Bramy wjazdowe i garażowe** | `gate` (wirtualna) / `relay` | `switcher` / status | Impuls sterujący `turn_on` / zwalnianie przekaźnika. Czujnik zamknięcia bramy w Sinum (`close_status_sensor`) wymaga logiki odwróconej (`true` = zamknięta). |
+| **Temperatura** | `temperature_sensor` | `text` (tekst-default) | Wartość rejestrowana w formacie Sinum (×10) oraz formatowany ciąg tekstowy (np. `21.4 °C`). |
+| **Wilgotność** | `humidity_sensor` | `text` (tekst-default) | Wartość w formacie Sinum (×10) oraz ciąg tekstowy (np. `52.0 %`). |
+| **Wielkości analogowe (ciśnienie, napięcie itp.)** | `analog_input` | Wartość wariantu | Dowolna wartość numeryczna z przypisaną jednostką (`unit`). |
+| **Pomiary energii i mocy** | `energy_meter` | Wartość wariantu | Pobór mocy (W) oraz zużycie energii (kWh). |
+| **Poziom baterii** | `battery` | Wartość wariantu | Stan naładowania (0–100%). |
+| **Klimatyzator (`climate`)** | `custom_device_module` | `variant: ac_module` | Tryby pracy (auto, chłodzenie, ogrzewanie, wentylacja, osuszanie), nastawa temperatury zadanej i odczyt temperatury pomieszczenia. |
 
-Dla natywnego wirtualnego `gate` czujnik `close_status_sensor` ma odwrotną
-logikę niż typowy kontaktron HA: `true` = **zamknięta**. W mapowaniu użyj
-`"invert": true` i opcjonalnie `text_true`/`text_false` (np. `Zamknięta` /
-`Otwarta`). Przetestowano na `TEST · Brama zamknięta` (Sinum 143) i bramie
-native 133: zamknięta → otwarta → `closing` → zamknięta.
+---
 
-## Mapowanie klas
+## Statystyki i wykresy InfluxDB w Sinum
 
-| HA / Z2M | Sinum variant |
-|---|---|
-| temperature | `temperature_sensor` |
-| humidity | `humidity_sensor` |
-| pressure, illuminance, voltage, current, linkquality, battery % | `analog_input` |
-| power / energy | `energy_meter` |
-| switch, plug | `relay` |
-| contact, motion, battery_low | `two_state_input_sensor` |
-| light (on/off/brightness/RGB/temperature) | `generic` + `color_picker` |
-| climate / TRV | `temperature_regulator` (do walidacji) |
-| gate | native virtual `gate` + odwrócony `close_status_sensor` |
-| AC | `custom_device_module` / `variant: ac_module` |
-| cover | brak natywnego wariantu — pominięte |
-
-## Konfiguracja
-
-W integracji HA są opcje:
-
-- **Eksponuj do Sinum** (włącz/wyłącz),
-- **Etykieta urządzeń** — domyślnie `sinumbridge` (legacy `sinum`),
-- **Docelowy pokój Sinum** — opcjonalny; `0` pomija przypisanie.
-
-Bridge wybiera encje/urządzenia po etykiecie, a nie po sztywnych pokojach LAB.
-Obecny test używa etykiety `sinum` i pokoi 11–13; produkcyjny wybór to
-`sinumbridge` na wybranych urządzeniach.
-
-## Architektura
-
-Most jest **częścią integracji** (`custom_components/sinum_home_assistant/bridge.py`)
-i działa w lifecycle config entry. Nie wymaga zewnętrznych usług systemd.
-
-1. **Mapper** — czyta rejestr HA, wybiera urządzenia z etykietą (`sinumbridge`,
-   legacy `sinum`), tworzy wirtualne urządzenia w Sinum i zapisuje mapowanie
-   w HA storage. Przy pierwszym uruchomieniu importuje istniejący
-   `bridge/mapping.json`.
-2. **HA → Sinum** — `async_track_state_change_event` reaguje na `state_changed`
-   i wysyła PATCH/element commands do Sinum.
-3. **Sinum → HA** — async klient STOMP/SockJS (`/topic/<deviceId>`) odbiera
-   zdarzenia i wywołuje usługi HA. Echo jest tłumione przez `_recent` i
-   porównanie ostatniego stanu.
-4. **Reconciliation** — co 60 s odświeża mapping i stan wirtualnych urządzeń
-   jako fallback po reconnectach.
-5. **Legacy** — `event_worker.py`, `z2m_to_sinum.py`, `map_z2m.py` i przykłady
-   systemd pozostają w repozytorium jako referencja; nie są uruchamiane w
-   docelowym wdrożeniu.
-
-## Statystyki LAB
-
-Sinum **nie zapisuje statystyk custom devices domyślnie**. Dla sensorów
-temperatury/wilgotności, świateł i kontaktronów bridge dodaje Lua:
+Domyślnie chmura Sinum nie rejestruje punktów statystycznych dla wirtualnych urządzeń niestandardowych. Aby wartości z mostu były widoczne na wykresach historycznych w aplikacji Sinum, most wstrzykuje odpowiedni blok skryptu Lua:
 
 ```lua
 function CustomDevice:onEvent(event)
@@ -131,48 +56,26 @@ function CustomDevice:onEvent(event)
 end
 ```
 
-Dzięki temu pojawiają się punkty w `/influx/query`; trzeba jeszcze dodać
-zapytanie statystyczne w UI Sinum. Nowe sensory z `map_z2m.py` dostają ten kod
-automatycznie; istniejące 83/84/88/89/96/97 zostały zmigrowane ręcznie.
-Światła mają `state` i `brightness`, kontaktrony `state`; relay 121 zarządzany
-przez bramę nie wygenerował punktu (ograniczenie).
+Dzięki temu punkty pomiarowe trafiają do bazy InfluxDB w chmurze Sinum i mogą być prezentowane na wykresach po skonfigurowaniu zapytania statystycznego w aplikacji.
 
-## Pomiary push
+---
 
-Na wirtualnej ławce **LAB Wirtualne** (pokój 13): brama ~0,45 s, lampa
-~0,6–0,9 s, temperatura/wilgotność ~0,45–0,65 s, kontaktron ~1,8 s (aktualizacja
-tekstu po zmianie stanu). Wcześniejszy polling 30 s nie jest potrzebny do
-reakcji UI → HA; pozostał tylko jako 300-sekundowy fallback.
+## Pomiary wydajności i czasy reakcji (Push vs Polling)
 
-Stan realny: 97 wpisów mapowania; **LAB Działające** ma światła, kontaktrony
-i działające przekaźniki, **LAB Lukasz** diagnostykę analog/energy/battery
-(plus stary `Nad wejściem`), a **LAB Wirtualne** (13) ma 32 moduły testowe
-i lokalne helpery B7
-(`input_boolean.sinum_lab_*`, `input_number.sinum_lab_*`, `light.sinum_lab_lampa`).
-Nie używamy produkcyjnego discovery MQTT — fałszywe urządzenia nie trafiają do
-produkcyjnego HA.
+Dzięki zastosowaniu protokołu WebSocket STOMP/SockJS opóźnienia w komunikacji dwukierunkowej zostały zredukowane do ułamków sekundy:
 
-## Moduły w moście
+- **Brama / impuls**: ~0.45 s
+- **Zmiana stanu i jasności światła**: ~0.60–0.90 s
+- **Czujnik temperatury i wilgotności**: ~0.45–0.65 s
+- **Aktualizacja stanu kontaktronu**: ~1.50–1.80 s
 
-Most obsługuje teraz także `class: custom_device_module`, `variant: ac_module`
-dla modułu AC w LAB Wirtualne (moduł 1): HA climate ↔ Sinum module przez
-`PATCH /devices/custom-device-module/1` i zdarzenia `device_state_changed`.
-Inne moduły nie są mapowane, żeby nie ruszać urządzeń poza LAB.
+Tradycyjne odpytywanie chmury (polling) zostało zachowane wyłącznie jako proces rekoncyliacji (co 60 s), zapewniający spójność stanów po ewentualnym zerwaniu połączenia internetowego.
 
-## AC: moduł zamiast symulacji
+---
 
-Aktywne mapowanie `climate.sinum_lab_klimatyzator` używa modułu
-`custom_device_module` ID 1 (`variant: ac_module`). Most robi
-`PATCH /devices/custom-device-module/1` i nasłuchuje `device_state_changed`.
-Stary `generic` 141 zostaje tylko jako bench, nie jest mapowany.
+## Znane ograniczenia techniczne
 
-## Ograniczenia
-
-- Brak natywnego `light`/`cover` w wirtualnych urządzeniach Sinum; światła
-  używają `generic` + `color_picker`.
-- Most modułów obsługuje obecnie tylko moduł AC w LAB; inne moduły nie są
-  mapowane, żeby nie ruszać urządzeń poza LAB.
-- Relay 121 zarządzany przez bramę nie generuje statystyk.
-- Grupy Z2M, bridge, repeater i diagnostyka (`linkquality`, battery_low) nie
-  powinny być osobnymi urządzeniami w Sinum; można je pominąć.
-- Tag `#sinum` wymaga read-only tokena HA albo allowlisty w bridge’u.
+- **Brak wirtualnego wariantu dla rolet**: Chmurowe API Sinum nie udostępnia typu `cover` dla urządzeń wirtualnych.
+- **Kamery RTSP / NVR**: Chmura Sinum odrzuca rejestrację strumieni kamer bez fizycznego rejestratora sprzętowego TECH (`422 NvrDeviceNotFound`).
+- **Status custom sensorów**: Wirtualne czujniki w interfejsie Sinum raportują status `unknown`, pomimo że przekazywane wartości i elementy UI działają poprawnie.
+- **Relay zarządzany przez termostat**: Przekaźnik przypisany do termostatu wirtualnego nie generuje własnych punktów statystycznych relay w chmurze.
