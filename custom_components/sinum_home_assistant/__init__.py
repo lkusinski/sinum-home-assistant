@@ -7,7 +7,7 @@ from typing import Any
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import EVENT_HOMEASSISTANT_STOP
-from homeassistant.core import HomeAssistant
+from homeassistant.core import Event, HomeAssistant
 from homeassistant.exceptions import ConfigEntryAuthFailed, ConfigEntryNotReady
 from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
@@ -102,12 +102,12 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             await bridge.async_stop()
             coordinator.bridge = None
         else:
+            async def _async_stop_bridge(_event: Event) -> None:
+                await bridge.async_stop()
+
             entry.async_on_unload(
                 hass.bus.async_listen_once(
-                    EVENT_HOMEASSISTANT_STOP,
-                    lambda _event: hass.async_create_task(
-                        bridge.async_stop(), "sinum bridge shutdown"
-                    ),
+                    EVENT_HOMEASSISTANT_STOP, _async_stop_bridge
                 )
             )
 

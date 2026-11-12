@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.2.2 — 2026-11-12
+
+- Add config-entry diagnostics with redacted credentials, coordinator counts,
+  bridge status and mapping count.
+- Fix the Home Assistant stop listener to run as an async callback, avoiding
+  cross-thread task creation and shutdown warnings.
+- Add local Sinum API research (`docs/API-LOCAL.md`) and source review notes
+  (`docs/SOURCES.md`), including the official API/OpenAPI and MCP resources.
+- No change to cloud behaviour; local transport remains a documented roadmap
+  until a reachable hub can be validated.
+
 ## 1.2.1 — 2026-11-12
 
 - Cancel bridge tasks cleanly on Home Assistant shutdown to avoid delayed

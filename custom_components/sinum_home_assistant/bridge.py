@@ -356,6 +356,11 @@ class SinumBridge:
             await asyncio.gather(*self._tasks, return_exceptions=True)
         self._tasks.clear()
 
+    @property
+    def mapping_count(self) -> int:
+        """Return the number of mapped HA entities."""
+        return len(self._mapping)
+
     async def _async_load_mapping(self) -> None:
         data = await self._store.async_load()
         mapping: dict[str, Any] = {}

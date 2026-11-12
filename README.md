@@ -260,6 +260,8 @@ Więcej informacji technicznych i poradników znajduje się w katalogu `docs/`:
 - [Polityka prywatności i bezpieczeństwa danych](docs/PRIVACY.md)
 - [Klasyfikacja encji i zalecane etykiety](docs/LABELS.md)
 - [Stan techniczny projektu i roadmapa](docs/PROJECT-STATE.md)
+- [Lokalne API Sinum — analiza i roadmapa](docs/API-LOCAL.md)
+- [Źródła i projekty pokrewne](docs/SOURCES.md)
 
 ---
 
