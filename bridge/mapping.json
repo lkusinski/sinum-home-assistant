@@ -1,43 +1,43 @@
 {
- "binary_sensor.garaz_wisniowa_dom_kontaktron_zamknieta_contact": {
+ "binary_sensor.garaz_posesja_dom_kontaktron_zamknieta_contact": {
   "id": 28,
   "variant": "two_state_input_sensor",
   "field": "state",
   "scale": null,
   "unit": "",
-  "name": "HA · Garaż Wiśniowa dom kontaktron zamknięta Drzwi"
+  "name": "HA · Garaż Posesja dom kontaktron zamknięta Drzwi"
  },
- "binary_sensor.garaz_agrestowa_kontaktron_contact": {
+ "binary_sensor.garaz_brama_kontaktron_contact": {
   "id": 29,
   "variant": "two_state_input_sensor",
   "field": "state",
   "scale": null,
   "unit": "",
-  "name": "HA · Garaż Agrestowa kontaktron Drzwi"
+  "name": "HA · Garaż Garażowa kontaktron Drzwi"
  },
- "binary_sensor.garaz_wisniowa_dom_kontaktron_otwarty_contact": {
+ "binary_sensor.garaz_posesja_dom_kontaktron_otwarty_contact": {
   "id": 30,
   "variant": "two_state_input_sensor",
   "field": "state",
   "scale": null,
   "unit": "",
-  "name": "HA · Garaż Wiśniowa dom kontaktron otwarty Drzwi"
+  "name": "HA · Garaż Posesja dom kontaktron otwarty Drzwi"
  },
- "binary_sensor.garaz_wisniowa_taras_kontaktron_otwarta_contact": {
+ "binary_sensor.garaz_posesja_taras_kontaktron_otwarta_contact": {
   "id": 31,
   "variant": "two_state_input_sensor",
   "field": "state",
   "scale": null,
   "unit": "",
-  "name": "HA · Garaż Wiśniowa taras kontaktron otwarta Drzwi"
+  "name": "HA · Garaż Posesja taras kontaktron otwarta Drzwi"
  },
- "binary_sensor.garaz_wisniowa_taras_kontaktron_zamknieta_contact": {
+ "binary_sensor.garaz_posesja_taras_kontaktron_zamknieta_contact": {
   "id": 32,
   "variant": "two_state_input_sensor",
   "field": "state",
   "scale": null,
   "unit": "",
-  "name": "HA · Garaż Wiśniowa taras kontaktron zamknięta Drzwi"
+  "name": "HA · Garaż Posesja taras kontaktron zamknięta Drzwi"
  },
  "light.lewa": {
   "id": 148,
@@ -65,57 +65,57 @@
   "unit": "",
   "name": "HA · Nad wejściem"
  },
- "light.wisniowa_dom_prawa": {
+ "light.posesja_dom_prawa": {
   "id": 150,
   "variant": "light",
   "element": "light",
   "field": "state",
   "scale": null,
   "unit": "",
-  "name": "HA · Wiśniowa dom prawa"
+  "name": "HA · Posesja dom prawa"
  },
- "light.wisniowa_dom_lewa": {
+ "light.posesja_dom_lewa": {
   "id": 151,
   "variant": "light",
   "element": "light",
   "field": "state",
   "scale": null,
   "unit": "",
-  "name": "HA · Wiśniowa dom lewa"
+  "name": "HA · Posesja dom lewa"
  },
- "light.wisniowa_taras_prawa": {
+ "light.posesja_taras_prawa": {
   "id": 152,
   "variant": "light",
   "element": "light",
   "field": "state",
   "scale": null,
   "unit": "",
-  "name": "HA · Wiśniowa taras prawa"
+  "name": "HA · Posesja taras prawa"
  },
- "light.wisniowa_taras_lewa": {
+ "light.posesja_taras_lewa": {
   "id": 153,
   "variant": "light",
   "element": "light",
   "field": "state",
   "scale": null,
   "unit": "",
-  "name": "HA · Wiśniowa taras lewa"
+  "name": "HA · Posesja taras lewa"
  },
- "sensor.garaz_wisniowa_dom_kontaktron_zamknieta_battery": {
+ "sensor.garaz_posesja_dom_kontaktron_zamknieta_battery": {
   "id": 42,
   "variant": "battery",
   "field": "soc",
   "scale": null,
   "unit": "%",
-  "name": "HA · Garaż Wiśniowa dom kontaktron zamknięta Bateria"
+  "name": "HA · Garaż Posesja dom kontaktron zamknięta Bateria"
  },
- "sensor.garaz_wisniowa_dom_kontaktron_zamknieta_voltage": {
+ "sensor.garaz_posesja_dom_kontaktron_zamknieta_voltage": {
   "id": 43,
   "variant": "analog_input",
   "field": "value",
   "scale": null,
   "unit": "mV",
-  "name": "HA · Garaż Wiśniowa dom kontaktron zamknięta Napięcie"
+  "name": "HA · Garaż Posesja dom kontaktron zamknięta Napięcie"
  },
  "sensor.wtyczka_salon_power": {
   "id": 44,
@@ -181,21 +181,21 @@
   "unit": "kWh",
   "name": "HA · Wtyczka Biuro Energia"
  },
- "sensor.garaz_agrestowa_kontaktron_battery": {
+ "sensor.garaz_brama_kontaktron_battery": {
   "id": 52,
   "variant": "battery",
   "field": "soc",
   "scale": null,
   "unit": "%",
-  "name": "HA · Garaż Agrestowa kontaktron Bateria"
+  "name": "HA · Garaż Garażowa kontaktron Bateria"
  },
- "sensor.garaz_agrestowa_kontaktron_voltage": {
+ "sensor.garaz_brama_kontaktron_voltage": {
   "id": 53,
   "variant": "analog_input",
   "field": "value",
   "scale": null,
   "unit": "mV",
-  "name": "HA · Garaż Agrestowa kontaktron Napięcie"
+  "name": "HA · Garaż Garażowa kontaktron Napięcie"
  },
  "sensor.wtyczka_taras_power": {
   "id": 54,
@@ -229,53 +229,53 @@
   "unit": "kWh",
   "name": "HA · Wtyczka taras Energia"
  },
- "sensor.pilot_lukasz_battery": {
+ "sensor.pilot_biuro_battery": {
   "id": 58,
   "variant": "battery",
   "field": "soc",
   "scale": null,
   "unit": "%",
-  "name": "HA · Pilot Łukasz Bateria"
+  "name": "HA · Pilot Biuro Bateria"
  },
- "sensor.pilot_lukasz_voltage": {
+ "sensor.pilot_biuro_voltage": {
   "id": 59,
   "variant": "analog_input",
   "field": "value",
   "scale": null,
   "unit": "mV",
-  "name": "HA · Pilot Łukasz Napięcie"
+  "name": "HA · Pilot Biuro Napięcie"
  },
- "sensor.wtyczka_lukasz_power": {
+ "sensor.wtyczka_biuro_power": {
   "id": 60,
   "variant": "energy_meter",
   "field": "total_active_power",
   "scale": 1000,
   "unit": "W",
-  "name": "HA · Wtyczka Łukasz Moc"
+  "name": "HA · Wtyczka Biuro Moc"
  },
- "sensor.wtyczka_lukasz_current": {
+ "sensor.wtyczka_biuro_current": {
   "id": 61,
   "variant": "analog_input",
   "field": "value",
   "scale": null,
   "unit": "A",
-  "name": "HA · Wtyczka Łukasz Natężenie prądu"
+  "name": "HA · Wtyczka Biuro Natężenie prądu"
  },
- "sensor.wtyczka_lukasz_voltage": {
+ "sensor.wtyczka_biuro_voltage": {
   "id": 62,
   "variant": "analog_input",
   "field": "value",
   "scale": null,
   "unit": "V",
-  "name": "HA · Wtyczka Łukasz Napięcie"
+  "name": "HA · Wtyczka Biuro Napięcie"
  },
- "sensor.wtyczka_lukasz_energy": {
+ "sensor.wtyczka_biuro_energy": {
   "id": 63,
   "variant": "energy_meter",
   "field": "energy_sum_total",
   "scale": 1000,
   "unit": "kWh",
-  "name": "HA · Wtyczka Łukasz Energia"
+  "name": "HA · Wtyczka Biuro Energia"
  },
  "sensor.suszarka_do_ubran_power": {
   "id": 64,
@@ -405,21 +405,21 @@
   "unit": "kWh",
   "name": "HA · Wtyczka Garderoba Energia"
  },
- "sensor.garaz_wisniowa_dom_kontaktron_otwarty_battery": {
+ "sensor.garaz_posesja_dom_kontaktron_otwarty_battery": {
   "id": 80,
   "variant": "battery",
   "field": "soc",
   "scale": null,
   "unit": "%",
-  "name": "HA · Garaż Wiśniowa dom kontaktron otwarty Bateria"
+  "name": "HA · Garaż Posesja dom kontaktron otwarty Bateria"
  },
- "sensor.garaz_wisniowa_dom_kontaktron_otwarty_voltage": {
+ "sensor.garaz_posesja_dom_kontaktron_otwarty_voltage": {
   "id": 81,
   "variant": "analog_input",
   "field": "value",
   "scale": null,
   "unit": "mV",
-  "name": "HA · Garaż Wiśniowa dom kontaktron otwarty Napięcie"
+  "name": "HA · Garaż Posesja dom kontaktron otwarty Napięcie"
  },
  "sensor.salon_temperatura_battery": {
   "id": 82,
@@ -461,69 +461,69 @@
   "unit": "mV",
   "name": "HA · Salon Temperatura Napięcie"
  },
- "sensor.lukasz_pir_illuminance": {
+ "sensor.biuro_pir_illuminance": {
   "id": 87,
   "variant": "analog_input",
   "field": "value",
   "scale": null,
   "unit": "lx",
-  "name": "HA · Łukasz PIR Natężenie oświetlenia"
+  "name": "HA · Biuro PIR Natężenie oświetlenia"
  },
- "sensor.lukasz_pir_temperature": {
+ "sensor.biuro_pir_temperature": {
   "id": 88,
   "variant": "temperature_sensor",
   "field": "temperature",
   "scale": 10,
   "unit": "°C",
-  "name": "HA · Łukasz PIR · Temperatura"
+  "name": "HA · Biuro PIR · Temperatura"
  },
- "sensor.lukasz_pir_humidity": {
+ "sensor.biuro_pir_humidity": {
   "id": 89,
   "variant": "humidity_sensor",
   "field": "humidity",
   "scale": 10,
   "unit": "%",
-  "name": "HA · Łukasz PIR · Wilgotność"
+  "name": "HA · Biuro PIR · Wilgotność"
  },
- "sensor.lukasz_pir_battery": {
+ "sensor.biuro_pir_battery": {
   "id": 90,
   "variant": "battery",
   "field": "soc",
   "scale": null,
   "unit": "%",
-  "name": "HA · Łukasz PIR Bateria"
+  "name": "HA · Biuro PIR Bateria"
  },
- "sensor.garaz_wisniowa_taras_kontaktron_otwarta_battery": {
+ "sensor.garaz_posesja_taras_kontaktron_otwarta_battery": {
   "id": 91,
   "variant": "battery",
   "field": "soc",
   "scale": null,
   "unit": "%",
-  "name": "HA · Garaż Wiśniowa taras kontaktron otwarta Bateria"
+  "name": "HA · Garaż Posesja taras kontaktron otwarta Bateria"
  },
- "sensor.garaz_wisniowa_taras_kontaktron_otwarta_voltage": {
+ "sensor.garaz_posesja_taras_kontaktron_otwarta_voltage": {
   "id": 92,
   "variant": "analog_input",
   "field": "value",
   "scale": null,
   "unit": "mV",
-  "name": "HA · Garaż Wiśniowa taras kontaktron otwarta Napięcie"
+  "name": "HA · Garaż Posesja taras kontaktron otwarta Napięcie"
  },
- "sensor.garaz_wisniowa_taras_kontaktron_zamknieta_battery": {
+ "sensor.garaz_posesja_taras_kontaktron_zamknieta_battery": {
   "id": 93,
   "variant": "battery",
   "field": "soc",
   "scale": null,
   "unit": "%",
-  "name": "HA · Garaż Wiśniowa taras kontaktron zamknięta Bateria"
+  "name": "HA · Garaż Posesja taras kontaktron zamknięta Bateria"
  },
- "sensor.garaz_wisniowa_taras_kontaktron_zamknieta_voltage": {
+ "sensor.garaz_posesja_taras_kontaktron_zamknieta_voltage": {
   "id": 94,
   "variant": "analog_input",
   "field": "value",
   "scale": null,
   "unit": "mV",
-  "name": "HA · Garaż Wiśniowa taras kontaktron zamknięta Napięcie"
+  "name": "HA · Garaż Posesja taras kontaktron zamknięta Napięcie"
  },
  "sensor.biuro_temperatura_battery": {
   "id": 95,
@@ -557,61 +557,61 @@
   "unit": "mV",
   "name": "HA · Biuro temperatura Napięcie"
  },
- "switch.ogrodzenie_wisniowa_l1": {
+ "switch.ogrodzenie_posesja_l1": {
   "id": 99,
   "variant": "relay",
   "field": "state",
   "scale": null,
   "unit": "",
-  "name": "HA · Ogrodzenie Wiśniowa L1"
+  "name": "HA · Ogrodzenie Posesja L1"
  },
- "switch.ogrodzenie_wisniowa_l2": {
+ "switch.ogrodzenie_posesja_l2": {
   "id": 100,
   "variant": "relay",
   "field": "state",
   "scale": null,
   "unit": "",
-  "name": "HA · Ogrodzenie Wiśniowa L2"
+  "name": "HA · Ogrodzenie Posesja L2"
  },
- "switch.ogrodzenie_wisniowa_l3": {
+ "switch.ogrodzenie_posesja_l3": {
   "id": 101,
   "variant": "relay",
   "field": "state",
   "scale": null,
   "unit": "",
-  "name": "HA · Ogrodzenie Wiśniowa L3"
+  "name": "HA · Ogrodzenie Posesja L3"
  },
- "switch.ogrodzenie_wisniowa_l4": {
+ "switch.ogrodzenie_posesja_l4": {
   "id": 102,
   "variant": "relay",
   "field": "state",
   "scale": null,
   "unit": "",
-  "name": "HA · Ogrodzenie Wiśniowa L4"
+  "name": "HA · Ogrodzenie Posesja L4"
  },
- "switch.garaz_agrestowa": {
+ "switch.garaz_brama": {
   "id": 103,
   "variant": "relay",
   "field": "state",
   "scale": null,
   "unit": "",
-  "name": "HA · Garaż Agrestowa"
+  "name": "HA · Garaż Garażowa"
  },
- "switch.garaz_wisniowa_dom": {
+ "switch.garaz_posesja_dom": {
   "id": 104,
   "variant": "relay",
   "field": "state",
   "scale": null,
   "unit": "",
-  "name": "HA · Garaż Wiśniowa dom"
+  "name": "HA · Garaż Posesja dom"
  },
- "switch.garaz_wisniowa_taras": {
+ "switch.garaz_posesja_taras": {
   "id": 105,
   "variant": "relay",
   "field": "state",
   "scale": null,
   "unit": "",
-  "name": "HA · Garaż Wiśniowa taras"
+  "name": "HA · Garaż Posesja taras"
  },
  "switch.wtyczka_salon": {
   "id": 106,
@@ -629,13 +629,13 @@
   "unit": "",
   "name": "HA · Wtyczka Biuro"
  },
- "switch.ogrodzenie_agrestowa_dom": {
+ "switch.ogrodzenie_garazowa_dom": {
   "id": 108,
   "variant": "relay",
   "field": "state",
   "scale": null,
   "unit": "",
-  "name": "HA · Ogrodzenie Agrestowa dom"
+  "name": "HA · Ogrodzenie Garażowa dom"
  },
  "switch.wtyczka_taras": {
   "id": 109,
@@ -645,45 +645,45 @@
   "unit": "",
   "name": "HA · Wtyczka taras"
  },
- "switch.agrestowa_ogrodzenie_garaz_l1": {
+ "switch.garazowa_ogrodzenie_garaz_l1": {
   "id": 110,
   "variant": "relay",
   "field": "state",
   "scale": null,
   "unit": "",
-  "name": "HA · Agrestowa Ogrodzenie garaż L1"
+  "name": "HA · Garażowa Ogrodzenie garaż L1"
  },
- "switch.agrestowa_ogrodzenie_garaz_l2": {
+ "switch.garazowa_ogrodzenie_garaz_l2": {
   "id": 111,
   "variant": "relay",
   "field": "state",
   "scale": null,
   "unit": "",
-  "name": "HA · Agrestowa Ogrodzenie garaż L2"
+  "name": "HA · Garażowa Ogrodzenie garaż L2"
  },
- "switch.agrestowa_ogrodzenie_garaz_l3": {
+ "switch.garazowa_ogrodzenie_garaz_l3": {
   "id": 112,
   "variant": "relay",
   "field": "state",
   "scale": null,
   "unit": "",
-  "name": "HA · Agrestowa Ogrodzenie garaż L3"
+  "name": "HA · Garażowa Ogrodzenie garaż L3"
  },
- "switch.agrestowa_ogrodzenie_garaz_l4": {
+ "switch.garazowa_ogrodzenie_garaz_l4": {
   "id": 113,
   "variant": "relay",
   "field": "state",
   "scale": null,
   "unit": "",
-  "name": "HA · Agrestowa Ogrodzenie garaż L4"
+  "name": "HA · Garażowa Ogrodzenie garaż L4"
  },
- "switch.wtyczka_lukasz": {
+ "switch.wtyczka_biuro": {
   "id": 114,
   "variant": "relay",
   "field": "state",
   "scale": null,
   "unit": "",
-  "name": "HA · Wtyczka Łukasz"
+  "name": "HA · Wtyczka Biuro"
  },
  "switch.suszarka_do_ubran": {
   "id": 115,
@@ -717,23 +717,23 @@
   "unit": "",
   "name": "HA · Wtyczka Garderoba"
  },
- "light.e27_lukasz_gorna": {
+ "light.e27_biuro_gorna": {
   "id": 119,
   "variant": "light",
   "element": "light",
   "field": "state",
   "scale": null,
   "unit": "",
-  "name": "HA E27 Lukasz gorna swiatlo"
+  "name": "HA E27 Biuro gorna swiatlo"
  },
- "light.e27_lukasz_dolna": {
+ "light.e27_biuro_dolna": {
   "id": 120,
   "variant": "light",
   "element": "light",
   "field": "state",
   "scale": null,
   "unit": "",
-  "name": "HA E27 Lukasz dolna swiatlo"
+  "name": "HA E27 Biuro dolna swiatlo"
  },
  "input_boolean.sinum_lab_brama": {
   "id": 121,

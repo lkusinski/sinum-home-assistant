@@ -51,23 +51,22 @@ planned refactor. No credentials belong in this file.
 
 ## Current runtime topology
 
-- **B7 HA:** `http://192.168.1.204` (`homeassistant-2`), destination HA.
-  It has the Generic Camera `camera.kamera_230_prod` using production Frigate
-  snapshot/HTTP and RTSP.
-- **Production HA Wiśniowa 9:** source of read-only Z2M/MQTT data; not modified
+- **Target HA:** destination Home Assistant instance.
+  It has the Generic Camera using Frigate snapshot/HTTP and RTSP.
+- **Source Z2M HA:** source of read-only Z2M/MQTT data; not modified
   by this project.
-- **Sinum:** cloud API `https://backend.prd.sinum24.com`; local API is not
-  reachable from CT310 at the moment.
-- **CT310:** `192.168.1.123`, legacy bridge host. The systemd services are
+- **Sinum:** cloud API `https://backend.prd.sinum24.com`; Home Assistant and the
+  hub operate on separate networks/locations, so the cloud API is used.
+- **CT310:** legacy bridge host. The systemd services are
   stopped/disabled after the integration-owned bridge went live; secrets remain
   in `/home/dev/.config/sinum-z2m.env` (600) as reference.
 
 ## Current LAB rooms and ownership
 
-- **LAB Lukasz (11):** mostly diagnostic analog/energy/battery devices and the
-  unavailable `HA · Nad wejściem`.
-- **LAB Działające (12):** working lights, contacts and relays.
-- **LAB Wirtualne (13):** 32 Lua modules and local fake helpers.
+- **LAB Diagnostic (11):** mostly diagnostic analog/energy/battery devices and the
+  unavailable test light.
+- **LAB Active (12):** working lights, contacts and relays.
+- **LAB Virtual (13):** 32 Lua modules and local fake helpers.
 - Every bridge-created virtual device is marked with
   `integration_uid: z2m-bridge`; the integration ignores those devices.
 
@@ -122,7 +121,7 @@ authoritative and mapping/config are owned by Home Assistant. The scripts in
 - README/bridge docs updated to present LAB as a test deployment.
 - Project state and target plan recorded here.
 
-### Phase 1 — configurable selection (implemented, live in B7)
+### Phase 1 — configurable selection (implemented, live in target setup)
 
 - Integration options now expose `bridge_enabled`, `bridge_label` (default
   `sinumbridge`), and `bridge_room_id`.

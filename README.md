@@ -53,25 +53,25 @@ Poniższa macierz przedstawia rzeczywisty, rzetelny stan wdrożenia — bez kolo
 
 | Funkcja / Komponent | Status | Środowisko weryfikacji | Szczegóły i uwagi |
 |---|:---:|---|---|
-| **Chmura Sinum Cloud API & OAuth2** | ✅ Przetestowane | Fizyczny sprzęt (Bursztynowa 7) | Logowanie, odnawianie `refresh_token`, obsługa błędów sieci i restartów. |
-| **Obszary (Areas) 1:1 z pokojami Sinum** | ✅ Przetestowane | Fizyczny sprzęt (Bursztynowa 7) | 9 pokoi zmapowanych automatycznie, przypięte sensory temp/wilgotności. |
-| **Termostaty pokojowe i WTP (`climate`)** | ✅ Przetestowane | Fizyczny sprzęt (Bursztynowa 7) | Odczyt temp, nastawa zadana (krok 0.5 °C), `hvac_action` (heating/idle/off). |
-| **Stacja pogodowa & prognoza (`weather`)** | ✅ Przetestowane | Fizyczny sprzęt (Bursztynowa 7) | Warunki bieżące, prognoza godzinowa i dzienna, indeks UV, ciśnienie, wiatr. |
-| **Wolne przekaźniki centrali (`switch`)** | ✅ Przetestowane | Fizyczny sprzęt (Bursztynowa 7) | Sterowanie ON/OFF wolnymi wyjściami przekaźnikowymi centrali. |
-| **Przekaźniki termostatów (strefowe)** | ✅ Przetestowane | Fizyczny sprzęt (Bursztynowa 7) | Wyłącznie odczyt jako `binary_sensor` + atrybuty. Chmura Sinum odrzuca bezpośrednie przełączanie. |
-| **Aktualizacje firmware (`update`)** | ✅ Przetestowane | Fizyczny sprzęt (Bursztynowa 7) | Odczyt wersji zainstalowanej i najnowszej w chmurze. Fizyczna instalacja z aplikacji Sinum. |
-| **Harmonogramy termiczne** | ✅ Przetestowane | Fizyczny sprzęt (Bursztynowa 7) | Encje sensora temperatury harmonogramu i binary_sensor aktywności. |
-| **Most: Żarówki Z2M/HA (`color_picker`)** | ✅ Przetestowane | Fizyczny sprzęt (Wiśniowa 9 / B7) | Dwukierunkowe sterowanie: on/off, jasność, kolor RGB, temperatura barwowa (Kelvin). |
-| **Most: Kontaktrony drzwi/okien** | ✅ Przetestowane | Fizyczny sprzęt (Wiśniowa 9 / B7) | Zmiana stanu w HA aktualizuje widget tekstowy w Sinum (`Otwarte`/`Zamknięte`). |
-| **Most: Brama garażowa (impulsowa)** | ✅ Przetestowane | Fizyczny sprzęt (Wiśniowa 9 / B7) | Sterowanie impulsem, obsługa odwróconego czujnika zamknięcia (`invert: true`). |
-| **Most: Sensory temperatury i wilgotności** | ✅ Przetestowane | Fizyczny sprzęt (Wiśniowa 9 / B7) | Wartość numeryczna w chmurze + formatowany element tekstowy w UI Sinum. |
-| **Most: Push WebSocket STOMP/SockJS** | ✅ Przetestowane | Fizyczny sprzęt (Bursztynowa 7) | Zdarzenia z Sinum trafiają do HA w ~0.45–0.9 s; eliminacja pętli zwrotnych (echo). |
+| **Chmura Sinum Cloud API & OAuth2** | ✅ Przetestowane | Fizyczna instalacja domowa | Logowanie, odnawianie `refresh_token`, obsługa błędów sieci i restartów. |
+| **Obszary (Areas) 1:1 z pokojami Sinum** | ✅ Przetestowane | Fizyczna instalacja domowa | 9 pokoi zmapowanych automatycznie, przypięte sensory temp/wilgotności. |
+| **Termostaty pokojowe i WTP (`climate`)** | ✅ Przetestowane | Fizyczna instalacja domowa | Odczyt temp, nastawa zadana (krok 0.5 °C), `hvac_action` (heating/idle/off). |
+| **Stacja pogodowa & prognoza (`weather`)** | ✅ Przetestowane | Fizyczna instalacja domowa | Warunki bieżące, prognoza godzinowa i dzienna, indeks UV, ciśnienie, wiatr. |
+| **Wolne przekaźniki centrali (`switch`)** | ✅ Przetestowane | Fizyczna instalacja domowa | Sterowanie ON/OFF wolnymi wyjściami przekaźnikowymi centrali. |
+| **Przekaźniki termostatów (strefowe)** | ✅ Przetestowane | Fizyczna instalacja domowa | Wyłącznie odczyt jako `binary_sensor` + atrybuty. Chmura Sinum odrzuca bezpośrednie przełączanie. |
+| **Aktualizacje firmware (`update`)** | ✅ Przetestowane | Fizyczna instalacja domowa | Odczyt wersji zainstalowanej i najnowszej w chmurze. Fizyczna instalacja z aplikacji Sinum. |
+| **Harmonogramy termiczne** | ✅ Przetestowane | Fizyczna instalacja domowa | Encje sensora temperatury harmonogramu i binary_sensor aktywności. |
+| **Most: Żarówki Z2M/HA (`color_picker`)** | ✅ Przetestowane | Fizyczna instalacja domowa | Dwukierunkowe sterowanie: on/off, jasność, kolor RGB, temperatura barwowa (Kelvin). |
+| **Most: Kontaktrony drzwi/okien** | ✅ Przetestowane | Fizyczna instalacja domowa | Zmiana stanu w HA aktualizuje widget tekstowy w Sinum (`Otwarte`/`Zamknięte`). |
+| **Most: Brama garażowa (impulsowa)** | ✅ Przetestowane | Fizyczna instalacja domowa | Sterowanie impulsem, obsługa odwróconego czujnika zamknięcia (`invert: true`). |
+| **Most: Sensory temperatury i wilgotności** | ✅ Przetestowane | Fizyczna instalacja domowa | Wartość numeryczna w chmurze + formatowany element tekstowy w UI Sinum. |
+| **Most: Push WebSocket STOMP/SockJS** | ✅ Przetestowane | Fizyczna instalacja domowa | Zdarzenia z Sinum trafiają do HA w ~0.45–0.9 s; eliminacja pętli zwrotnych (echo). |
 | **Wirtualne urządzenia natywne Sinum** | 🧪 LAB Bench | Wirtualna centrala / LAB | Wirtualny termostat, brama, furtka, heat pump manager, integratory rolet i dimmerów. |
 | **Moduł klimatyzacji AC (`ac_module`)** | 🧪 LAB Bench | Moduł Lua w LAB Wirtualne | Dwukierunkowe mapowanie z encją `climate` w HA (tryby auto/cool/heat/fan/dry, nastawa). |
 | **32 moduły rozszerzeń Lua Sinum** | 🧪 LAB Bench | Moduły Lua w LAB Wirtualne | Moduły przekaźników, ściemniaczy, RGB, liczników energii/wody, czujników CO2/IAQ/jakości powietrza. |
 | **Wszystkie 11 kontrolek UI Sinum** | 🧪 LAB Bench | Wirtualna centrala / LAB | `text`, `switcher`, `progress_bar`, `slider`, `button`, `combo_box`, `device_selector`, `schedule_selector`, `time_picker`, `date_picker`, `color_picker`. |
 | **Statystyki InfluxDB dla custom devices** | 🧪 LAB Bench | Wirtualna centrala / LAB | Wstrzykiwanie kodu Lua `statistics:addPoint` generuje punkty pomiarowe dla wykresów w Sinum. |
-| **Lokalne API LAN centrali Sinum** | ❌ Brak w API | Ograniczenie producenta | Centrala Sinum nie udostępnia lokalnego portu REST API w LAN. Integracja działa w 100% przez chmurę. |
+| **Komunikacja lokalna (LAN)** | ℹ️ Nie testowano | Poza zakresem wdrożenia | Home Assistant i centrala Sinum pracują w niezależnych podsieciach/lokalizacjach. Integracja została zaprojektowana i zweryfikowana pod kątem bezpośredniej komunikacji z oficjalną chmurą Sinum Cloud API, co umożliwia stabilną pracę także w konfiguracjach zdalnych (poza wspólnym LAN). |
 | **Kamery RTSP / NVR w Sinum** | ❌ Nieobsługiwane | Ograniczenie chmury Sinum | API chmury Sinum zwraca błąd `422 NvrDeviceNotFound` przy próbie dodania wirtualnego strumienia RTSP. |
 | **Rolety i żaluzje (Cover) z HA w Sinum** | ❌ Brak typu | Ograniczenie wirtualnych urządzeń | Sinum nie posiada wariantu wirtualnego urządzenia dla rolet. Integrator rolet działa tylko ze sprzętem TECH. |
 | **Status online dla custom sensorów** | ⚠️ Ograniczenie UI | Kosmetyczne zachowanie Sinum | Wirtualne sensory w Sinum zgłaszają stan `unknown` na liście urządzeń, mimo że ich widgety i wartości działają. |
@@ -99,7 +99,7 @@ flowchart TD
     end
 
     subgraph Hardware ["Fizyczna Instalacja"]
-        Hub["Centrala Sinum\n(Bursztynowa 7)"]
+        Hub["Centrala Sinum\n(Instalacja domowa)"]
         Thermostats["Termostaty WTP\n& Siłowniki grzewcze"]
         Z2M_Devices["Urządzenia Zigbee2MQTT\n(Światła, Bramy, Kontaktrony)"]
     end
@@ -292,24 +292,24 @@ It connects directly to the Sinum Cloud API, maps rooms 1:1 to Home Assistant Ar
 
 | Feature / Platform | Status | Verified In | Details |
 |---|:---:|---|---|
-| **Sinum Cloud API & OAuth2** | ✅ Verified | Physical hardware | Automatic token refresh, network reconnects, and session recovery. |
-| **Room 1:1 Area Mapping** | ✅ Verified | Physical hardware | 9 rooms mapped with assigned temperature/humidity sensors. |
-| **Thermostats & WTP Regulators** | ✅ Verified | Physical hardware | Setpoint adjustments (0.5 °C steps), current temperature, `hvac_action`. |
-| **Weather & Daily Forecast** | ✅ Verified | Physical hardware | Current conditions, hourly/daily forecasts, UV index, pressure, wind. |
-| **Free Relay Switches** | ✅ Verified | Physical hardware | Reliable ON/OFF switching of unassigned physical relay outputs. |
-| **Thermostat-Assigned Relays** | ✅ Verified | Physical hardware | Read-only state sensors & attributes; cloud API rejects direct overrides. |
-| **Firmware Update Sensors** | ✅ Verified | Physical hardware | Cloud version detection. Installation triggered via Sinum mobile app. |
-| **Bridge: Zigbee Lights (`color_picker`)** | ✅ Verified | Physical hardware | Bidirectional: on/off, brightness, RGB colors, Kelvin white temperatures. |
-| **Bridge: Door/Window Contacts** | ✅ Verified | Physical hardware | Real-time state updates in Sinum text elements (`Open` / `Closed`). |
-| **Bridge: Impulse Garage Gate** | ✅ Verified | Physical hardware | Pulse command triggers with inverted close-status contact support. |
-| **Bridge: Temp / Humidity Sensors** | ✅ Verified | Physical hardware | Numeric values and human-readable text representations in Sinum UI. |
-| **Bridge: Real-Time WebSocket Push** | ✅ Verified | Physical hardware | Sub-second latency (~0.45–0.9 s) with bidirectional echo suppression. |
+| **Sinum Cloud API & OAuth2** | ✅ Verified | Physical home setup | Automatic token refresh, network reconnects, and session recovery. |
+| **Room 1:1 Area Mapping** | ✅ Verified | Physical home setup | 9 rooms mapped with assigned temperature/humidity sensors. |
+| **Thermostats & WTP Regulators** | ✅ Verified | Physical home setup | Setpoint adjustments (0.5 °C steps), current temperature, `hvac_action`. |
+| **Weather & Daily Forecast** | ✅ Verified | Physical home setup | Current conditions, hourly/daily forecasts, UV index, pressure, wind. |
+| **Free Relay Switches** | ✅ Verified | Physical home setup | Reliable ON/OFF switching of unassigned physical relay outputs. |
+| **Thermostat-Assigned Relays** | ✅ Verified | Physical home setup | Read-only state sensors & attributes; cloud API rejects direct overrides. |
+| **Firmware Update Sensors** | ✅ Verified | Physical home setup | Cloud version detection. Installation triggered via Sinum mobile app. |
+| **Bridge: Zigbee Lights (`color_picker`)** | ✅ Verified | Physical home setup | Bidirectional: on/off, brightness, RGB colors, Kelvin white temperatures. |
+| **Bridge: Door/Window Contacts** | ✅ Verified | Physical home setup | Real-time state updates in Sinum text elements (`Open` / `Closed`). |
+| **Bridge: Impulse Garage Gate** | ✅ Verified | Physical home setup | Pulse command triggers with inverted close-status contact support. |
+| **Bridge: Temp / Humidity Sensors** | ✅ Verified | Physical home setup | Numeric values and human-readable text representations in Sinum UI. |
+| **Bridge: Real-Time WebSocket Push** | ✅ Verified | Physical home setup | Sub-second latency (~0.45–0.9 s) with bidirectional echo suppression. |
 | **Native Virtual Devices** | 🧪 LAB Bench | Virtual testbed | Virtual thermostats, gates, wickets, heat pump managers, blind integrators. |
 | **AC Climate Module (`ac_module`)** | 🧪 LAB Bench | Virtual testbed | Bidirectional mapping to HA `climate` (auto/cool/heat/fan/dry modes). |
 | **32 Sinum Lua Modules** | 🧪 LAB Bench | Virtual testbed | Validated modules for dimmers, meters, pumps, inverters, and EV chargers. |
 | **11 Sinum UI Element Types** | 🧪 LAB Bench | Virtual testbed | All custom UI controls rendered and tested against cloud REST endpoints. |
 | **InfluxDB Statistics Injection** | 🧪 LAB Bench | Virtual testbed | Lua `statistics:addPoint` scripts generate historical graphs in Sinum. |
-| **Local LAN API** | ❌ Unavailable | Manufacturer design | The Sinum hub has no open local LAN API. Cloud connectivity is required. |
+| **Local LAN Connection** | ℹ️ Untested | Out of current scope | Home Assistant and the Sinum hub reside in separate subnets/locations. The integration is designed and verified against the official Sinum Cloud API, enabling reliable remote operation without requiring a shared local LAN. |
 | **RTSP / NVR Video in Sinum** | ❌ Unsupported | Cloud API limitation | Cloud API returns `422 NvrDeviceNotFound` for virtual generic RTSP cameras. |
 | **Covers / Blinds from HA to Sinum** | ❌ Unsupported | Virtual device limitation | Sinum has no virtual variant for covers or blinds. |
 | **Online Status on Custom Sensors** | ⚠️ Cosmetic | Sinum UI behavior | Virtual custom sensors report `unknown` status in Sinum UI, though values work. |
