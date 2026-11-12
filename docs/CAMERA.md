@@ -37,6 +37,23 @@ visible through the cloud proxy. The local video endpoints
 (`/api/v1/devices/video/{id}/snapshot` and `/stream`) cannot be tested until the
 hub's local API is reachable.
 
+## Cloud API video-parent probe
+
+The cloud proxy exposes `POST /proxy/parent-devices/video`, but it is not a
+generic RTSP/ONVIF camera endpoint:
+
+- `type: "nvr"` requires `driver` and `user`; the allowed `driver` value is
+  `p6s` (P6S-compatible NVR).
+- `type: "generic"` and `type: "video_server"` return `422 NvrDeviceNotFound`
+  (`id 13293`) even with a valid RTSP URL and reachable host.
+- The official Sinum documentation requires the camera and the central unit to
+  be in the same subnet and to support ONVIF; our central has no camera on its
+  LAN and reports `video` capability only.
+
+A P6S NVR is not present in this installation, so the cloud path cannot create
+a Frigate camera. The local UI/API is the supported route for a normal RTSP or
+ONVIF camera, but it is unreachable from B7, CT310, wimex and prod HA.
+
 ## Conclusion
 
 - The B7 camera (Frigate snapshot + RTSP) works correctly and is safe for
