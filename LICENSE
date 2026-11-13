@@ -1,21 +1,19 @@
-MIT License
+Source-Available License (Non-Commercial & Modification Restricted)
 
-Copyright (c) 2026 Tech Sterowniki
+Copyright (c) 2026 Łukasz Kusiński. All rights reserved.
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+Permission is hereby granted to any person obtaining a copy of this software and associated documentation files (the "Software"), to inspect, download, compile, and run the Software strictly for personal, educational, and non-commercial purposes in connection with Home Assistant, subject to the following terms and conditions:
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+1. NON-COMMERCIAL USE ONLY
+The Software may NOT be used, deployed, integrated, bundled, or redistributed for any commercial purpose, commercial product, or commercial service, whether for-profit or non-profit commercial operations, without the prior express written permission of the copyright holder.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+2. NO PUBLIC MODIFICATIONS OR DERIVATIVE WORKS WITHOUT WRITTEN PERMISSION
+You may NOT modify, alter, adapt, translate, create derivative works, or distribute modified versions of the Software (including publicly hosting or distributing altered forks) without the prior express written permission of the copyright holder. Personal local adaptations strictly for private debugging or personal home deployment are permitted, provided they are not published, shared, or distributed.
+
+3. ATTRIBUTION AND COPYRIGHT NOTICE
+The above copyright notice, this permission notice, and all disclaimers must be retained in all copies or substantial portions of the Software.
+
+4. TRADEMARKS
+"Sinum" and "TECH Sterowniki" are registered trademarks of TECH Sterowniki Sp. z o.o. This project and license are independent and not affiliated with, endorsed by, or sponsored by TECH Sterowniki Sp. z o.o.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.

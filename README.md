@@ -6,7 +6,7 @@
 
 [![HACS Custom](https://img.shields.io/badge/HACS-Custom-41BDF5.svg)](https://hacs.xyz)
 [![Home Assistant](https://img.shields.io/badge/Home%20Assistant-2026.11%2B-18BCEE.svg)](https://www.home-assistant.io)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![License: Source--Available](https://img.shields.io/badge/License-Source--Available-blue.svg)](LICENSE)
 [![Validate](https://github.com/lkusinski/sinum-home-assistant/actions/workflows/validate.yml/badge.svg)](https://github.com/lkusinski/sinum-home-assistant/actions/workflows/validate.yml)
 
 **Sinum Home Assistant** to niezależna, zaawansowana integracja dla central i automatyki domowej **Sinum** firmy **TECH Sterowniki**.
@@ -268,7 +268,7 @@ Więcej informacji technicznych i poradników znajduje się w katalogu `docs/`:
 
 ## Prawa autorskie i znaki towarowe
 
-- Kod integracji jest udostępniany na licencji **MIT License** — Copyright © 2026 **Łukasz Kusiński**. Zobacz [LICENSE](LICENSE).
+- Kod integracji jest udostępniany na licencji **Source-Available (do użytku niekomercyjnego)** — Copyright © 2026 **Łukasz Kusiński**. Wszelkie prawa zastrzeżone. Dozwolone jest bezpłatne używanie w prywatnych instalacjach Home Assistant; zabrania się komercyjnego wykorzystania oraz publikacji zmodyfikowanych wersji (forków) bez uprzedniej pisemnej zgody autora. Zobacz pełną treść: [LICENSE](LICENSE).
 - Nazwy **Sinum** oraz **TECH Sterowniki** są zarejestrowanymi znakami towarowymi firmy **TECH Sterowniki Sp. z o.o.**
 - Ten projekt jest niezależną, społecznościową integracją Home Assistant i nie jest oficjalnym produktem firmy TECH Sterowniki Sp. z o.o.
 
@@ -312,7 +312,7 @@ It connects directly to the Sinum Cloud API, maps rooms 1:1 to Home Assistant Ar
 | **32 Sinum Lua Modules** | 🧪 LAB Bench | Virtual testbed | Validated modules for dimmers, meters, pumps, inverters, and EV chargers. |
 | **11 Sinum UI Element Types** | 🧪 LAB Bench | Virtual testbed | All custom UI controls rendered and tested against cloud REST endpoints. |
 | **InfluxDB Statistics Injection** | 🧪 LAB Bench | Virtual testbed | Lua `statistics:addPoint` scripts generate historical graphs in Sinum. |
-| **Local LAN Connection** | ℹ️ Untested | Out of current scope | The hub reports LAN `192.168.1.16`, but its local API ports are closed from B7/CT310. The integration remains cloud-first; local API is documented in `docs/API-LOCAL.md`. |
+| **Local LAN Connection** | ℹ️ Untested | Out of current scope | The hub reports LAN `192.168.1.16`, but Home Assistant and the hub reside in separate physical networks in the current test setup. The integration remains cloud-first; local API is documented in `docs/API-LOCAL.md`. |
 | **RTSP / NVR Video in Sinum** | ❌ Unsupported | Cloud API limitation | Cloud API returns `422 NvrDeviceNotFound` for virtual generic RTSP cameras. |
 | **Covers / Blinds from HA to Sinum** | ❌ Unsupported | Virtual device limitation | Sinum has no virtual variant for covers or blinds. |
 | **Online Status on Custom Sensors** | ⚠️ Cosmetic | Sinum UI behavior | Virtual custom sensors report `unknown` status in Sinum UI, though values work. |
@@ -324,3 +324,8 @@ It connects directly to the Sinum Cloud API, maps rooms 1:1 to Home Assistant Ar
 2. Download **Sinum Home Assistant** and restart Home Assistant.
 3. Navigate to **Settings → Devices & Services → Add Integration** and select **Sinum Home Assistant**.
 4. Enter your Sinum account credentials and cloud device ID (`uid`).
+
+### License and Copyright
+
+- This integration is licensed under a **Source-Available License (Non-Commercial & Modification Restricted)** — Copyright © 2026 **Łukasz Kusiński**. All rights reserved. Free for personal, non-commercial use with Home Assistant. Commercial use and public distribution of modified versions/forks are strictly prohibited without prior express written consent. See [LICENSE](LICENSE).
+- **Sinum** and **TECH Sterowniki** are registered trademarks of **TECH Sterowniki Sp. z o.o.**
