@@ -12,6 +12,9 @@ import aiohttp
 
 from .const import API_BASE, APP_BASIC, OAUTH_URL, TOKEN_SAFETY
 
+REQUEST_RETRIES = 2
+REQUEST_RETRY_DELAY = 0.75
+
 
 class SinumHomeAssistantError(Exception):
     """Base error for the Sinum cloud client."""
@@ -55,6 +58,7 @@ class SinumHomeAssistantClient:
         self._access_token: str | None = None
         self._expires_at = 0.0
         self._lock = asyncio.Lock()
+        self._request_lock = asyncio.Lock()
 
     @property
     def device_id(self) -> str:
@@ -154,45 +158,89 @@ class SinumHomeAssistantClient:
         payload: dict[str, Any] | None = None,
         retry: bool = True,
     ) -> Any:
-        token = await self.async_ensure_token()
+        # The Sinum cloud allows only one request in flight per device id.
+        # Coordinator polls, the bridge and entity actions all share this
+        # client, so serialize requests instead of racing into HTTP 429.
         url = f"{API_BASE}/{path.lstrip('/')}"
-        headers = {
-            "Authorization": f"Bearer {token}",
-            "X-Device-ID": self._device_id,
-            "Accept": "application/json",
-        }
-        try:
-            async with self._session.request(
-                method,
-                url,
-                headers=headers,
-                json=payload,
-                timeout=aiohttp.ClientTimeout(total=45),
-            ) as response:
-                if response.status == 401 and retry:
-                    await self.async_ensure_token(force=True)
-                    return await self._async_request(
-                        method, path, payload=payload, retry=False
-                    )
-                if response.status in (404, 501):
-                    raise SinumNotSupportedError(path)
-                if response.status == 304:
-                    return None
-                if response.status >= 400:
-                    body = (await response.text())[:200]
-                    raise SinumApiError(
-                        f"{method} {path} failed with HTTP {response.status}: {body}"
-                    )
-                if response.status == 204:
-                    return None
-                body = await response.text()
-                if not body:
-                    return None
-                return json.loads(body)
-        except SinumHomeAssistantError:
-            raise
-        except (aiohttp.ClientError, TimeoutError, json.JSONDecodeError) as err:
-            raise SinumConnectionError(f"{method} {path} failed: {err}") from err
+        attempts = REQUEST_RETRIES + 1 if retry else 1
+        token = await self.async_ensure_token()
+        async with self._request_lock:
+            last_error: SinumHomeAssistantError | None = None
+            for attempt in range(attempts):
+                headers = {
+                    "Authorization": f"Bearer {token}",
+                    "X-Device-ID": self._device_id,
+                    "Accept": "application/json",
+                }
+                try:
+                    async with self._session.request(
+                        method,
+                        url,
+                        headers=headers,
+                        json=payload,
+                        timeout=aiohttp.ClientTimeout(total=45),
+                    ) as response:
+                        if response.status == 401:
+                            if attempt < attempts - 1:
+                                token = await self.async_ensure_token(
+                                    force=True
+                                )
+                                continue
+                            raise SinumAuthError(
+                                f"{method} {path} failed with HTTP 401"
+                            )
+                        if response.status == 429:
+                            body = (await response.text())[:120]
+                            last_error = SinumApiError(
+                                f"{method} {path} failed with HTTP 429: {body}"
+                            )
+                            if attempt < attempts - 1:
+                                await asyncio.sleep(
+                                    REQUEST_RETRY_DELAY * (2**attempt)
+                                )
+                                continue
+                            raise last_error
+                        if response.status in (500, 502, 503, 504):
+                            body = (await response.text())[:120]
+                            last_error = SinumApiError(
+                                f"{method} {path} failed with HTTP "
+                                f"{response.status}: {body}"
+                            )
+                            if attempt < attempts - 1:
+                                await asyncio.sleep(
+                                    REQUEST_RETRY_DELAY * (2**attempt)
+                                )
+                                continue
+                            raise last_error
+                        if response.status in (404, 501):
+                            raise SinumNotSupportedError(path)
+                        if response.status == 304:
+                            return None
+                        if response.status >= 400:
+                            body = (await response.text())[:200]
+                            raise SinumApiError(
+                                f"{method} {path} failed with HTTP "
+                                f"{response.status}: {body}"
+                            )
+                        if response.status == 204:
+                            return None
+                        body = await response.text()
+                        if not body:
+                            return None
+                        return json.loads(body)
+                except SinumHomeAssistantError:
+                    raise
+                except (
+                    aiohttp.ClientError,
+                    TimeoutError,
+                    json.JSONDecodeError,
+                ) as err:
+                    raise SinumConnectionError(
+                        f"{method} {path} failed: {err}"
+                    ) from err
+            if last_error is not None:
+                raise last_error
+        return None
 
     async def async_get(self, path: str) -> Any:
         return await self._async_request("GET", path)

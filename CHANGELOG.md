@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.3.1 — 2026-11-17
+
+- Serialize every Sinum cloud request per config entry. The coordinator, the
+  bridge and entity actions share one client, and the cloud allows only one
+  request in flight per device id. Concurrent polling produced repeated
+  `HTTP 429: Device ... already has a request in flight` and dropped updates.
+- Retry `HTTP 429` and transient `5xx` responses with exponential backoff;
+  retry `401` once after a forced token refresh.
+- Run the bridge event stream, reconciliation and initial sync as Home
+  Assistant background tasks, so they no longer trigger "Setup timed out for
+  bootstrap" warnings.
+- Mark the coordinator area listener as a Home Assistant callback to keep
+  task creation on the event loop.
+
 ## 1.3.0 — 2026-11-17
 
 - Add a `momentary` bridge variant for garage gates and fences. Sinum shows a

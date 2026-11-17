@@ -49,6 +49,22 @@ Entity IDs depend on room and device names in Sinum. Renaming a room or device
 in Sinum can change the generated entity ID on the next setup. Rename entities
 in Home Assistant if you need stable IDs for dashboards and automations.
 
+## HTTP 429 "already has a request in flight"
+
+The Sinum cloud allows only one request at a time per hub device id. The
+integration serializes all cloud calls (coordinator, bridge, entity actions)
+and retries `429`/`5xx` with backoff. Occasional messages in debug logs are
+expected when the Sinum mobile app queries the same hub at the same time;
+persistent failures indicate another client polling the same device id too
+aggressively.
+
+## "Setup timed out for bootstrap" in the log
+
+This warning appeared when the bridge loops were created as foreground tasks.
+Since 1.3.1 they run as background tasks and are cancelled cleanly on unload
+or Home Assistant stop. If it still appears, check for other custom
+integrations that create long-running foreground tasks.
+
 ## Debug logging
 
 ```yaml

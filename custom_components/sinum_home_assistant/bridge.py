@@ -403,18 +403,21 @@ class SinumBridge:
             )
         self._subscribe_ha_states()
         self._tasks.append(
-            self.hass.async_create_task(
-                self._async_sinum_stream(), "sinum bridge event stream"
+            self.hass.async_create_background_task(
+                self._async_sinum_stream(),
+                "sinum bridge event stream",
             )
         )
         self._tasks.append(
-            self.hass.async_create_task(
-                self._async_reconcile_loop(), "sinum bridge reconcile"
+            self.hass.async_create_background_task(
+                self._async_reconcile_loop(),
+                "sinum bridge reconcile",
             )
         )
         self._tasks.append(
-            self.hass.async_create_task(
-                self._async_initial_sync(), "sinum bridge initial sync"
+            self.hass.async_create_background_task(
+                self._async_initial_sync(),
+                "sinum bridge initial sync",
             )
         )
         _LOGGER.info(

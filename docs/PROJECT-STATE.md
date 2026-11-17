@@ -1,6 +1,6 @@
 # Project state and refactor plan
 
-Last updated: 2026-11-12 21:40 CET (Europe/Warsaw)
+Last updated: 2026-11-17 22:55 CET (Europe/Warsaw)
 
 This document is the hand-off snapshot for the current work. It separates the
 Home Assistant integration from the experimental Z2M/HA bridge and records the
@@ -11,7 +11,7 @@ planned refactor. No credentials belong in this file.
 ### Home Assistant integration
 
 - Domain: `sinum_home_assistant`
-- Manifest version: `1.2.1`
+- Manifest version: `1.3.1`
 - Source: `custom_components/sinum_home_assistant/`
 - Direction: **Sinum → Home Assistant** (cloud polling, one coordinator).
 - Main building blocks:
@@ -69,6 +69,19 @@ planned refactor. No credentials belong in this file.
 - **LAB Virtual (13):** 32 Lua modules and local fake helpers.
 - Every bridge-created virtual device is marked with
   `integration_uid: z2m-bridge`; the integration ignores those devices.
+
+## Reliability fixes from the 2026-11-10..17 observation window
+
+- **One request in flight:** the cloud rejects concurrent calls with
+  `HTTP 429: Device ... already has a request in flight`. All requests now pass
+  through a single lock in `api.py`; 429/5xx are retried with backoff and 401
+  forces one token refresh.
+- **Background bridge tasks:** the event stream, reconciliation and initial
+  sync are Home Assistant background tasks, so they do not block the bootstrap
+  phase (previously logged as "Setup timed out for bootstrap").
+- **Event-loop safety:** the coordinator area listener is a `@callback`.
+- **Momentary gates (1.3.0):** native Sinum button + contact-state text,
+  script-based action, 3 s watchdog and 1 s debounce.
 
 ## Current bridge behavior
 
