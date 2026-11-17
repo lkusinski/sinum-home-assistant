@@ -175,9 +175,12 @@ authoritative and mapping/config are owned by Home Assistant. The scripts in
 
 ### Phase 4 — tests and release
 
-- Add unit tests for selection, mapping and echo suppression.
-- Add a repeatable LAB smoke test (API + Playwright + physical verification).
-- Release integration and bridge separately or document a combined release.
+- `tests/test_api.py` covers request serialization, `429`/`5xx` retries and
+  `404` handling; the CI `tests` job runs pytest on every push.
+- Still to add: selection/mapping and echo-suppression tests, plus a repeatable
+  LAB smoke test (API + Playwright + physical verification).
+- Releases `v1.2.4`, `v1.3.0` and `v1.3.1` are published on GitHub; HACS uses
+  the manifest version and matching tag.
 
 ## Safety rules
 
