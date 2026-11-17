@@ -12,7 +12,7 @@ Most jest **wbudowanym, asynchronicznym komponentem integracji** (`custom_compon
 2. **Kierunek dwukierunkowy w czasie rzeczywistym**:
    - **HA → Sinum**: Zmiana stanu encji w Home Assistant natychmiast wysyła polecenie REST/PATCH do wirtualnego urządzenia w chmurze Sinum.
    - **Sinum → HA**: Asynchroniczny klient WebSocket STOMP/SockJS subskrybuje kanał `/topic/<deviceId>`. Akcja użytkownika w aplikacji Sinum (suwak jasności, zmiana barwy, przełącznik) natychmiast wywołuje odpowiednią usługę w Home Assistant (`light.turn_on`, `switch.turn_on` itp.).
-3. **Eliminacja pętli (Echo Suppression)**: Mechanizm tłumienia echa sprawdza ostatnio wysłane stany (`_ha_last`, `_recent`) i ignoruje zdarzenia zwrotne wynikające z własnych poleceń.
+3. **Eliminacja pętli (Echo Suppression)**: Mechanizm tłumienia echa sprawdza ostatnio wysłane stany (`_ha_last`, `_recent`) i ignoruje zdarzenia zwrotne wynikające z własnych poleceń. Dla przekaźników (`relay`) obowiązuje dodatkowe okno 3 s (`RELAY_ECHO_SECONDS`) po zapisie HA → Sinum: asynchroniczne echo `ON`/`OFF` z Sinum bywa opóźnione i może dotrzeć już po powrocie przekaźnika do `OFF`, więc w tym oknie most tylko aktualizuje `_sinum_last` i nie wywołuje ponownie usługi w HA (ochrona impulsowych bram i ogrodzeń przed drugim impulsem).
 4. **Izolacja encji w HA**: Wirtualne urządzenia tworzone w chmurze Sinum są oznaczane unikalnym znacznikiem `integration_uid: z2m-bridge`. Główny koordynator integracji odfiltrowuje je, dzięki czemu nie są one ponownie importowane do Home Assistant jako zdublowane encje.
 
 ---

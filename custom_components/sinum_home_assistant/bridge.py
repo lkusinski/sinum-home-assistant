@@ -38,6 +38,7 @@ _LOGGER = logging.getLogger(__name__)
 STREAM_RECONNECT = 5
 RECENT_SECONDS = 15
 RECONCILE_SECONDS = 60
+RELAY_ECHO_SECONDS = 3.0
 MAPPING_FILE = "sinum_bridge/mapping.json"
 STORE_VERSION = 1
 
@@ -300,6 +301,7 @@ class SinumBridge:
         self._ha_last: dict[str, Any] = {}
         self._sinum_last: dict[str, Any] = {}
         self._recent: dict[str, tuple[Any, float]] = {}
+        self._relay_echo_until: dict[str, float] = {}
         self._stop = asyncio.Event()
         self._tasks: list[asyncio.Task[Any]] = []
         self._unsub_state = None
@@ -521,14 +523,20 @@ class SinumBridge:
                 return
             self._ha_last[entity_id] = value
             try:
-                await self._async_apply_value(device_id, entry, value)
+                await self._async_apply_value(
+                    entity_id, device_id, entry, value
+                )
             except SinumHomeAssistantError as err:
                 _LOGGER.warning(
                     "Sinum bridge update failed for %s: %s", entity_id, err
                 )
 
     async def _async_apply_value(
-        self, device_id: int, entry: dict[str, Any], value: Any
+        self,
+        entity_id: str,
+        device_id: int,
+        entry: dict[str, Any],
+        value: Any,
     ) -> None:
         variant = str(entry.get("variant"))
         payload = _mapping_payload(entry, value)
@@ -536,6 +544,13 @@ class SinumBridge:
             return
         await self._async_patch_virtual(device_id, payload)
         if variant == "relay":
+            # A relay is momentary (garage/gate pulse): Sinum echoes the
+            # element state back asynchronously, sometimes after the HA
+            # relay already returned to OFF. Apply a short echo window so
+            # that stale ON echoes cannot retrigger the physical relay.
+            self._relay_echo_until[entity_id] = (
+                time.monotonic() + RELAY_ECHO_SECONDS
+            )
             await self._async_set_relay_switch(
                 device_id, "relay_switch", bool(value)
             )
@@ -1358,6 +1373,15 @@ class SinumBridge:
         _LOGGER.debug("Sinum bridge event %s: %s", entity_id, variant)
         if variant == "relay" and payload.get("name") == "relay_switch":
             current = bool(payload.get("value"))
+            if time.monotonic() < self._relay_echo_until.get(entity_id, 0.0):
+                # Echo of our own recent HA -> Sinum relay write. Keep the
+                # last known Sinum value in sync and do not touch HA, so a
+                # momentary garage/gate relay is not pulsed a second time.
+                self._sinum_last[entity_id] = current
+                _LOGGER.debug(
+                    "Sinum bridge relay echo suppressed for %s", entity_id
+                )
+                return
             if self._sinum_last.get(entity_id) == current:
                 return
             self._mark_recent(entity_id, current)

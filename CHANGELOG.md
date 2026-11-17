@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.2.4 — 2026-11-17
+
+- Suppress stale Sinum relay echoes after a Home Assistant → Sinum relay
+  write (3 s window). Momentary garage/gate relays were being retriggered by an
+  asynchronous echo of the previous ON, which arrived after HA had already
+  returned the relay to OFF. This caused an unintended second impulse.
+
 ## 1.2.3 — 2026-11-13
 
 - Document camera verification for B7 (`camera.kamera_230_prod`): snapshot
