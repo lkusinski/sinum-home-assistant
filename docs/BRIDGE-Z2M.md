@@ -33,13 +33,40 @@ Wybór urządzeń i encji do mostu odbywa się deklaratywnie w Home Assistant:
 |---|---|---|---|
 | **Oświetlenie (`light`)** | `generic` | `color_picker` | Włącz/Wyłącz, jasność (0–100%), kolor RGB (HEX), temperatura barwowa (Kelvin). Sinum używa trybu `temperature`, a HA `color_temp`; most dokonuje automatycznej normalizacji. |
 | **Kontaktrony / czujniki otwarcia** | `two_state_input_sensor` | `text` | Wyświetla `Otwarte` lub `Zamknięte`. Obsługuje odwrócenie logiki (`invert: true`). |
-| **Bramy wjazdowe i garażowe** | `gate` (wirtualna) / `relay` | `switcher` / status | Impuls sterujący `turn_on` / zwalnianie przekaźnika. Czujnik zamknięcia bramy w Sinum (`close_status_sensor`) wymaga logiki odwróconej (`true` = zamknięta). |
+| **Bramy wjazdowe i garażowe** | `momentary` (custom) | `button` + `text` | Natywny przycisk `pulse_button` w Sinum wywołuje akcję HA (`script.*`, `input_button.*`, `cover.*`) — nigdy bezpośrednio przekaźnika. Tekst `contact_state` pokazuje kontaktron/pozycję (`Otwarta`/`Zamknięta`), a watchdog 3 s wymusza `off`, jeśli impuls nie został zwolniony. |
 | **Temperatura** | `temperature_sensor` | `text` (tekst-default) | Wartość rejestrowana w formacie Sinum (×10) oraz formatowany ciąg tekstowy (np. `21.4 °C`). |
 | **Wilgotność** | `humidity_sensor` | `text` (tekst-default) | Wartość w formacie Sinum (×10) oraz ciąg tekstowy (np. `52.0 %`). |
 | **Wielkości analogowe (ciśnienie, napięcie itp.)** | `analog_input` | Wartość wariantu | Dowolna wartość numeryczna z przypisaną jednostką (`unit`). |
 | **Pomiary energii i mocy** | `energy_meter` | Wartość wariantu | Pobór mocy (W) oraz zużycie energii (kWh). |
 | **Poziom baterii** | `battery` | Wartość wariantu | Stan naładowania (0–100%). |
 | **Klimatyzator (`climate`)** | `custom_device_module` | `variant: ac_module` | Tryby pracy (auto, chłodzenie, ogrzewanie, wentylacja, osuszanie), nastawa temperatury zadanej i odczyt temperatury pomieszczenia. |
+
+### Wariant `momentary` (bramy i ogrodzenia)
+
+Wpisy bram w pliku mapowania (`mapping.json` / `.storage/sinum_home_assistant.bridge`) używają wariantu `momentary`:
+
+```json
+"switch.garaz_agrestowa": {
+  "id": 103,
+  "variant": "momentary",
+  "field": "state",
+  "name": "HA · Garaż Agrestowa",
+  "action_entity": "script.brama_puls_agrestowa",
+  "state_entity": "binary_sensor.garaz_agrestowa_kontaktron_contact",
+  "state_invert": false,
+  "text_true": "Otwarta",
+  "text_false": "Zamknięta",
+  "pulse_text": "Impuls"
+}
+```
+
+- `action_entity` — encja akcji w HA. Obsługiwane domeny: `script` (`turn_on`), `input_button`/`button` (`press`), `cover` (`toggle`); brak wpisu = fallback na `switch.turn_on` z automatycznym zwolnieniem po 0,5 s.
+- `state_entity` — kontaktron lub encja pozycji. `state_invert: true` odwraca logikę (np. kontaktron „zamknięta”, gdzie `on` = zamknięta brama).
+- `pulse_text` — etykieta przycisku w Sinum (domyślnie `Impuls`).
+- `watch_entity` — opcjonalny przekaźnik pilnowany przez watchdog (domyślnie encja mapowana, jeśli jest `switch`/`light`/`input_boolean`).
+- Brak `state_entity` (np. ogrodzenia bez kontaktronu) pokazuje `Brak czujnika`.
+- Ponowna akcja w ciągu 1 s jest ignorowana (debounce), a watchdog po 3 s wyłącza przekaźnik, jeśli nadal jest `on`.
+- Migracja istniejących urządzeń relay → momentary odbywa się przez zmianę wpisu w `mapping.json`; most przebudowuje elementy urządzenia przy najbliższej rekoncyliacji (bez usuwania urządzenia i bez zmiany jego ID).
 
 ---
 

@@ -75,7 +75,7 @@ Poniższa macierz przedstawia rzeczywisty, rzetelny stan wdrożenia — bez kolo
 | **Kamery RTSP / NVR w Sinum** | ❌ Nieobsługiwane | Ograniczenie chmury Sinum | API chmury Sinum zwraca błąd `422 NvrDeviceNotFound` przy próbie dodania wirtualnego strumienia RTSP. |
 | **Rolety i żaluzje (Cover) z HA w Sinum** | ❌ Brak typu | Ograniczenie wirtualnych urządzeń | Sinum nie posiada wariantu wirtualnego urządzenia dla rolet. Integrator rolet działa tylko ze sprzętem TECH. |
 | **Status online dla custom sensorów** | ⚠️ Ograniczenie UI | Kosmetyczne zachowanie Sinum | Wirtualne sensory w Sinum zgłaszają stan `unknown` na liście urządzeń, mimo że ich widgety i wartości działają. |
-| **Bramy jako przycisk monostabilny** | ⚠️ Do ulepszenia | Wdrożone jako switch | Most symuluje przycisk poprzez przełącznik wysyłający impuls, a nie natywny momentary button. |
+| **Bramy jako przycisk monostabilny** | ✅ Przetestowane | Fizyczna instalacja domowa (Agrestowa) | Wariant `momentary`: natywny `button` w Sinum wywołuje `script.*`/`input_button.*`/`cover.*`, tekst pokazuje kontaktron, watchdog 3 s. |
 
 ---
 
@@ -239,7 +239,7 @@ Most `SinumBridge` rozwiązuje częsty problem: jak w jednej aplikacji Sinum kon
 |---|---|---|---|
 | **Światło (`light`)** | `generic` | `color_picker` | Włącz/Wyłącz, Jasność (0–100%), Kolor RGB, Barwa biała (Kelvin). |
 | **Kontaktron (`binary_sensor`)** | `two_state_input_sensor` | `text` | Stan otwarcia (`Otwarte` / `Zamknięte`), obsługa inwersji. |
-| **Brama garażowa / wjazdowa** | `gate` (wirtualna) / `relay` | `switcher` / status | Impuls sterujący, monitorowanie stanu otwarcia/zamknięcia. |
+| **Brama garażowa / wjazdowa** | `momentary` (custom) | `button` + `text` | Przycisk `pulse_button` wywołuje akcję HA; `contact_state` pokazuje kontaktron; watchdog 3 s. |
 | **Temperatura (`sensor`)** | `temperature_sensor` | `text` (tekst-default) | Wartość numeryczna + czytelny format np. `21.4 °C`. |
 | **Wilgotność (`sensor`)** | `humidity_sensor` | `text` (tekst-default) | Wartość numeryczna + czytelny format np. `55.0 %`. |
 | **Wielkości analogowe (moc, energia, bateria)** | `analog_input` / `energy_meter` | Wartości wariantu | Jednostki dopasowane automatycznie (W, kWh, %, V). |
@@ -287,7 +287,7 @@ It connects directly to the Sinum Cloud API, maps rooms 1:1 to Home Assistant Ar
 - **Weather Station & Forecasts**: Hourly and daily weather forecasts, solar irradiance, UV index, wind speed, atmospheric pressure, and humidity.
 - **Safe Relay Management**: Free relay outputs are exposed as switches; thermostat-controlled heating relays are exposed as read-only binary sensors and diagnostic attributes to prevent equipment damage and conflicting logic.
 - **Firmware Update Tracking**: Monitors available firmware updates for the hub, parent controllers, repeaters, and transceivers directly from the cloud.
-- **Built-in Async Bridge (`SinumBridge`)**: Bridges Zigbee2MQTT lights (RGB, color temperature in Kelvin, brightness), door/window contacts, impulse garage gates, environmental sensors, and AC modules into Sinum using standard Home Assistant device labels (default: `sinumbridge`).
+- **Built-in Async Bridge (`SinumBridge`)**: Bridges Zigbee2MQTT lights (RGB, color temperature in Kelvin, brightness), door/window contacts, momentary garage gates/fences (native Sinum buttons), environmental sensors, and AC modules into Sinum using standard Home Assistant device labels (default: `sinumbridge`).
 - **Real-Time Push via WebSocket**: The bridge listens to real-time Sinum cloud STOMP/SockJS events (< 1 s latency) with built-in echo suppression.
 - **Secure OAuth2 Authentication**: Passwords are used only once during initial setup; only the `refresh_token` is stored, and access tokens rotate in memory automatically.
 
@@ -316,7 +316,7 @@ It connects directly to the Sinum Cloud API, maps rooms 1:1 to Home Assistant Ar
 | **RTSP / NVR Video in Sinum** | ❌ Unsupported | Cloud API limitation | Cloud API returns `422 NvrDeviceNotFound` for virtual generic RTSP cameras. |
 | **Covers / Blinds from HA to Sinum** | ❌ Unsupported | Virtual device limitation | Sinum has no virtual variant for covers or blinds. |
 | **Online Status on Custom Sensors** | ⚠️ Cosmetic | Sinum UI behavior | Virtual custom sensors report `unknown` status in Sinum UI, though values work. |
-| **Gates as Monostable Buttons** | ⚠️ Roadmap | Implemented as switch | Currently triggered via a pulse switch rather than a native monostable button. |
+| **Gates as Monostable Buttons** | ✅ Verified | Physical home setup (Agrestowa) | `momentary` variant: native Sinum `button` calls `script.*`/`input_button.*`/`cover.*`; `contact_state` text shows the sensor; 3 s watchdog. |
 
 ### Installation
 

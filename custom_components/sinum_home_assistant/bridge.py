@@ -39,6 +39,9 @@ STREAM_RECONNECT = 5
 RECENT_SECONDS = 15
 RECONCILE_SECONDS = 60
 RELAY_ECHO_SECONDS = 3.0
+MOMENTARY_PULSE_SECONDS = 0.5
+MOMENTARY_WATCHDOG_SECONDS = 3.0
+MOMENTARY_DEBOUNCE_SECONDS = 1.0
 MAPPING_FILE = "sinum_bridge/mapping.json"
 STORE_VERSION = 1
 
@@ -137,6 +140,79 @@ def _relay_switch_layout(
         ],
     }
     return layout, widget
+
+
+def _momentary_elements(
+    pulse_text: str, state_text: str
+) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    button_uuid = str(uuid.uuid4())
+    text_uuid = str(uuid.uuid4())
+    row_button = str(uuid.uuid4())
+    row_text = str(uuid.uuid4())
+    cell_button = str(uuid.uuid4())
+    cell_text = str(uuid.uuid4())
+    button = {
+        "type": "button",
+        "name": "pulse_button",
+        "uuid": button_uuid,
+        "enabled": True,
+        "visibility": "visible",
+        "text": pulse_text,
+        "text_id": 0,
+        "icon": "",
+        "on_press": "onPulseButton",
+    }
+    text = {
+        "type": "text",
+        "name": "contact_state",
+        "uuid": text_uuid,
+        "enabled": True,
+        "visibility": "visible",
+        "value": state_text,
+        "text_id": 0,
+        "icon": "",
+        "font_weight": "normal",
+        "font_size": "large",
+        "on_change": "onSensorTextChange",
+    }
+    widget = {
+        "version": 2,
+        "content": [
+            {
+                "id": row_button,
+                "type": "row",
+                "cells": [
+                    {
+                        "id": cell_button,
+                        "type": "row",
+                        "orientation": "row",
+                        "vertical_alignment": "center",
+                        "horizontal_alignment": "center",
+                        "elements": [
+                            {"uuid": button_uuid, "variant": "button-default"}
+                        ],
+                    }
+                ],
+            },
+            {
+                "id": row_text,
+                "type": "row",
+                "cells": [
+                    {
+                        "id": cell_text,
+                        "type": "row",
+                        "orientation": "row",
+                        "vertical_alignment": "center",
+                        "horizontal_alignment": "center",
+                        "elements": [
+                            {"uuid": text_uuid, "variant": "text-default"}
+                        ],
+                    }
+                ],
+            },
+        ],
+    }
+    return [button, text], widget
 
 
 def _sensor_text(entry: dict[str, Any], value: Any) -> str:
@@ -302,6 +378,11 @@ class SinumBridge:
         self._sinum_last: dict[str, Any] = {}
         self._recent: dict[str, tuple[Any, float]] = {}
         self._relay_echo_until: dict[str, float] = {}
+        self._state_watchers: dict[str, list[tuple[str, dict[str, Any]]]] = {}
+        self._momentary_ready: set[int] = set()
+        self._momentary_text_cache: dict[int, str] = {}
+        self._momentary_debounce: dict[str, float] = {}
+        self._momentary_watchdogs: dict[str, asyncio.Task[Any]] = {}
         self._stop = asyncio.Event()
         self._tasks: list[asyncio.Task[Any]] = []
         self._unsub_state = None
@@ -398,11 +479,18 @@ class SinumBridge:
             if isinstance(entry, dict) and entry.get("id") is not None
         }
         self._by_id = {}
+        self._state_watchers = {}
         for entity_id, entry in self._mapping.items():
             try:
                 self._by_id[int(entry["id"])] = (entity_id, entry)
             except (KeyError, TypeError, ValueError):
                 continue
+            if entry.get("variant") == "momentary":
+                state_entity = str(entry.get("state_entity") or "")
+                if state_entity:
+                    self._state_watchers.setdefault(
+                        state_entity, []
+                    ).append((entity_id, entry))
 
     def _subscribe_ha_states(self) -> None:
         if self._unsub_state is not None:
@@ -412,7 +500,7 @@ class SinumBridge:
             return
         self._unsub_state = async_track_state_change_event(
             self.hass,
-            list(self._mapping),
+            sorted(set(self._mapping) | set(self._state_watchers)),
             self._handle_ha_state_event,
         )
 
@@ -422,6 +510,13 @@ class SinumBridge:
         new_state = event.data.get("new_state")
         if not entity_id or not isinstance(new_state, State):
             return
+        for watch_entity, entry in self._state_watchers.get(
+            entity_id, []
+        ):
+            self.hass.async_create_task(
+                self._async_refresh_momentary_text(watch_entity, entry),
+                f"sinum bridge momentary {watch_entity}",
+            )
         if entity_id not in self._mapping or self._is_recent(entity_id):
             return
         self.hass.async_create_task(
@@ -452,6 +547,8 @@ class SinumBridge:
             if state is None or state.state in ("unavailable", "unknown"):
                 continue
             variant = entry.get("variant")
+            if variant == "momentary":
+                continue
             if variant in ("relay", "light", "ac_module"):
                 self._ha_last[entity_id] = self._desired(
                     variant, entry, state
@@ -487,6 +584,8 @@ class SinumBridge:
                 return
             variant = str(entry.get("variant"))
             device_id = int(entry["id"])
+            if variant == "momentary":
+                return
             if variant == "ac_module":
                 desired = _ha_ac_values(state)
                 if self._ha_last.get(entity_id) == desired:
@@ -716,6 +815,162 @@ class SinumBridge:
             device_id, element, "set_value", {"set_value": bool(value)}
         )
 
+    def _momentary_text(self, entry: dict[str, Any]) -> str:
+        state_entity = str(entry.get("state_entity") or "")
+        if not state_entity:
+            return str(entry.get("state_text") or "Brak czujnika")
+        state = self.hass.states.get(state_entity)
+        if state is None or state.state in ("unavailable", "unknown"):
+            return "Niedostępny"
+        is_open = state.state in ("on", "open", "True", "true")
+        if entry.get("state_invert"):
+            is_open = not is_open
+        if is_open:
+            return str(entry.get("text_true") or "Otwarta")
+        return str(entry.get("text_false") or "Zamknięta")
+
+    async def _async_ensure_momentary_layout(
+        self,
+        device_id: int,
+        entry: dict[str, Any],
+        device: dict[str, Any] | None = None,
+    ) -> None:
+        if device_id in self._momentary_ready:
+            return
+        if device is None:
+            virtual = await self._async_get_virtual()
+            device = virtual.get(device_id, {})
+        names = {
+            str(element.get("name"))
+            for element in device.get("elements") or []
+        }
+        if (
+            "pulse_button" in names
+            and "contact_state" in names
+            and "relay_switch" not in names
+        ):
+            self._momentary_ready.add(device_id)
+            return
+        pulse_text = str(entry.get("pulse_text") or "Impuls")
+        text = self._momentary_text(entry)
+        elements, widget = _momentary_elements(pulse_text, text)
+        await self.client.async_patch(
+            f"devices/virtual/{device_id}",
+            {"elements": elements, "widget": widget},
+        )
+        self._momentary_ready.add(device_id)
+        self._momentary_text_cache[device_id] = text
+        _LOGGER.info(
+            "Sinum bridge momentary layout ready for device %s", device_id
+        )
+
+    async def _async_set_momentary_text(
+        self, device_id: int, text: str
+    ) -> None:
+        await self._async_element(
+            device_id, "contact_state", "set_value", {"set_value": text}
+        )
+
+    async def _async_refresh_momentary_text(
+        self, entity_id: str, entry: dict[str, Any]
+    ) -> None:
+        device_id = int(entry["id"])
+        try:
+            await self._async_ensure_momentary_layout(device_id, entry)
+            text = self._momentary_text(entry)
+            if self._momentary_text_cache.get(device_id) == text:
+                return
+            await self._async_set_momentary_text(device_id, text)
+            self._momentary_text_cache[device_id] = text
+        except SinumHomeAssistantError as err:
+            _LOGGER.debug(
+                "Sinum bridge momentary state update failed for %s: %s",
+                entity_id,
+                err,
+            )
+
+    async def _async_invoke_momentary(
+        self, entity_id: str, entry: dict[str, Any], device_id: int
+    ) -> None:
+        now = time.monotonic()
+        if (
+            now - self._momentary_debounce.get(entity_id, 0.0)
+            < MOMENTARY_DEBOUNCE_SECONDS
+        ):
+            _LOGGER.debug(
+                "Sinum bridge momentary debounce for %s", entity_id
+            )
+            return
+        self._momentary_debounce[entity_id] = now
+        target = str(entry.get("action_entity") or entity_id)
+        domain = target.split(".", 1)[0]
+        if domain == "script":
+            service = "turn_on"
+        elif domain in ("input_button", "button"):
+            service = "press"
+        elif domain == "cover":
+            service = "toggle"
+        else:
+            service = "turn_on"
+        _LOGGER.info(
+            "Sinum bridge momentary %s -> %s.%s", entity_id, domain, service
+        )
+        await self._async_call_ha(target, service)
+        if not entry.get("action_entity") and domain in (
+            "switch",
+            "light",
+            "input_boolean",
+        ):
+            self.hass.async_create_task(
+                self._async_momentary_release(target),
+                f"sinum bridge momentary release {target}",
+            )
+        watch_entity = str(entry.get("watch_entity") or "")
+        if not watch_entity and entity_id.split(".", 1)[0] in (
+            "switch",
+            "light",
+            "input_boolean",
+        ):
+            watch_entity = entity_id
+        if watch_entity:
+            old = self._momentary_watchdogs.get(watch_entity)
+            if old is not None and not old.done():
+                old.cancel()
+            self._momentary_watchdogs[watch_entity] = (
+                self.hass.async_create_task(
+                    self._async_momentary_watchdog(watch_entity),
+                    f"sinum bridge momentary watchdog {watch_entity}",
+                )
+            )
+        await self._async_refresh_momentary_text(entity_id, entry)
+
+    async def _async_momentary_release(self, entity_id: str) -> None:
+        try:
+            await asyncio.sleep(MOMENTARY_PULSE_SECONDS)
+            await self._async_call_ha(entity_id, "turn_off")
+        except asyncio.CancelledError:
+            raise
+
+    async def _async_momentary_watchdog(self, entity_id: str) -> None:
+        try:
+            await asyncio.sleep(MOMENTARY_WATCHDOG_SECONDS)
+        except asyncio.CancelledError:
+            return
+        state = self.hass.states.get(entity_id)
+        if state is None or state.state != "on":
+            return
+        _LOGGER.warning(
+            "Sinum bridge momentary watchdog forcing %s off", entity_id
+        )
+        try:
+            await self._async_call_ha(entity_id, "turn_off")
+        except SinumHomeAssistantError as err:
+            _LOGGER.warning(
+                "Sinum bridge momentary watchdog failed for %s: %s",
+                entity_id,
+                err,
+            )
+
     async def _async_reconcile_loop(self) -> None:
         while not self._stop.is_set():
             try:
@@ -745,6 +1000,21 @@ class SinumBridge:
             if not device:
                 continue
             variant = entry.get("variant")
+            if variant == "momentary":
+                try:
+                    await self._async_ensure_momentary_layout(
+                        device_id, entry, device
+                    )
+                    await self._async_refresh_momentary_text(
+                        entity_id, entry
+                    )
+                except SinumHomeAssistantError as err:
+                    _LOGGER.debug(
+                        "Sinum bridge momentary sync failed for %s: %s",
+                        entity_id,
+                        err,
+                    )
+                continue
             async with self._lock:
                 if self._is_recent(entity_id):
                     continue
@@ -1362,6 +1632,21 @@ class SinumBridge:
                     await self._async_handle_ac_event(
                         device_id, entity_id
                     )
+            return
+        if event_type == "custom_device_element_stateless_event":
+            found = self._by_id.get(device_id)
+            if not found:
+                return
+            entity_id, entry = found
+            if entry.get("variant") != "momentary":
+                return
+            if payload.get("name") != "pulse_button":
+                return
+            if data.get("details") not in (None, "", "press"):
+                return
+            await self._async_invoke_momentary(
+                entity_id, entry, device_id
+            )
             return
         if event_type != "custom_device_element_state_changed":
             return

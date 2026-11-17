@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.3.0 — 2026-11-17
+
+- Add a `momentary` bridge variant for garage gates and fences. Sinum shows a
+  native `button` element (`pulse_button`) plus a `text` element
+  (`contact_state`) instead of a raw relay switch. Pressing the button calls
+  the configured HA action (`script.*`, `input_button.*`, `cover.*`),
+  never the physical relay directly.
+- Watch the mapped contact sensor (with optional `state_invert`) and show
+  open/closed state in Sinum. Entries without a sensor show `Brak czujnika`.
+- Add a 3 s watchdog that forces the underlying HA switch off if a pulse
+  remains on, plus a 1 s debounce against duplicate button events.
+- Persistent devices (plugs, chargers, lights) remain `relay` and keep the
+  1.2.4 echo suppression.
+
 ## 1.2.4 — 2026-11-17
 
 - Suppress stale Sinum relay echoes after a Home Assistant → Sinum relay
