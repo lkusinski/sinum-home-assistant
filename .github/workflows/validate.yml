@@ -41,3 +41,5 @@ jobs:
       - uses: hacs/action@main
         with:
           category: integration
+          # Source-Available license is intentional and not OSI-approved.
+          ignore: license
