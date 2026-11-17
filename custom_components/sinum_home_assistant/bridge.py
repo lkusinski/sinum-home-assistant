@@ -42,6 +42,19 @@ RELAY_ECHO_SECONDS = 3.0
 MOMENTARY_PULSE_SECONDS = 0.5
 MOMENTARY_WATCHDOG_SECONDS = 3.0
 MOMENTARY_DEBOUNCE_SECONDS = 1.0
+AVAILABILITY_COMMAND = "set_availability"
+UNAVAILABLE_STATES = ("unavailable",)
+AVAILABILITY_LUA = (
+    "\nfunction CustomDevice:onCommand(command, arg)\n"
+    "  if command == \"set_availability\" then\n"
+    "    if arg == false or arg == \"offline\" or arg == 0 then\n"
+    "      self:setValue(\"status\", \"offline\")\n"
+    "    else\n"
+    "      self:setValue(\"status\", \"online\")\n"
+    "    end\n"
+    "  end\n"
+    "end\n"
+)
 MAPPING_FILE = "sinum_bridge/mapping.json"
 STORE_VERSION = 1
 
@@ -53,6 +66,11 @@ class BridgeOptions:
     enabled: bool
     label: str
     room_id: int
+
+
+def _with_availability_lua(payload: dict[str, Any]) -> dict[str, Any]:
+    payload["lua"] = (payload.get("lua") or "") + AVAILABILITY_LUA
+    return payload
 
 
 def _hex_to_rgb(value: str) -> list[int]:
@@ -383,6 +401,8 @@ class SinumBridge:
         self._momentary_text_cache: dict[int, str] = {}
         self._momentary_debounce: dict[str, float] = {}
         self._momentary_watchdogs: dict[str, asyncio.Task[Any]] = {}
+        self._availability: dict[str, bool] = {}
+        self._availability_lua_ready: set[int] = set()
         self._stop = asyncio.Event()
         self._tasks: list[asyncio.Task[Any]] = []
         self._unsub_state = None
@@ -547,8 +567,14 @@ class SinumBridge:
     async def _async_initial_sync_inner(self) -> None:
         for entity_id, entry in list(self._mapping.items()):
             state = self.hass.states.get(entity_id)
-            if state is None or state.state in ("unavailable", "unknown"):
+            if state is None or state.state in UNAVAILABLE_STATES:
+                await self._async_set_availability(
+                    entity_id, entry, False
+                )
                 continue
+            if state.state == "unknown":
+                continue
+            await self._async_set_availability(entity_id, entry, True)
             variant = entry.get("variant")
             if variant == "momentary":
                 continue
@@ -579,12 +605,20 @@ class SinumBridge:
         self, entity_id: str, state: State
     ) -> None:
         entry = self._mapping.get(entity_id)
-        if not entry or state.state in ("unavailable", "unknown"):
+        if not entry:
             return
         async with self._lock:
             entry = self._mapping.get(entity_id)
             if not entry or self._is_recent(entity_id):
                 return
+            if state.state in UNAVAILABLE_STATES:
+                await self._async_set_availability(
+                    entity_id, entry, False
+                )
+                return
+            if state.state == "unknown":
+                return
+            await self._async_set_availability(entity_id, entry, True)
             variant = str(entry.get("variant"))
             device_id = int(entry["id"])
             if variant == "momentary":
@@ -874,6 +908,81 @@ class SinumBridge:
             device_id, "contact_state", "set_value", {"set_value": text}
         )
 
+    async def _async_ensure_availability_lua(self, device_id: int) -> None:
+        if device_id in self._availability_lua_ready:
+            return
+        try:
+            data = await self.client.async_get(
+                f"devices/virtual/{device_id}/lua"
+            )
+        except SinumHomeAssistantError as err:
+            _LOGGER.debug(
+                "Sinum bridge cannot read Lua for %s: %s", device_id, err
+            )
+            return
+        code = str(data.get("data") or "") if isinstance(data, dict) else ""
+        if AVAILABILITY_COMMAND in code:
+            self._availability_lua_ready.add(device_id)
+            return
+        if "function CustomDevice:onCommand" in code:
+            _LOGGER.warning(
+                "Sinum bridge device %s already defines onCommand; "
+                "availability status is not propagated",
+                device_id,
+            )
+            self._availability_lua_ready.add(device_id)
+            return
+        try:
+            await self.client.async_patch(
+                f"devices/virtual/{device_id}",
+                {"lua": code + AVAILABILITY_LUA},
+            )
+        except SinumHomeAssistantError as err:
+            _LOGGER.debug(
+                "Sinum bridge cannot patch Lua for %s: %s", device_id, err
+            )
+            return
+        self._availability_lua_ready.add(device_id)
+        _LOGGER.info(
+            "Sinum bridge availability handler added to device %s", device_id
+        )
+
+    async def _async_set_availability(
+        self,
+        entity_id: str,
+        entry: dict[str, Any],
+        available: bool,
+        force: bool = False,
+    ) -> None:
+        if entry.get("class") == "custom_device_module":
+            return
+        if (
+            not force
+            and self._availability.get(entity_id, True) == available
+        ):
+            return
+        device_id = int(entry["id"])
+        await self._async_ensure_availability_lua(device_id)
+        try:
+            await self.client.async_post(
+                f"devices/virtual/{device_id}/command/"
+                f"{AVAILABILITY_COMMAND}",
+                {AVAILABILITY_COMMAND: bool(available)},
+            )
+        except SinumHomeAssistantError as err:
+            _LOGGER.debug(
+                "Sinum bridge availability update failed for %s: %s",
+                entity_id,
+                err,
+            )
+            return
+        self._availability[entity_id] = available
+        _LOGGER.info(
+            "Sinum bridge availability %s -> %s",
+            entity_id,
+            "online" if available else "offline",
+        )
+
     async def _async_refresh_momentary_text(
         self, entity_id: str, entry: dict[str, Any]
     ) -> None:
@@ -1002,6 +1111,23 @@ class SinumBridge:
             device = virtual.get(device_id)
             if not device:
                 continue
+            ha_state = self.hass.states.get(entity_id)
+            if ha_state is None or ha_state.state in UNAVAILABLE_STATES:
+                if device.get("status") != "offline":
+                    await self._async_set_availability(
+                        entity_id, entry, False, force=True
+                    )
+                else:
+                    self._availability[entity_id] = False
+                continue
+            if ha_state.state == "unknown":
+                continue
+            if device.get("status") == "offline":
+                await self._async_set_availability(
+                    entity_id, entry, True, force=True
+                )
+            else:
+                self._availability[entity_id] = True
             variant = entry.get("variant")
             if variant == "momentary":
                 try:
@@ -1144,7 +1270,7 @@ class SinumBridge:
                 '  statistics:addPoint("brightness", newValue, unit.percent)\n'
                 'end\n'
             )
-            return payload
+            return _with_availability_lua(payload)
         initial = self._initial_value(variant, field, state, scale, unit)
         payload["variant_device"] = initial
         if variant in ("temperature_sensor", "humidity_sensor"):
@@ -1171,7 +1297,7 @@ class SinumBridge:
             layout, widget = _sensor_text_layout("contact_state", text)
             payload["elements"] = [layout]
             payload["widget"] = widget
-        return payload
+        return _with_availability_lua(payload)
 
     def _initial_value(
         self,
@@ -1641,6 +1767,12 @@ class SinumBridge:
             if not found:
                 return
             entity_id, entry = found
+            if self._availability.get(entity_id) is False:
+                _LOGGER.debug(
+                    "Sinum bridge ignoring press for unavailable %s",
+                    entity_id,
+                )
+                return
             if entry.get("variant") != "momentary":
                 return
             if payload.get("name") != "pulse_button":
@@ -1657,6 +1789,12 @@ class SinumBridge:
         if not found or self._is_recent(found[0]):
             return
         entity_id, entry = found
+        if self._availability.get(entity_id) is False:
+            _LOGGER.debug(
+                "Sinum bridge ignoring event for unavailable %s",
+                entity_id,
+            )
+            return
         variant = entry.get("variant")
         _LOGGER.debug("Sinum bridge event %s: %s", entity_id, variant)
         if variant == "relay" and payload.get("name") == "relay_switch":

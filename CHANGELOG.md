@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.3.2 — 2026-11-17
+
+- Propagate Home Assistant availability to Sinum. Bridge-created custom
+  devices expose a `set_availability` Lua command; an `unavailable` or
+  `unknown` HA entity sets the Sinum device status to `offline`, and a
+  recovered entity sets it back to `online`.
+- Sinum actions for an unavailable mapped entity are ignored, so pressing a
+  powered-off Zigbee light or gate button no longer calls HA.
+- New devices include the availability handler in their Lua. Existing devices
+  get it lazily the first time their HA state becomes unavailable, without
+  touching persistent plugs or lights that are online.
+
 ## 1.3.1 — 2026-11-17
 
 - Serialize every Sinum cloud request per config entry. The coordinator, the

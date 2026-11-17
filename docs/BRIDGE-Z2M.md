@@ -14,6 +14,7 @@ Most jest **wbudowanym, asynchronicznym komponentem integracji** (`custom_compon
    - **Sinum → HA**: Asynchroniczny klient WebSocket STOMP/SockJS subskrybuje kanał `/topic/<deviceId>`. Akcja użytkownika w aplikacji Sinum (suwak jasności, zmiana barwy, przełącznik) natychmiast wywołuje odpowiednią usługę w Home Assistant (`light.turn_on`, `switch.turn_on` itp.).
 3. **Eliminacja pętli (Echo Suppression)**: Mechanizm tłumienia echa sprawdza ostatnio wysłane stany (`_ha_last`, `_recent`) i ignoruje zdarzenia zwrotne wynikające z własnych poleceń. Dla przekaźników (`relay`) obowiązuje dodatkowe okno 3 s (`RELAY_ECHO_SECONDS`) po zapisie HA → Sinum: asynchroniczne echo `ON`/`OFF` z Sinum bywa opóźnione i może dotrzeć już po powrocie przekaźnika do `OFF`, więc w tym oknie most tylko aktualizuje `_sinum_last` i nie wywołuje ponownie usługi w HA (ochrona impulsowych bram i ogrodzeń przed drugim impulsem).
 4. **Izolacja encji w HA**: Wirtualne urządzenia tworzone w chmurze Sinum są oznaczane unikalnym znacznikiem `integration_uid: z2m-bridge`. Główny koordynator integracji odfiltrowuje je, dzięki czemu nie są one ponownie importowane do Home Assistant jako zdublowane encje.
+5. **Dostępność (availability)**: Gdy encja w HA ma stan `unavailable` lub `unknown` (np. lampa Zigbee odcięta od prądu), most ustawia urządzenie w Sinum na status `offline` komendą `set_availability` (Lua `onCommand`). Po powrocie encji status wraca na `online`, a wartości są synchronizowane ponownie. Akcje z Sinum dla urządzenia `offline` są ignorowane. Nowe urządzenia dostają handler w Lua od razu; istniejące dostają go leniwie przy pierwszej utracie dostępności.
 
 ---
 
@@ -95,6 +96,7 @@ Dzięki zastosowaniu protokołu WebSocket STOMP/SockJS opóźnienia w komunikacj
 - **Zmiana stanu i jasności światła**: ~0.60–0.90 s
 - **Czujnik temperatury i wilgotności**: ~0.45–0.65 s
 - **Aktualizacja stanu kontaktronu**: ~1.50–1.80 s
+- **Zmiana dostępności (online/offline)**: < 1 s
 
 Tradycyjne odpytywanie chmury (polling) zostało zachowane wyłącznie jako proces rekoncyliacji (co 60 s), zapewniający spójność stanów po ewentualnym zerwaniu połączenia internetowego.
 

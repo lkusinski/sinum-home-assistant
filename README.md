@@ -291,6 +291,7 @@ It connects directly to the Sinum Cloud API, maps rooms 1:1 to Home Assistant Ar
 - **Real-Time Push via WebSocket**: The bridge listens to real-time Sinum cloud STOMP/SockJS events (< 1 s latency) with built-in echo suppression.
 - **Serialized Cloud Requests**: All calls share one per-entry request lock (the cloud allows one request in flight per hub), with retry/backoff for `429`/`5xx` and automatic token refresh.
 - **Momentary Gate Buttons**: Garage gates and fences use a native Sinum `button` plus a contact-state text element, call HA scripts/buttons/covers, and enforce a 3 s watchdog.
+- **Availability Propagation**: `unavailable`/`unknown` Home Assistant entities mark their Sinum virtual device as `offline`; actions are ignored until the entity recovers.
 - **Secure OAuth2 Authentication**: Passwords are used only once during initial setup; only the `refresh_token` is stored, and access tokens rotate in memory automatically.
 
 ### Honest Implementation Status

@@ -82,6 +82,9 @@ planned refactor. No credentials belong in this file.
 - **Event-loop safety:** the coordinator area listener is a `@callback`.
 - **Momentary gates (1.3.0):** native Sinum button + contact-state text,
   script-based action, 3 s watchdog and 1 s debounce.
+- **Availability (1.3.2):** `unavailable`/`unknown` HA entities set the Sinum
+  custom-device status to `offline` via the Lua `set_availability` command;
+  Sinum actions are ignored while offline.
 
 ## Current bridge behavior
 
