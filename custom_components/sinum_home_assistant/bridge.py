@@ -32,6 +32,7 @@ from .const import (
     DEFAULT_BRIDGE_LABEL,
     DOMAIN,
 )
+from .text import bridge_name, fix_mojibake
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -1098,6 +1099,129 @@ class SinumBridge:
             except TimeoutError:
                 continue
 
+    def _desired_bridge_name(self, entity_id: str) -> str:
+        state = self.hass.states.get(entity_id)
+        friendly: str | None = None
+        if state is not None:
+            value = state.attributes.get("friendly_name")
+            if value:
+                friendly = str(value)
+        if not friendly:
+            registry = er.async_get(self.hass)
+            entity = registry.async_get(entity_id)
+            if entity is not None:
+                device = (
+                    dr.async_get(self.hass).async_get(entity.device_id)
+                    if entity.device_id
+                    else None
+                )
+                device_name = ""
+                if device is not None:
+                    device_name = str(
+                        device.name_by_user or device.name or ""
+                    ).strip()
+                original = str(entity.original_name or "").strip()
+                friendly = " ".join(
+                    part for part in (device_name, original) if part
+                )
+        if not friendly:
+            friendly = entity_id.split(".", 1)[-1]
+        return bridge_name(friendly)
+
+    async def _async_refresh_mapping_metadata(
+        self, virtual: dict[int, dict[str, Any]]
+    ) -> None:
+        if not self._mapping:
+            return
+        mapping = dict(self._mapping)
+        changed = False
+        sync_text: list[tuple[str, dict[str, Any]]] = []
+        for entity_id, raw_entry in mapping.items():
+            entry = dict(raw_entry)
+            if entry.get("class") == "custom_device_module":
+                continue
+            try:
+                device_id = int(entry["id"])
+            except (KeyError, TypeError, ValueError):
+                continue
+            if device_id not in virtual:
+                continue
+            entry_changed = False
+            for key in (
+                "name",
+                "unit",
+                "text_true",
+                "text_false",
+                "state_text",
+                "pulse_text",
+            ):
+                value = entry.get(key)
+                if isinstance(value, str):
+                    fixed = fix_mojibake(value)
+                    if fixed != value:
+                        entry[key] = fixed
+                        entry_changed = True
+            desired = self._desired_bridge_name(entity_id)
+            if desired and entry.get("name") != desired:
+                try:
+                    await self.client.async_patch(
+                        f"devices/virtual/{device_id}",
+                        {"name": desired},
+                    )
+                except SinumHomeAssistantError as err:
+                    _LOGGER.debug(
+                        "Sinum bridge name update failed for %s: %s",
+                        entity_id,
+                        err,
+                    )
+                entry["name"] = desired
+                entry_changed = True
+            if not entry_changed:
+                continue
+            mapping[entity_id] = entry
+            changed = True
+            if entry.get("variant") in (
+                "temperature_sensor",
+                "humidity_sensor",
+                "two_state_input_sensor",
+            ):
+                sync_text.append((entity_id, entry))
+        for entity_id, entry in sync_text:
+            state = self.hass.states.get(entity_id)
+            if state is None or state.state in ("unavailable", "unknown"):
+                continue
+            value = _value_for(entry, state)
+            if value is None:
+                continue
+            try:
+                if entry.get("variant") == "two_state_input_sensor":
+                    await self._async_set_sensor_text(
+                        int(entry["id"]),
+                        "contact_state",
+                        _two_state_text(entry, value),
+                    )
+                else:
+                    await self._async_set_sensor_text(
+                        int(entry["id"]),
+                        str(entry["field"]),
+                        _sensor_text(entry, value),
+                    )
+            except SinumHomeAssistantError as err:
+                _LOGGER.debug(
+                    "Sinum bridge text refresh failed for %s: %s",
+                    entity_id,
+                    err,
+                )
+        if changed:
+            self._mapping = mapping
+            self._set_mapping(mapping)
+            await self._store.async_save({"mapping": mapping})
+            await self._async_write_mapping_file(mapping)
+            _LOGGER.info(
+                "Sinum bridge mapping metadata refreshed (%s entries)",
+                len(mapping),
+            )
+
     async def _async_reconcile(self) -> None:
         if time.monotonic() - self._last_map >= 60:
             self._last_map = time.monotonic()
@@ -1106,6 +1230,7 @@ class SinumBridge:
                 await self._async_load_mapping()
         await self._async_reload_mapping_if_needed()
         virtual = await self._async_get_virtual()
+        await self._async_refresh_mapping_metadata(virtual)
         for entity_id, entry in list(self._mapping.items()):
             device_id = int(entry["id"])
             device = virtual.get(device_id)

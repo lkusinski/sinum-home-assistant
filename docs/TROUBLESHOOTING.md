@@ -65,6 +65,16 @@ Since 1.3.1 they run as background tasks and are cancelled cleanly on unload
 or Home Assistant stop. If it still appears, check for other custom
 integrations that create long-running foreground tasks.
 
+## Sinum shows `Â°C` or old device names
+
+Sinum device names and units come from the bridge mapping. The bridge repairs
+UTF-8/Latin-1 mojibake and, on every reconciliation, rebuilds each virtual
+device name from the current Home Assistant friendly name. If a device was
+renamed in HA, the Sinum name follows on the next reconcile (up to 60 s).
+Temperature/humidity/contact text is resynced after a unit or text repair.
+Persistent custom devices with `class: custom_device_module` are not renamed
+by this refresh.
+
 ## Debug logging
 
 ```yaml

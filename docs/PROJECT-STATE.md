@@ -85,6 +85,9 @@ planned refactor. No credentials belong in this file.
 - **Availability (1.3.2):** `unavailable`/`unknown` HA entities set the Sinum
   custom-device status to `offline` via the Lua `set_availability` command;
   Sinum actions are ignored while offline.
+- **Metadata refresh (1.4.1):** mapping names/units are repaired from
+  UTF-8/Latin-1 mojibake, and Sinum virtual device names follow the current HA
+  friendly name on reconcile.
 
 ## Current bridge behavior
 

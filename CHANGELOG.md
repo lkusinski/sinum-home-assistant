@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.4.1 — 2026-11-18
+
+- Repair mojibake in the bridge mapping (names, units and texts). Values such
+  as `ÃÂ°C` now become `°C`, `GaraÃÂ¼` becomes `Garaż`, and mixed strings with
+  already-correct Polish characters are handled by repairing only the Latin-1
+  runs.
+- Refresh Sinum virtual device names from the current HA friendly name on each
+  reconcile. Renamed devices (for example the old `Łukasz PIR` now exposed as
+  `Salon PIR`) update automatically without recreating the mapping.
+- Resync temperature/humidity/contact text immediately after a unit or text
+  repair, so the Sinum UI stops showing stale `Â°C` values.
+
 ## 1.4.0 — 2026-11-18
 
 - Add custom device module support. Sinum Lua modules are now exposed in Home
