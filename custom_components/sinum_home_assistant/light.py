@@ -18,7 +18,7 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .api import SinumHomeAssistantError
 from .coordinator import SinumHomeAssistantCoordinator
-from .entity import SinumDeviceEntity, custom_module_device_info
+from .entity import SinumDeviceEntity, generic_device_info
 
 PARALLEL_UPDATES = 1
 
@@ -47,7 +47,11 @@ class SinumModuleLight(SinumDeviceEntity, LightEntity):
         module_type: str,
     ) -> None:
         super().__init__(
-            coordinator, device_info, unique_key, device_id, "custom_modules"
+            coordinator,
+            device_info,
+            unique_key,
+            device_id,
+            "custom_device_module",
         )
         self._module_type = module_type
         if module_type == "dimmer":
@@ -167,7 +171,9 @@ async def async_setup_entry(
         entities.append(
             SinumModuleLight(
                 coordinator,
-                custom_module_device_info(entry.entry_id, module, data),
+                generic_device_info(
+                    entry.entry_id, "custom_device_module", module, data
+                ),
                 f"custom_module_{module_id}_light",
                 module_id,
                 module_type,

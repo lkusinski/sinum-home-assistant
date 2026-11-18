@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 from typing import Any
 
 from homeassistant.config_entries import ConfigEntry
@@ -15,6 +16,8 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from .const import DOMAIN, MANUFACTURER, MODEL
 from .coordinator import SinumHomeAssistantCoordinator
 from .data import SinumHomeAssistantData, is_managed_relay
+
+_LOGGER = logging.getLogger(__name__)
 
 
 def _room(data: SinumHomeAssistantData, device: dict[str, Any]) -> str | None:
@@ -172,23 +175,6 @@ def virtual_device_info(
         manufacturer=MANUFACTURER,
         model="Virtual Thermostat",
         suggested_area=room,
-        via_device_id=data.hub_device_id,
-    )
-
-
-def custom_module_device_info(
-    entry_id: str, module: dict[str, Any], data: SinumHomeAssistantData
-) -> DeviceInfo:
-    module_id = int(module["id"])
-    module_type = str(module.get("type") or "module")
-    return DeviceInfo(
-        identifiers={(DOMAIN, f"{entry_id}_custom_module_{module_id}")},
-        name=str(module.get("name") or f"Module {module_id}").strip(),
-        manufacturer=MANUFACTURER,
-        model=f"Custom module: {module_type}",
-        sw_version=str(module.get("software_version") or ""),
-        serial_number=str(module.get("uuid") or ""),
-        suggested_area=data.room_name(module.get("room_id")),
         via_device_id=data.hub_device_id,
     )
 
@@ -455,6 +441,47 @@ def async_remove_stale_relay_switches(
         entity_id = registry.async_get_entity_id("switch", DOMAIN, unique_id)
         if entity_id is not None:
             registry.async_remove(entity_id)
+
+
+def async_remove_orphan_devices(
+    hass: HomeAssistant, entry: ConfigEntry, data: SinumHomeAssistantData
+) -> None:
+    """Remove stale HA devices for bridge-owned or legacy virtual devices."""
+
+    registry = dr.async_get(hass)
+    entity_registry = er.async_get(hass)
+    used = {
+        entity.device_id
+        for entity in entity_registry.entities.values()
+        if entity.device_id is not None
+    }
+    virtual_prefix = f"{entry.entry_id}_virtual_"
+    legacy_prefix = f"{entry.entry_id}_custom_module_"
+    removed = 0
+    for device in list(registry.devices):
+        if device.id in used:
+            continue
+        remove = False
+        for domain, identifier in device.identifiers:
+            if domain != DOMAIN:
+                continue
+            if identifier.startswith(legacy_prefix):
+                remove = True
+                break
+            if not identifier.startswith(virtual_prefix):
+                continue
+            try:
+                virtual_id = int(identifier[len(virtual_prefix) :])
+            except ValueError:
+                continue
+            if virtual_id not in data.virtual:
+                remove = True
+                break
+        if remove:
+            registry.async_remove_device(device.id)
+            removed += 1
+    if removed:
+        _LOGGER.info("Removed %s stale Sinum bridge devices", removed)
 
 
 async def async_assign_areas(

@@ -27,6 +27,7 @@ from .entity import (
     async_assign_areas,
     async_ensure_device_hierarchy,
     async_remove_deprecated_entities,
+    async_remove_orphan_devices,
     async_remove_schedule_entities,
     async_remove_stale_relay_switches,
     async_remove_system_module_entities,
@@ -89,6 +90,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     if not coordinator.enable_schedules:
         async_remove_schedule_entities(hass, entry)
     async_remove_deprecated_entities(hass, entry, coordinator.data)
+    async_remove_orphan_devices(hass, entry, coordinator.data)
     await async_assign_areas(hass, entry, coordinator.data)
     area_signature = set(coordinator.data.area_names.items())
 

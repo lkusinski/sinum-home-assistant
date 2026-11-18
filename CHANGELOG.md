@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.4.2 — 2026-11-18
+
+- Remove stale Home Assistant devices left behind for bridge-owned or legacy
+  virtual Sinum devices. Devices without entities that are not part of the
+  current filtered virtual set are deleted from the device registry on setup.
+- Move dimmer/RGB light entities onto the shared `custom_device_module_*`
+  device, so each module has one HA device instead of one for the light and a
+  second for diagnostics. The old `custom_module_*` light devices are removed
+  when empty.
+
 ## 1.4.1 — 2026-11-18
 
 - Repair mojibake in the bridge mapping (names, units and texts). Values such

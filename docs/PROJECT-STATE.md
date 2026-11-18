@@ -88,6 +88,9 @@ planned refactor. No credentials belong in this file.
 - **Metadata refresh (1.4.1):** mapping names/units are repaired from
   UTF-8/Latin-1 mojibake, and Sinum virtual device names follow the current HA
   friendly name on reconcile.
+- **Registry cleanup (1.4.2):** HA devices for bridge-owned/legacy virtual
+  Sinum devices without entities are removed on setup; dimmer/RGB lights share
+  the module device instead of creating a second one.
 
 ## Current bridge behavior
 
