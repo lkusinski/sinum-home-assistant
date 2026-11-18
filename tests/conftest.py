@@ -17,6 +17,7 @@ if "homeassistant" not in sys.modules:
     class Platform:
         BINARY_SENSOR = "binary_sensor"
         CLIMATE = "climate"
+        LIGHT = "light"
         SENSOR = "sensor"
         SWITCH = "switch"
         UPDATE = "update"

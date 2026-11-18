@@ -71,9 +71,17 @@ class SinumRelaySwitch(SinumDeviceEntity, SwitchEntity):
 
     async def _async_set_state(self, state: bool) -> None:
         try:
-            await self.coordinator.client.async_patch_device(
-                self._device_class, self._device_id, {"state": state}
-            )
+            if self._device_class == "custom_device_module":
+                command = "turn_on" if state else "turn_off"
+                await self.coordinator.client.async_post(
+                    f"devices/custom-device-module/{self._device_id}"
+                    f"/command/{command}",
+                    {},
+                )
+            else:
+                await self.coordinator.client.async_patch_device(
+                    self._device_class, self._device_id, {"state": state}
+                )
         except SinumHomeAssistantError as err:
             raise HomeAssistantError(f"Cannot set relay state: {err}") from err
         await self.coordinator.async_request_refresh()

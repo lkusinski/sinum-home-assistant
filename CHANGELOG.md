@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.4.0 — 2026-11-18
+
+- Add custom device module support. Sinum Lua modules are now exposed in Home
+  Assistant: relay modules as switches, dimmer/RGB modules as lights, and
+  temperature/humidity/battery/analog/energy/water/gas/heat meter modules as
+  sensors. Opening, motion, flood, smoke and two-state modules become binary
+  sensors.
+- Add a native `light` platform for dimmer and RGB custom modules.
+- Modules whose parent custom device is bridge-owned
+  (`integration_uid: z2m-bridge`) are skipped to avoid control loops. The
+  parent room is inherited when the module has no room of its own.
+- Add custom-module counts and types to diagnostics.
+
 ## 1.3.2 — 2026-11-17
 
 - Propagate Home Assistant availability to Sinum. Bridge-created custom

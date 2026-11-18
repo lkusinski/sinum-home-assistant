@@ -169,12 +169,16 @@ authoritative and mapping/config are owned by Home Assistant. The scripts in
 - Remaining hardening: tests for selection/mapping and long-run reconnect
   scenarios; optional bridge service for manual remap.
 
-### Phase 3 — module and protocol expansion (next)
+### Phase 3 — module and protocol expansion (in progress)
 
-- Generalize `custom_device_module` beyond the AC module: modules, sensors,
-  meters, valves.
+- Custom device modules are now exposed in HA: relay → `switch`, dimmer/RGB →
+  `light`, temperature/humidity/battery/analog/energy/water/gas/heat meters →
+  `sensor`, opening/motion/flood/smoke/two-state → `binary_sensor`.
+- Bridge-owned modules (`custom_device_id` whose parent has
+  `integration_uid: z2m-bridge`) are filtered out.
+- Remaining: AC module → HA `climate`, valve/radiator actuators, module
+  commands for blind controllers, and marketplace-ready export/import tests.
 - Decide whether to use the official Sinum MQTT/Lua path or cloud REST/WS.
-- Add marketplace-ready export/import tests.
 
 ### Phase 4 — tests and release
 

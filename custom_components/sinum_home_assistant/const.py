@@ -34,6 +34,7 @@ MAX_SCAN_INTERVAL = 300
 PLATFORMS: tuple[Platform, ...] = (
     Platform.BINARY_SENSOR,
     Platform.CLIMATE,
+    Platform.LIGHT,
     Platform.SENSOR,
     Platform.SWITCH,
     Platform.UPDATE,

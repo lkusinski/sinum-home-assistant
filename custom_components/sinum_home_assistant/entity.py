@@ -176,6 +176,23 @@ def virtual_device_info(
     )
 
 
+def custom_module_device_info(
+    entry_id: str, module: dict[str, Any], data: SinumHomeAssistantData
+) -> DeviceInfo:
+    module_id = int(module["id"])
+    module_type = str(module.get("type") or "module")
+    return DeviceInfo(
+        identifiers={(DOMAIN, f"{entry_id}_custom_module_{module_id}")},
+        name=str(module.get("name") or f"Module {module_id}").strip(),
+        manufacturer=MANUFACTURER,
+        model=f"Custom module: {module_type}",
+        sw_version=str(module.get("software_version") or ""),
+        serial_number=str(module.get("uuid") or ""),
+        suggested_area=data.room_name(module.get("room_id")),
+        via_device_id=data.hub_device_id,
+    )
+
+
 class SinumHomeAssistantEntity(CoordinatorEntity[SinumHomeAssistantCoordinator]):
     """Base entity for the cloud hub and weather devices."""
 
@@ -230,6 +247,8 @@ class SinumDeviceEntity(SinumHomeAssistantEntity):
             return False
         if device.get("status") == "online":
             return True
+        if self._store in ("custom_modules", "custom_device_module"):
+            return device.get("status") in (None, "unknown", "online")
         return (
             self._store == "virtual"
             and device.get("type") == "custom_device"

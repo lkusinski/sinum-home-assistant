@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable
+from functools import partial
 from typing import Any
 
 from homeassistant.components.sensor import (
@@ -23,6 +24,7 @@ from homeassistant.const import (
     UnitOfSpeed,
     UnitOfTemperature,
     UnitOfTime,
+    UnitOfVolume,
     UnitOfVolumeFlowRate,
 )
 from homeassistant.core import HomeAssistant
@@ -74,6 +76,22 @@ FEELS_LIKE = "Temperatura odczuwalna"
 def _scale(value: Any) -> float | None:
     if isinstance(value, (int, float)):
         return round(float(value) * TEMP_SCALE, 1)
+    return None
+
+
+def _scaled_field(device: dict[str, Any], key: str, factor: Any) -> Any:
+    return _scale_factor(device.get(key), factor)
+
+
+def _temperature_field(device: dict[str, Any], key: str) -> Any:
+    return _valid_temperature(device.get(key))
+
+
+def _valid_temperature(value: Any) -> float | None:
+    if isinstance(value, (int, float)):
+        scaled = round(float(value) * TEMP_SCALE, 1)
+        if -100.0 <= scaled <= 150.0:
+            return scaled
     return None
 
 
@@ -256,6 +274,73 @@ def _weather_clouds(weather: dict[str, Any]) -> Any:
 
 def _weather_feels_like(weather: dict[str, Any]) -> float | None:
     return _scale(_weather_current(weather, "feels_like"))
+
+
+MODULE_SENSOR_SPECS: dict[str, list[tuple]] = {
+    "temperature_sensor": [
+        ("temperature", TEMPERATURE, SensorDeviceClass.TEMPERATURE,
+         UnitOfTemperature.CELSIUS, TEMP_SCALE, 1,
+         SensorStateClass.MEASUREMENT),
+    ],
+    "humidity_sensor": [
+        ("humidity", HUMIDITY, SensorDeviceClass.HUMIDITY, PERCENTAGE,
+         TEMP_SCALE, 1, SensorStateClass.MEASUREMENT),
+    ],
+    "battery": [
+        ("soc", BATTERY, SensorDeviceClass.BATTERY, PERCENTAGE, None, 0,
+         SensorStateClass.MEASUREMENT),
+    ],
+    "analog_input": [
+        ("value", "Wartość", None, None, None, 2,
+         SensorStateClass.MEASUREMENT),
+    ],
+    "analog_output": [
+        ("value", "Wartość", None, None, None, 2,
+         SensorStateClass.MEASUREMENT),
+    ],
+    "energy_meter": [
+        ("total_active_power", "Moc", SensorDeviceClass.POWER,
+         UnitOfPower.WATT, 0.001, 1, SensorStateClass.MEASUREMENT),
+        ("energy_sum_total", "Energia", SensorDeviceClass.ENERGY,
+         UnitOfEnergy.KILO_WATT_HOUR, 0.001, 1,
+         SensorStateClass.TOTAL_INCREASING),
+    ],
+    "water_meter": [
+        ("current_water_flow", "Przepływ", None,
+         UnitOfVolumeFlowRate.CUBIC_METERS_PER_HOUR, None, 2,
+         SensorStateClass.MEASUREMENT),
+        ("total_water_volume", "Objętość", SensorDeviceClass.WATER,
+         UnitOfVolume.CUBIC_METERS, 0.001, 1,
+         SensorStateClass.TOTAL_INCREASING),
+    ],
+    "gas_meter": [
+        ("current_gas_flow", "Przepływ", None,
+         UnitOfVolumeFlowRate.CUBIC_METERS_PER_HOUR, None, 2,
+         SensorStateClass.MEASUREMENT),
+        ("gas_consumed_total", "Gaz", SensorDeviceClass.GAS,
+         UnitOfVolume.CUBIC_METERS, 0.001, 1,
+         SensorStateClass.TOTAL_INCREASING),
+    ],
+    "heat_meter": [
+        ("current_water_flow", "Przepływ", None,
+         UnitOfVolumeFlowRate.CUBIC_METERS_PER_HOUR, None, 2,
+         SensorStateClass.MEASUREMENT),
+        ("total_water_volume", "Objętość", SensorDeviceClass.WATER,
+         UnitOfVolume.CUBIC_METERS, 0.001, 1,
+         SensorStateClass.TOTAL_INCREASING),
+        ("energy_consumed_total", "Energia", SensorDeviceClass.ENERGY,
+         UnitOfEnergy.KILO_WATT_HOUR, 0.001, 1,
+         SensorStateClass.TOTAL_INCREASING),
+        ("flow_temperature", "Temperatura zasilania",
+         SensorDeviceClass.TEMPERATURE, UnitOfTemperature.CELSIUS,
+         TEMP_SCALE, 1, SensorStateClass.MEASUREMENT),
+        ("return_temperature", "Temperatura powrotu",
+         SensorDeviceClass.TEMPERATURE, UnitOfTemperature.CELSIUS,
+         TEMP_SCALE, 1, SensorStateClass.MEASUREMENT),
+        ("active_power", "Moc", SensorDeviceClass.POWER,
+         UnitOfPower.WATT, 0.001, 1, SensorStateClass.MEASUREMENT),
+    ],
+}
 
 
 class SinumValueSensor(SinumHomeAssistantEntity, SensorEntity):
@@ -666,11 +751,22 @@ async def async_setup_entry(
                         precision=1,
                     )
                 )
+            sensor_specs = (
+                {**WTP_SENSOR_SPECS, **MODULE_SENSOR_SPECS}
+                if group == "custom_device_module"
+                else WTP_SENSOR_SPECS
+            )
             for key, name, device_class, unit, factor, precision, state_class in (
-                WTP_SENSOR_SPECS.get(device.get("type"), [])
+                sensor_specs.get(device.get("type"), [])
             ):
                 if key not in device:
                     continue
+                if group == "custom_device_module" and key == "temperature":
+                    value_fn = partial(_temperature_field, key=key)
+                else:
+                    value_fn = partial(
+                        _scaled_field, key=key, factor=factor
+                    )
                 entities.append(
                     SinumDeviceSensor(
                         coordinator,
@@ -679,12 +775,10 @@ async def async_setup_entry(
                         device_id,
                         group,
                         name,
-                        lambda d, key=key, factor=factor: _scale_factor(
-                            d.get(key), factor
-                        ),
+                        value_fn,
                         device_class=device_class,
                         state_class=state_class,
-                        unit=unit,
+                        unit=unit or device.get("unit"),
                         precision=precision,
                     )
                 )

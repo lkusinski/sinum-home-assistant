@@ -83,12 +83,14 @@ class SinumHomeAssistantCoordinator(DataUpdateCoordinator[SinumHomeAssistantData
         list[dict[str, Any]],
         dict[str, list[dict[str, Any]]],
         dict[str, list[dict[str, Any]]],
+        list[dict[str, Any]],
     ]:
         return await asyncio.gather(
             self._async_info(),
             self.client.async_get_rooms(),
             self.client.async_get_parent_devices(),
             self.client.async_get_devices(),
+            self.client.async_get_custom_device_modules(),
         )
 
     async def _async_update_data(self) -> SinumHomeAssistantData:
@@ -97,9 +99,16 @@ class SinumHomeAssistantCoordinator(DataUpdateCoordinator[SinumHomeAssistantData
         rooms: list[dict[str, Any]] = []
         parents: dict[str, list[dict[str, Any]]] = {}
         devices: dict[str, list[dict[str, Any]]] = {}
+        modules: list[dict[str, Any]] = []
         for attempt in range(3):
             try:
-                info, rooms, parents, devices = await self._async_fetch_core()
+                (
+                    info,
+                    rooms,
+                    parents,
+                    devices,
+                    modules,
+                ) = await self._async_fetch_core()
                 last_error = None
                 break
             except SinumAuthError as err:
@@ -142,6 +151,7 @@ class SinumHomeAssistantCoordinator(DataUpdateCoordinator[SinumHomeAssistantData
             rooms=rooms,
             parents=parents,
             devices=devices,
+            custom_modules=modules,
             weather=weather,
             schedules=schedules,
         )
@@ -153,6 +163,10 @@ class SinumHomeAssistantCoordinator(DataUpdateCoordinator[SinumHomeAssistantData
                 (f"parent:{group}", parent_id) for parent_id in items
             )
         keys.update(("schedule", schedule_id) for schedule_id in data.schedules)
+        keys.update(
+            ("custom_module", module_id)
+            for module_id in data.custom_modules
+        )
         if self._known_keys is None:
             self._known_keys = keys
         elif keys != self._known_keys and not self._reload_requested:

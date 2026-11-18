@@ -274,6 +274,16 @@ class SinumHomeAssistantClient:
         data = await self.async_get("weather")
         return data.get("data", {}) if isinstance(data, dict) else {}
 
+    async def async_get_custom_device_modules(
+        self,
+    ) -> list[dict[str, Any]]:
+        try:
+            data = await self.async_get("devices/custom-device-module")
+        except SinumNotSupportedError:
+            return []
+        value = data.get("data", []) if isinstance(data, dict) else []
+        return value if isinstance(value, list) else []
+
     async def async_get_schedules(self) -> list[dict[str, Any]]:
         data = await self.async_get("schedules")
         value = data.get("data", []) if isinstance(data, dict) else []

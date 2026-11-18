@@ -37,6 +37,7 @@ class SinumHomeAssistantData:
     wtp: dict[int, dict[str, Any]] = field(default_factory=dict)
     virtual: dict[int, dict[str, Any]] = field(default_factory=dict)
     system_modules: dict[int, dict[str, Any]] = field(default_factory=dict)
+    custom_modules: dict[int, dict[str, Any]] = field(default_factory=dict)
     schedules: dict[int, dict[str, Any]] = field(default_factory=dict)
     weather: dict[str, Any] | None = None
     room_names: dict[int, str] = field(default_factory=dict)
@@ -93,6 +94,7 @@ def build_data(
     devices: dict[str, list[dict[str, Any]]],
     weather: dict[str, Any] | None,
     schedules: list[dict[str, Any]] | None = None,
+    custom_modules: list[dict[str, Any]] | None = None,
 ) -> SinumHomeAssistantData:
     data = SinumHomeAssistantData(info=info, weather=weather)
 
@@ -107,6 +109,7 @@ def build_data(
         for name, items in parents.items()
         if isinstance(items, list)
     }
+    raw_virtual = _index(devices.get("virtual", []))
     data.device_groups = {
         name: _index(items)
         for name, items in devices.items()
@@ -118,12 +121,40 @@ def build_data(
             for device_id, device in group.items()
             if str(device.get("integration_uid") or "") != "z2m-bridge"
         }
+    module_group = data.device_groups.get("custom_device_module")
+    if module_group:
+        filtered_modules: dict[int, dict[str, Any]] = {}
+        for module_id, module in module_group.items():
+            parent = raw_virtual.get(module.get("custom_device_id"))
+            if (
+                parent is not None
+                and str(parent.get("integration_uid") or "") == "z2m-bridge"
+            ):
+                continue
+            if module.get("room_id") is None and parent is not None:
+                module["room_id"] = parent.get("room_id")
+            filtered_modules[module_id] = module
+        data.device_groups["custom_device_module"] = filtered_modules
     data.parents_wtp = data.parent_groups.get("wtp", {})
     data.parents_system_module = data.parent_groups.get("system_module", {})
     data.wtp = data.device_groups.get("wtp", {})
     data.virtual = data.device_groups.get("virtual", {})
     data.system_modules = data.device_groups.get("system_module", {})
     data.schedules = _index(schedules or [])
+
+    modules = _index(custom_modules or [])
+    for module_id, module in modules.items():
+        parent_id = module.get("custom_device_id")
+        parent = raw_virtual.get(parent_id) if isinstance(parent_id, int) else None
+        if (
+            parent is not None
+            and str(parent.get("integration_uid") or "") == "z2m-bridge"
+        ):
+            continue
+        if module.get("room_id") is None and parent is not None:
+            module["room_id"] = parent.get("room_id")
+        module["parent_custom_device_id"] = parent_id
+        data.custom_modules[module_id] = module
 
     for device in data.virtual.values():
         if device.get("type") != "thermostat":

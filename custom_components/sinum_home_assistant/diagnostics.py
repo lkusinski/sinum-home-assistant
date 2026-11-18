@@ -63,6 +63,20 @@ async def async_get_config_entry_diagnostics(
             "parent_counts": parent_counts,
             "schedules": len(data.schedules),
             "weather": data.weather is not None,
+            "custom_modules": len(data.custom_modules),
+            "custom_module_types": {
+                module_type: sum(
+                    1
+                    for module in data.custom_modules.values()
+                    if module.get("type") == module_type
+                )
+                for module_type in sorted(
+                    {
+                        str(module.get("type") or "")
+                        for module in data.custom_modules.values()
+                    }
+                )
+            },
         },
         "bridge": bridge_info,
     }

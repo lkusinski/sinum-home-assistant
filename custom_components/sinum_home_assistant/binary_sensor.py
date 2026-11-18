@@ -63,6 +63,14 @@ WTP_BINARY_SPECS: dict[str, list[tuple]] = {
 }
 
 
+MODULE_BINARY_SPECS = {
+    **WTP_BINARY_SPECS,
+    "opening_sensor": [
+        ("open", OPENING, BinarySensorDeviceClass.WINDOW),
+    ],
+}
+
+
 class SinumDeviceBinarySensor(SinumDeviceEntity, BinarySensorEntity):
     """Binary sensor bound to a cloud device."""
 
@@ -283,7 +291,12 @@ async def async_setup_entry(
                     ),
                 ]
             )
-            for key, name, device_class in WTP_BINARY_SPECS.get(
+            binary_specs = (
+                MODULE_BINARY_SPECS
+                if group == "custom_device_module"
+                else WTP_BINARY_SPECS
+            )
+            for key, name, device_class in binary_specs.get(
                 device.get("type"), []
             ):
                 if key not in device:

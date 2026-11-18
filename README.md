@@ -69,6 +69,7 @@ Poniższa macierz przedstawia rzeczywisty, rzetelny stan wdrożenia — bez kolo
 | **Wirtualne urządzenia natywne Sinum** | 🧪 LAB Bench | Wirtualna centrala / LAB | Wirtualny termostat, brama, furtka, heat pump manager, integratory rolet i dimmerów. |
 | **Moduł klimatyzacji AC (`ac_module`)** | 🧪 LAB Bench | Moduł Lua w LAB Wirtualne | Dwukierunkowe mapowanie z encją `climate` w HA (tryby auto/cool/heat/fan/dry, nastawa). |
 | **32 moduły rozszerzeń Lua Sinum** | 🧪 LAB Bench | Moduły Lua w LAB Wirtualne | Moduły przekaźników, ściemniaczy, RGB, liczników energii/wody, czujników CO2/IAQ/jakości powietrza. |
+| **Moduły Lua jako encje HA** | ✅ LAB Bench | LAB Wirtualne | Przekaźnik → `switch`, dimmer/RGB → `light`, sensory i liczniki → `sensor`, wejścia/kontaktrony → `binary_sensor`; moduły należące do mostu są filtrowane. |
 | **Wszystkie 11 kontrolek UI Sinum** | 🧪 LAB Bench | Wirtualna centrala / LAB | `text`, `switcher`, `progress_bar`, `slider`, `button`, `combo_box`, `device_selector`, `schedule_selector`, `time_picker`, `date_picker`, `color_picker`. |
 | **Statystyki InfluxDB dla custom devices** | 🧪 LAB Bench | Wirtualna centrala / LAB | Wstrzykiwanie kodu Lua `statistics:addPoint` generuje punkty pomiarowe dla wykresów w Sinum. |
 | **Komunikacja lokalna (LAN)** | ℹ️ Nie testowano | Poza zakresem wdrożenia | Home Assistant i centrala Sinum pracują w niezależnych podsieciach/lokalizacjach. Integracja została zaprojektowana i zweryfikowana pod kątem bezpośredniej komunikacji z oficjalną chmurą Sinum Cloud API, co umożliwia stabilną pracę także w konfiguracjach zdalnych (poza wspólnym LAN). |
@@ -313,6 +314,7 @@ It connects directly to the Sinum Cloud API, maps rooms 1:1 to Home Assistant Ar
 | **Native Virtual Devices** | 🧪 LAB Bench | Virtual testbed | Virtual thermostats, gates, wickets, heat pump managers, blind integrators. |
 | **AC Climate Module (`ac_module`)** | 🧪 LAB Bench | Virtual testbed | Bidirectional mapping to HA `climate` (auto/cool/heat/fan/dry modes). |
 | **32 Sinum Lua Modules** | 🧪 LAB Bench | Virtual testbed | Validated modules for dimmers, meters, pumps, inverters, and EV chargers. |
+| **Lua Modules as HA Entities** | ✅ LAB Bench | Virtual testbed | Relay → `switch`, dimmer/RGB → `light`, sensors/meters → `sensor`, inputs → `binary_sensor`; bridge-owned modules are filtered. |
 | **11 Sinum UI Element Types** | 🧪 LAB Bench | Virtual testbed | All custom UI controls rendered and tested against cloud REST endpoints. |
 | **InfluxDB Statistics Injection** | 🧪 LAB Bench | Virtual testbed | Lua `statistics:addPoint` scripts generate historical graphs in Sinum. |
 | **Local LAN Connection** | ℹ️ Untested | Out of current scope | The hub reports LAN `192.168.1.16`, but Home Assistant and the hub reside in separate physical networks in the current test setup. The integration remains cloud-first; local API is documented in `docs/API-LOCAL.md`. |
