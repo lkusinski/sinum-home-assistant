@@ -493,6 +493,28 @@ class SinumBridgeConfigSensor(SinumHomeAssistantEntity, SensorEntity):
         }
 
 
+class SinumBridgeHealthSensor(SinumHomeAssistantEntity, SensorEntity):
+    """Operational health of the integration-owned bridge."""
+
+    _attr_name = "Bridge health"
+    _attr_icon = "mdi:bridge"
+    _attr_entity_category = EntityCategory.DIAGNOSTIC
+
+    @property
+    def native_value(self) -> str:
+        bridge = getattr(self.coordinator, "bridge", None)
+        if bridge is None:
+            return "disabled"
+        return str(bridge.health_snapshot().get("state") or "unknown")
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        bridge = getattr(self.coordinator, "bridge", None)
+        if bridge is None:
+            return {"state": "disabled"}
+        return bridge.health_snapshot()
+
+
 class SinumScheduleSensor(SinumHomeAssistantEntity, SensorEntity):
     """Read-only thermal schedule value."""
 
@@ -593,6 +615,9 @@ async def async_setup_entry(
                 entity_category=EntityCategory.DIAGNOSTIC,
             ),
             SinumBridgeConfigSensor(coordinator, hub_info, "hub_bridge"),
+            SinumBridgeHealthSensor(
+                coordinator, hub_info, "hub_bridge_health"
+            ),
         ]
     )
 

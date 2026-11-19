@@ -32,6 +32,7 @@ async def async_get_config_entry_diagnostics(
                 "mapping_count": bridge.mapping_count,
                 "label": bridge.options.label,
                 "room_id": bridge.options.room_id,
+                "health": bridge.health_snapshot(),
             }
         )
 

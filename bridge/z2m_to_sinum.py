@@ -18,8 +18,8 @@ from typing import Any
 
 import requests
 
-HA_URL = os.environ.get("B7_URL", "http://192.168.1.204")
-HA_TOKEN = os.environ.get("B7_TOKEN", "")
+HA_URL = os.environ.get("HA_URL", "http://homeassistant.local:8123")
+HA_TOKEN = os.environ.get("HA_TOKEN", "")
 SINUM_EMAIL = os.environ.get("SINUM_EMAIL", "")
 SINUM_PASSWORD = os.environ.get("SINUM_PASSWORD", "")
 SINUM_DEVICE = os.environ.get("SINUM_DEVICE_ID", "")
@@ -550,7 +550,7 @@ def main() -> None:
     args = parser.parse_args()
     if not HA_TOKEN or not SINUM_EMAIL or not SINUM_PASSWORD or not SINUM_DEVICE:
         raise SystemExit(
-            "Set B7_TOKEN, SINUM_EMAIL, SINUM_PASSWORD and SINUM_DEVICE_ID"
+            "Set HA_TOKEN, SINUM_EMAIL, SINUM_PASSWORD and SINUM_DEVICE_ID"
         )
 
     sinum = SinumClient()

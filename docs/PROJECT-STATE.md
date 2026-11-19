@@ -166,9 +166,9 @@ Read-only probing of the cloud API and the current target runtime:
    power, SOC/status, consumption/production today/total, grid export,
    storage counters and currency. Next: dashboard examples and optional
    price parsing.
-2. **Bridge health and tests** — mapping counts, offline devices, last
-   event, request/echo metrics, plus echo/momentary/heat-pump and long-run
-   reconnect tests.
+2. **Bridge health and tests** — health sensor with mapping counts, offline
+   devices and last events is implemented in 1.8.0. Still to add: automated
+   echo/momentary/heat-pump tests and a long-run reconnect test.
 3. **Sinum automations/scenes** — expose run/enable and scene activation.
 4. **Module controls** — valve/radiator/blind/car charger/DHW/inverter/button;
    AC preset/swing; heat-pump mode/DHW/current temperature.
@@ -231,8 +231,8 @@ widgets (API limitations), camera/NVR in Sinum (cloud limitation).
   `integration_uid: z2m-bridge`) are filtered out.
 - AC modules are now exposed as HA `climate` (modes, target, fan) and heat
   pumps as read-only sensors/binary sensors (1.5.0).
-- The real Wiśniowa 9 salon AC is a Midea device in the production HA
-  (`climate.wisniowa_salon_klimatyzator_salon`), **not** a Sinum cloud device.
+- The real production salon AC is a Midea device in the production HA
+  (`climate.example_air_conditioner`), **not** a Sinum cloud device.
   The LAB AC module is only a simulator; controlling the physical AC from
   Sinum requires a remote-HA proxy/bridge or adding the Midea integration to
   the target HA.

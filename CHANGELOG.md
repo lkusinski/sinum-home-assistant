@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.8.0 — 2026-11-19
+
+- Add a diagnostic **Bridge health** sensor (`ok`/`degraded`/`disabled`) with
+  mapping count, variant counts, offline entities, stream state, last HA/Sinum
+  event, last reconcile, connect attempts and last error.
+- Include the bridge health snapshot in config-entry diagnostics.
+- Anonymize the public documentation and the legacy `bridge/mapping.json`
+  example (no private installation names, addresses or entity IDs).
+
 ## 1.7.0 — 2026-11-19
 
 - Add Energy Center sensors: PV/grid/building/battery power, battery SOC and
@@ -49,7 +58,7 @@ All notable changes to this project will be documented in this file.
   linked in the config-entry column; the integration-created devices are
   otherwise found by the stable `sinum_home_assistant` identifier.
 - This makes moving the LAB AC and heat-pump modules from LAB Wirtualne to
-  LAB Lukasz visible in the HA area assignment, without recreating entities.
+  LAB visible in the HA area assignment, without recreating entities.
 
 ## 1.5.0 — 2026-11-18
 
@@ -80,7 +89,7 @@ All notable changes to this project will be documented in this file.
   already-correct Polish characters are handled by repairing only the Latin-1
   runs.
 - Refresh Sinum virtual device names from the current HA friendly name on each
-  reconcile. Renamed devices (for example the old `Łukasz PIR` now exposed as
+  reconcile. Renamed devices (for example the old `PIR` now exposed as
   `Salon PIR`) update automatically without recreating the mapping.
 - Resync temperature/humidity/contact text immediately after a unit or text
   repair, so the Sinum UI stops showing stale `Â°C` values.
@@ -147,7 +156,7 @@ All notable changes to this project will be documented in this file.
 
 ## 1.2.3 — 2026-11-13
 
-- Document camera verification for B7 (`camera.kamera_230_prod`): snapshot
+- Document camera verification for target instance (`camera.example_camera`): snapshot
   640×360, HEVC RTSP 2560×1920/15 fps, and a successful 5-second HA recording.
 - Document that the Sinum cloud has no visible video devices and the local API
   video endpoints are unreachable from the current network.

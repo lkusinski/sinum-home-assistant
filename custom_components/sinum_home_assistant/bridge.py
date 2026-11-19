@@ -7,7 +7,9 @@ import json
 import logging
 import time
 import uuid
+from collections import Counter
 from dataclasses import dataclass
+from datetime import UTC, datetime
 from pathlib import Path
 from random import randint
 from secrets import choice
@@ -447,6 +449,16 @@ class SinumBridge:
         self._ac_echo_until: dict[str, float] = {}
         self._hp_echo_until: dict[str, float] = {}
         self._state_watchers: dict[str, list[tuple[str, dict[str, Any]]]] = {}
+        self._health: dict[str, Any] = {
+            "started_at": None,
+            "last_ha_event": None,
+            "last_sinum_event": None,
+            "last_reconcile": None,
+            "last_stream_connect": None,
+            "last_error": None,
+            "stream_connected": False,
+            "reconnects": 0,
+        }
         self._momentary_ready: set[int] = set()
         self._momentary_text_cache: dict[int, str] = {}
         self._momentary_debounce: dict[str, float] = {}
@@ -459,8 +471,49 @@ class SinumBridge:
         self._ws: aiohttp.ClientWebSocketResponse | None = None
         self._lock = asyncio.Lock()
 
+    @staticmethod
+    def _now() -> str:
+        return datetime.now(UTC).isoformat(timespec="seconds")
+
+    def health_snapshot(self) -> dict[str, Any]:
+        """Return a safe operational snapshot of the bridge."""
+        variants = Counter(
+            str(entry.get("variant") or "unknown")
+            for entry in self._mapping.values()
+        )
+        offline = sum(
+            1
+            for entity_id in self._mapping
+            if self._availability.get(entity_id) is False
+        )
+        started = self._health.get("started_at")
+        connected = bool(self._health.get("stream_connected"))
+        if not started:
+            state = "disabled"
+        elif connected:
+            state = "ok"
+        else:
+            state = "degraded"
+        return {
+            "state": state,
+            "stream_connected": connected,
+            "mapping_count": len(self._mapping),
+            "variants": dict(variants),
+            "offline": offline,
+            "started_at": started,
+            "last_ha_event": self._health.get("last_ha_event"),
+            "last_sinum_event": self._health.get("last_sinum_event"),
+            "last_reconcile": self._health.get("last_reconcile"),
+            "last_stream_connect": self._health.get(
+                "last_stream_connect"
+            ),
+            "last_error": self._health.get("last_error"),
+            "reconnects": self._health.get("reconnects", 0),
+        }
+
     async def async_start(self) -> None:
         """Load mapping and start event processing."""
+        self._health["started_at"] = self._now()
         await self._async_load_mapping()
         if not self._mapping:
             await self._async_map_entities()
@@ -579,6 +632,7 @@ class SinumBridge:
 
     @callback
     def _handle_ha_state_event(self, event: Event[Any]) -> None:
+        self._health["last_ha_event"] = self._now()
         entity_id = event.data.get("entity_id")
         new_state = event.data.get("new_state")
         if not entity_id or not isinstance(new_state, State):
@@ -1186,6 +1240,7 @@ class SinumBridge:
             except asyncio.CancelledError:
                 raise
             except Exception as err:  # noqa: BLE001
+                self._health["last_error"] = f"reconcile: {err}"
                 _LOGGER.warning("Sinum bridge reconcile failed: %s", err)
             try:
                 await asyncio.wait_for(
@@ -1318,6 +1373,7 @@ class SinumBridge:
             )
 
     async def _async_reconcile(self) -> None:
+        self._health["last_reconcile"] = self._now()
         if time.monotonic() - self._last_map >= 60:
             self._last_map = time.monotonic()
             await self._async_map_entities()
@@ -1876,7 +1932,11 @@ class SinumBridge:
             except asyncio.CancelledError:
                 raise
             except Exception as err:  # noqa: BLE001
+                self._health["last_error"] = f"stream: {err}"
                 _LOGGER.warning("Sinum bridge event stream error: %s", err)
+            finally:
+                self._health["stream_connected"] = False
+            self._health["reconnects"] += 1
             if self._stop.is_set():
                 break
             try:
@@ -1902,6 +1962,8 @@ class SinumBridge:
             heartbeat=None,
         ) as ws:
             self._ws = ws
+            self._health["stream_connected"] = True
+            self._health["last_stream_connect"] = self._now()
             await ws.send_str(
                 json.dumps(
                     [
@@ -1977,6 +2039,7 @@ class SinumBridge:
     async def _async_handle_sinum_event(
         self, event: dict[str, Any]
     ) -> None:
+        self._health["last_sinum_event"] = self._now()
         data = event.get("data") or {}
         if not isinstance(data, dict):
             return

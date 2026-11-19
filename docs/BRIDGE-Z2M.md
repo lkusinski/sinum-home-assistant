@@ -47,13 +47,13 @@ Wybór urządzeń i encji do mostu odbywa się deklaratywnie w Home Assistant:
 Wpisy bram w pliku mapowania (`mapping.json` / `.storage/sinum_home_assistant.bridge`) używają wariantu `momentary`:
 
 ```json
-"switch.garaz_agrestowa": {
+"switch.example_gate": {
   "id": 103,
   "variant": "momentary",
   "field": "state",
-  "name": "HA · Garaż Agrestowa",
-  "action_entity": "script.brama_puls_agrestowa",
-  "state_entity": "binary_sensor.garaz_agrestowa_kontaktron_contact",
+  "name": "HA · Example Gate",
+  "action_entity": "script.example_gate_pulse",
+  "state_entity": "binary_sensor.example_gate_contact",
   "state_invert": false,
   "text_true": "Otwarta",
   "text_false": "Zamknięta",
@@ -70,6 +70,20 @@ Wpisy bram w pliku mapowania (`mapping.json` / `.storage/sinum_home_assistant.br
 - Migracja istniejących urządzeń relay → momentary odbywa się przez zmianę wpisu w `mapping.json`; most przebudowuje elementy urządzenia przy najbliższej rekoncyliacji (bez usuwania urządzenia i bez zmiany jego ID).
 
 ---
+
+## Health i diagnostyka mostu
+
+Integracja wystawia diagnostyczny sensor **Bridge health**
+(`sensor.sinum_home_assistant_bridge_health`) ze stanem:
+
+- `ok` — most działa i strumień Sinum jest połączony,
+- `degraded` — most wystartował, ale strumień nie jest połączony,
+- `disabled` — most jest wyłączony w opcjach.
+
+Atrybuty: `mapping_count`, `variants`, `offline`, `stream_connected`,
+`last_ha_event`, `last_sinum_event`, `last_reconcile`,
+`last_stream_connect`, `last_error`, `reconnects`. Ten sam snapshot trafia do
+diagnostyki integracji. Nie zawiera sekretów ani identyfikatorów instalacji.
 
 ## Statystyki i wykresy InfluxDB w Sinum
 

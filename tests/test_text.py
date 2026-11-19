@@ -35,15 +35,15 @@ def test_fix_mojibake_unit():
 
 def test_fix_mojibake_polish_text():
     assert fix_mojibake("ZamkniÄ\x99ta") == "Zamknięta"
-    assert fix_mojibake("HA Ã\x82Â· Ã\x85Â\x81ukasz") == "HA · Łukasz"
+    assert fix_mojibake("HA Ã\x82Â· Dom") == "HA · Dom"
 
 
 def test_fix_mojibake_keeps_valid_text():
-    assert fix_mojibake("Garaż") == "Garaż"
+    assert fix_mojibake("Garage") == "Garage"
     assert fix_mojibake("20.6 °C") == "20.6 °C"
 
 
 def test_bridge_name():
     assert bridge_name("Salon PIR Temperatura") == "HA · Salon PIR Temperatura"
-    assert bridge_name("HA Ã\x82Â· GaraÅ¼ Agrestowa") == "HA · Garaż Agrestowa"
+    assert bridge_name("HA Ã\x82Â· GaraÅ¼ Example") == "HA · Garaż Example"
     assert len(bridge_name("x" * 100)) == 64

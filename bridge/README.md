@@ -58,9 +58,9 @@ Set `WRITE_BACK=0` to disable Sinum → HA commands.
 Selection is label-based. `SINUM_BRIDGE_LABEL` defaults to the target label
 `sinumbridge`; the legacy label `sinum` is still accepted for compatibility.
 All bridge-created devices carry `integration_uid: z2m-bridge` so the
-integration can skip them and avoid feedback loops. The test mapping
-uses 97 mapping entries: relays, two-state
-contacts, temperature/humidity, lights, analog values, energy and battery. All lights use `generic` custom devices with a `color_picker` element, so
+integration can skip them and avoid feedback loops. The example mapping
+contains relays, two-state contacts, temperature/humidity, lights, analog
+values, energy and battery. All lights use `generic` custom devices with a `color_picker` element, so
 on/off, brightness, RGB and color temperature work in both directions. Temperature and
 humidity sensors get a `text` element (`21.1 °C` / `52.6 %`) because Sinum does
 not render the custom sensor variant value on its own; the stock value stays in

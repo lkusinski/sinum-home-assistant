@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Create Sinum virtual endpoints for B7 devices labelled `sinum`.
+"""Create Sinum virtual endpoints for target HA devices labelled `sinum`.
 
-Read-only source: B7 Home Assistant / MQTT-discovered Zigbee2MQTT entities.
+Read-only source: target Home Assistant / MQTT-discovered Zigbee2MQTT entities.
 Target: Sinum virtual custom devices in the room set by SINUM_ROOM_ID.
 The worker (`z2m_to_sinum.py`) handles ongoing value changes.
 """
@@ -19,8 +19,8 @@ from typing import Any
 import requests
 import websocket
 
-HA_URL = os.environ.get("B7_URL", "http://192.168.1.204")
-HA_TOKEN = os.environ.get("B7_TOKEN", "")
+HA_URL = os.environ.get("HA_URL", "http://homeassistant.local:8123")
+HA_TOKEN = os.environ.get("HA_TOKEN", "")
 SINUM_EMAIL = os.environ.get("SINUM_EMAIL", "")
 SINUM_PASSWORD = os.environ.get("SINUM_PASSWORD", "")
 SINUM_DEVICE = os.environ.get("SINUM_DEVICE_ID", "")
@@ -105,7 +105,7 @@ class Sinum:
 def main() -> None:
     if not HA_TOKEN or not SINUM_EMAIL or not SINUM_PASSWORD or not SINUM_DEVICE:
         raise SystemExit(
-            "Set B7_TOKEN, SINUM_EMAIL, SINUM_PASSWORD and SINUM_DEVICE_ID"
+            "Set HA_TOKEN, SINUM_EMAIL, SINUM_PASSWORD and SINUM_DEVICE_ID"
         )
 
     devices, entities = ha_registry()
@@ -151,7 +151,7 @@ def main() -> None:
     }
     if not label_ids:
         raise SystemExit(
-            f"B7 label '{bridge_label}' (or legacy 'sinum') does not exist"
+            f"target HA label '{bridge_label}' (or legacy 'sinum') does not exist"
         )
     zdev = {
         d["id"]: d

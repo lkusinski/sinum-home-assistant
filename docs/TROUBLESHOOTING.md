@@ -79,7 +79,7 @@ by this refresh.
 
 The Sinum cloud only reports AC modules that exist in Sinum (the LAB bench uses
 module 1). A physical Midea AC exposed by another Home Assistant instance, for
-example `climate.wisniowa_salon_klimatyzator_salon`, is not a Sinum device and
+example `climate.example_air_conditioner`, is not a Sinum device and
 will not appear just because the integration exposes Sinum modules. To control
 it from Sinum, bridge that HA instance to the target HA or add the Midea
 integration to the target HA and map the resulting climate entity.

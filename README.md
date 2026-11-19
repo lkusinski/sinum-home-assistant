@@ -71,8 +71,9 @@ Poniższa macierz przedstawia rzeczywisty, rzetelny stan wdrożenia — bez kolo
 | **32 moduły rozszerzeń Lua Sinum** | 🧪 LAB Bench | Moduły Lua w LAB Wirtualne | Moduły przekaźników, ściemniaczy, RGB, liczników energii/wody, czujników CO2/IAQ/jakości powietrza. |
 | **Moduły Lua jako encje HA** | ✅ LAB Bench | LAB Wirtualne | Przekaźnik → `switch`, dimmer/RGB → `light`, klimatyzator → `climate`, pompa ciepła → sensory read-only, sensory i liczniki → `sensor`, wejścia/kontaktrony → `binary_sensor`; moduły należące do mostu są filtrowane. |
 | **Energy Center → HA** | ✅ LAB Bench | Chmura Sinum | PV/sieć/budynek/bateria, SOC, zużycie/produkcja dziś i total, eksport, magazyn, waluta. |
+| **Bridge health** | ✅ LAB Bench | Wdrożenie docelowe | Diagnostyczny sensor `ok`/`degraded`/`disabled` z licznikami, offline, eventami i błędem. |
 | **Klimatyzator (moduł AC → HA)** | ✅ LAB Bench | Moduł AC 1 (LAB) | Tryby off/auto/cool/heat/fan/dry, nastawa, prędkość wentylatora; testowo sterowany z HA. |
-| **Most pompy ciepła (heat_pump)** | ✅ LAB Bench | Moduł heat_pump + zdalny climate W9 | `enabled` i temperatura zadana w obie strony; test na module LAB. |
+| **Most pompy ciepła (heat_pump)** | ✅ LAB Bench | Moduł heat_pump + zdalny climate | `enabled` i temperatura zadana w obie strony; test na module LAB. |
 | **Status prac serwisowych Sinum** | ✅ LAB Bench | Chmura Sinum | `binary_sensor` `Prace serwisowe` z `serviceStatus`, `from`, `to`, `message`. |
 | **Wszystkie 11 kontrolek UI Sinum** | 🧪 LAB Bench | Wirtualna centrala / LAB | `text`, `switcher`, `progress_bar`, `slider`, `button`, `combo_box`, `device_selector`, `schedule_selector`, `time_picker`, `date_picker`, `color_picker`. |
 | **Statystyki InfluxDB dla custom devices** | 🧪 LAB Bench | Wirtualna centrala / LAB | Wstrzykiwanie kodu Lua `statistics:addPoint` generuje punkty pomiarowe dla wykresów w Sinum. |
@@ -80,7 +81,7 @@ Poniższa macierz przedstawia rzeczywisty, rzetelny stan wdrożenia — bez kolo
 | **Kamery RTSP / NVR w Sinum** | ❌ Nieobsługiwane | Ograniczenie chmury Sinum | API chmury Sinum zwraca błąd `422 NvrDeviceNotFound` przy próbie dodania wirtualnego strumienia RTSP. |
 | **Rolety i żaluzje (Cover) z HA w Sinum** | ❌ Brak typu | Ograniczenie wirtualnych urządzeń | Sinum nie posiada wariantu wirtualnego urządzenia dla rolet. Integrator rolet działa tylko ze sprzętem TECH. |
 | **Status online dla custom sensorów** | ⚠️ Ograniczenie UI | Kosmetyczne zachowanie Sinum | Wirtualne sensory w Sinum zgłaszają stan `unknown` na liście urządzeń, mimo że ich widgety i wartości działają. |
-| **Bramy jako przycisk monostabilny** | ✅ Przetestowane | Fizyczna instalacja domowa (Agrestowa) | Wariant `momentary`: natywny `button` w Sinum wywołuje `script.*`/`input_button.*`/`cover.*`, tekst pokazuje kontaktron, watchdog 3 s. |
+| **Bramy jako przycisk monostabilny** | ✅ Przetestowane | Fizyczna instalacja domowa | Wariant `momentary`: natywny `button` w Sinum wywołuje `script.*`/`input_button.*`/`cover.*`, tekst pokazuje kontaktron, watchdog 3 s. |
 
 ---
 
@@ -322,11 +323,11 @@ It connects directly to the Sinum Cloud API, maps rooms 1:1 to Home Assistant Ar
 | **Lua Modules as HA Entities** | ✅ LAB Bench | Virtual testbed | Relay → `switch`, dimmer/RGB → `light`, sensors/meters → `sensor`, inputs → `binary_sensor`; bridge-owned modules are filtered. |
 | **11 Sinum UI Element Types** | 🧪 LAB Bench | Virtual testbed | All custom UI controls rendered and tested against cloud REST endpoints. |
 | **InfluxDB Statistics Injection** | 🧪 LAB Bench | Virtual testbed | Lua `statistics:addPoint` scripts generate historical graphs in Sinum. |
-| **Local LAN Connection** | ℹ️ Untested | Out of current scope | The hub reports LAN `192.168.1.16`, but Home Assistant and the hub reside in separate physical networks in the current test setup. The integration remains cloud-first; local API is documented in `docs/API-LOCAL.md`. |
+| **Local LAN Connection** | ℹ️ Untested | Out of current scope | The hub reports LAN `<hub-LAN-IP>`, but Home Assistant and the hub reside in separate physical networks in the current test setup. The integration remains cloud-first; local API is documented in `docs/API-LOCAL.md`. |
 | **RTSP / NVR Video in Sinum** | ❌ Unsupported | Cloud API limitation | Cloud API returns `422 NvrDeviceNotFound` for virtual generic RTSP cameras. |
 | **Covers / Blinds from HA to Sinum** | ❌ Unsupported | Virtual device limitation | Sinum has no virtual variant for covers or blinds. |
 | **Online Status on Custom Sensors** | ⚠️ Cosmetic | Sinum UI behavior | Virtual custom sensors report `unknown` status in Sinum UI, though values work. |
-| **Gates as Monostable Buttons** | ✅ Verified | Physical home setup (Agrestowa) | `momentary` variant: native Sinum `button` calls `script.*`/`input_button.*`/`cover.*`; `contact_state` text shows the sensor; 3 s watchdog. |
+| **Gates as Monostable Buttons** | ✅ Verified | Physical home setup | `momentary` variant: native Sinum `button` calls `script.*`/`input_button.*`/`cover.*`; `contact_state` text shows the sensor; 3 s watchdog. |
 
 ### Installation
 

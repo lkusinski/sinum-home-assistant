@@ -26,7 +26,7 @@ STOP = threading.Event()
 STATE_LOCK = threading.Lock()
 SINUM = z.SinumClient()
 SINUM_HA = z.SinumClient()
-HA_WS_URL = os.environ.get("HA_WS_URL", "ws://192.168.1.204/api/websocket")
+HA_WS_URL = os.environ.get("HA_WS_URL", "ws://homeassistant.local:8123/api/websocket")
 RECENT: dict[str, tuple[Any, float]] = {}
 SUPPRESS: dict[str, float] = {}
 

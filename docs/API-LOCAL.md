@@ -57,9 +57,9 @@ community implementation; the official Go process exposes `/ws`) with
 ## Current status on our hub
 
 The cloud `/proxy/info` response reports the central LAN address
-`192.168.1.16`, firmware `1.25.1`, `device_type: sinum_lite`, and the `video`
-label. From CT310 and from B7 HA, TCP ports 80, 443, 8080 and 8000 on
-`192.168.1.16` are closed and `GET /api/v1/info` cannot connect (2026-11-12).
+`<hub-LAN-IP>`, firmware `1.25.1`, `device_type: sinum_lite`, and the `video`
+label. From the test host and from the target HA, TCP ports 80, 443, 8080 and 8000 on
+`<hub-LAN-IP>` are closed and `GET /api/v1/info` cannot connect (2026-11-12).
 The address is not reachable as a local API from the current hosts, so the local
 transport cannot be validated from this environment.
 
