@@ -55,6 +55,8 @@ class SinumHomeAssistantCoordinator(DataUpdateCoordinator[SinumHomeAssistantData
         )
         self._info: dict[str, Any] = {}
         self._info_at = 0.0
+        self._energy_center: dict[str, Any] = {}
+        self._energy_at = 0.0
         self._known_keys: set[tuple[str, int]] | None = None
         self._reload_requested = False
         super().__init__(
@@ -153,6 +155,21 @@ class SinumHomeAssistantCoordinator(DataUpdateCoordinator[SinumHomeAssistantData
             raise ConfigEntryAuthFailed(str(err)) from err
         except SinumHomeAssistantError as err:
             _LOGGER.debug("Sinum maintenance status unavailable: %s", err)
+        energy_center = self._energy_center
+        if (
+            time.monotonic() - self._energy_at >= 60
+            or not energy_center
+        ):
+            try:
+                energy_center = await self.client.async_get_energy_center()
+                self._energy_center = energy_center
+                self._energy_at = time.monotonic()
+            except SinumAuthError as err:
+                raise ConfigEntryAuthFailed(str(err)) from err
+            except SinumHomeAssistantError as err:
+                _LOGGER.debug(
+                    "Sinum energy center unavailable: %s", err
+                )
         data = build_data(
             info=info,
             rooms=rooms,
@@ -162,6 +179,7 @@ class SinumHomeAssistantCoordinator(DataUpdateCoordinator[SinumHomeAssistantData
             weather=weather,
             schedules=schedules,
             maintenance=maintenance,
+            energy_center=energy_center,
         )
         keys: set[tuple[str, int]] = set()
         for group, items in data.device_groups.items():

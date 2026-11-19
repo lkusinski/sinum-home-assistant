@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.7.0 — 2026-11-19
+
+- Add Energy Center sensors: PV/grid/building/battery power, battery SOC and
+  status, consumption/production today and total, grid export, storage
+  charged/discharged today, and an energy currency diagnostic. Data is read
+  from `/energy-center/*` and refreshed at most once per minute.
+- Handle `available: false` as unknown instead of zero, so the HA Energy
+  dashboard does not record fake values.
+- Refresh the integration brand assets with the current square logo, @2x and
+  dark variants.
+
 ## 1.6.0 — 2026-11-19
 
 - Add a Sinum maintenance sensor. The coordinator reads

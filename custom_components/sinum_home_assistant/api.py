@@ -280,6 +280,30 @@ class SinumHomeAssistantClient:
         data = await self.async_get("weather")
         return data.get("data", {}) if isinstance(data, dict) else {}
 
+    async def async_get_energy_center(self) -> dict[str, Any]:
+        paths = {
+            "flow": "energy-center/flow-monitor",
+            "consumption": "energy-center/energy-consumption",
+            "production": "energy-center/energy-production",
+            "storage": "energy-center/energy-storage",
+            "prices": "energy-center/prices",
+            "associations": "energy-center/associations",
+        }
+        result: dict[str, Any] = {}
+        for key, path in paths.items():
+            try:
+                data = await self.async_get(path)
+            except SinumNotSupportedError:
+                result[key] = None
+                continue
+            except SinumHomeAssistantError:
+                result[key] = None
+                continue
+            result[key] = (
+                data.get("data") if isinstance(data, dict) else None
+            )
+        return result
+
     async def async_get_maintenance_status(self) -> dict[str, Any]:
         try:
             data = await self._async_request("GET", MAINTENANCE_URL)

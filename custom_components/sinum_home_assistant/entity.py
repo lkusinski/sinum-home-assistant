@@ -37,6 +37,18 @@ def hub_device_info(entry_id: str, data: SinumHomeAssistantData) -> DeviceInfo:
     )
 
 
+def energy_center_device_info(
+    entry_id: str, data: SinumHomeAssistantData
+) -> DeviceInfo:
+    return DeviceInfo(
+        identifiers={(DOMAIN, f"{entry_id}_energy_center")},
+        name="Sinum Energy Center",
+        manufacturer=MANUFACTURER,
+        model="Energy Center",
+        via_device_id=data.hub_device_id,
+    )
+
+
 def weather_device_info(entry_id: str, data: SinumHomeAssistantData) -> DeviceInfo:
     return DeviceInfo(
         identifiers={(DOMAIN, f"{entry_id}_weather")},

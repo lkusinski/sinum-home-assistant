@@ -63,6 +63,11 @@ async def async_get_config_entry_diagnostics(
             "parent_counts": parent_counts,
             "schedules": len(data.schedules),
             "weather": data.weather is not None,
+            "maintenance": data.maintenance,
+            "energy_center": {
+                key: value is not None
+                for key, value in data.energy_center.items()
+            },
             "custom_modules": len(data.custom_modules),
             "custom_module_types": {
                 module_type: sum(

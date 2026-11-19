@@ -132,6 +132,55 @@ async def test_retries_transient_5xx(monkeypatch):
 
 
 @pytest.mark.asyncio
+async def test_energy_center_sections():
+    session = FakeSession(
+        [
+            (200, '{"data": {"summary": {"pv": {"value": 123}}}}'),
+            (200, '{"data": {"available": true}}'),
+            (200, '{"data": {"available": false}}'),
+            (200, '{"data": {"available": true}}'),
+            (200, '{"data": {"currency": "PLN"}}'),
+            (200, '{"data": {"pv": {"id": 1}}}'),
+        ]
+    )
+    client = make_client(session)
+
+    result = await client.async_get_energy_center()
+
+    assert set(result) == {
+        "flow",
+        "consumption",
+        "production",
+        "storage",
+        "prices",
+        "associations",
+    }
+    assert result["flow"]["summary"]["pv"]["value"] == 123
+    assert result["prices"]["currency"] == "PLN"
+    assert len(session.calls) == 6
+
+
+@pytest.mark.asyncio
+async def test_energy_center_tolerates_missing_endpoint():
+    session = FakeSession(
+        [
+            (501, ""),
+            (200, '{"data": {}}'),
+            (200, '{"data": {}}'),
+            (200, '{"data": {}}'),
+            (200, '{"data": {}}'),
+            (200, '{"data": {}}'),
+        ]
+    )
+    client = make_client(session)
+
+    result = await client.async_get_energy_center()
+
+    assert result["flow"] is None
+    assert result["consumption"] == {}
+
+
+@pytest.mark.asyncio
 async def test_not_supported_on_404():
     session = FakeSession([(404, "missing")])
     client = make_client(session)

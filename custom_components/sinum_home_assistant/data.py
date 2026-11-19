@@ -41,6 +41,7 @@ class SinumHomeAssistantData:
     schedules: dict[int, dict[str, Any]] = field(default_factory=dict)
     weather: dict[str, Any] | None = None
     maintenance: dict[str, Any] = field(default_factory=dict)
+    energy_center: dict[str, Any] = field(default_factory=dict)
     room_names: dict[int, str] = field(default_factory=dict)
     hub_device_id: str | None = None
     wtp_parent_ids: dict[int, str] = field(default_factory=dict)
@@ -97,9 +98,13 @@ def build_data(
     schedules: list[dict[str, Any]] | None = None,
     custom_modules: list[dict[str, Any]] | None = None,
     maintenance: dict[str, Any] | None = None,
+    energy_center: dict[str, Any] | None = None,
 ) -> SinumHomeAssistantData:
     data = SinumHomeAssistantData(
-        info=info, weather=weather, maintenance=maintenance or {}
+        info=info,
+        weather=weather,
+        maintenance=maintenance or {},
+        energy_center=energy_center or {},
     )
 
     data.rooms = _index(rooms)

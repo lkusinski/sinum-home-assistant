@@ -42,6 +42,7 @@ from .data import SinumHomeAssistantData
 from .entity import (
     SinumDeviceEntity,
     SinumHomeAssistantEntity,
+    energy_center_device_info,
     generic_device_info,
     hub_device_info,
     schedule_device_info,
@@ -71,6 +72,48 @@ CLOUD_COVERAGE = "Zachmurzenie"
 WIND_SPEED = "Wiatr"
 SOLAR_IRRADIANCE = "Irradiancja"
 FEELS_LIKE = "Temperatura odczuwalna"
+
+
+def _ec_flow_value(data: Any, key: str) -> Any:
+    flow = (getattr(data, "energy_center", {}) or {}).get("flow") or {}
+    item = ((flow.get("summary") or {}).get(key) or {})
+    if item.get("available") is False:
+        return None
+    return item.get("value")
+
+
+def _ec_battery_soc(data: Any) -> Any:
+    flow = (getattr(data, "energy_center", {}) or {}).get("flow") or {}
+    battery = ((flow.get("summary") or {}).get("battery") or {})
+    state = battery.get("state_of_charge") or {}
+    if battery.get("available") is False or state.get("available") is False:
+        return None
+    return state.get("value")
+
+
+def _ec_energy(data: Any, section: str, period: str, key: str) -> Any:
+    block = (getattr(data, "energy_center", {}) or {}).get(section) or {}
+    if block.get("available") is False:
+        return None
+    return (block.get(period) or {}).get(key)
+
+
+def _ec_storage(data: Any, key: str) -> Any:
+    block = (getattr(data, "energy_center", {}) or {}).get("storage") or {}
+    if block.get("available") is False:
+        return None
+    if key == "soc":
+        state = block.get("state_of_charge") or {}
+        if state.get("available") is False:
+            return None
+        return state.get("value")
+    return block.get(key)
+
+
+def _ec_currency(data: Any) -> Any:
+    return (
+        (getattr(data, "energy_center", {}) or {}).get("prices") or {}
+    ).get("currency")
 
 
 def _scale(value: Any) -> float | None:
@@ -552,6 +595,97 @@ async def async_setup_entry(
             SinumBridgeConfigSensor(coordinator, hub_info, "hub_bridge"),
         ]
     )
+
+    energy_info = energy_center_device_info(entry.entry_id, data)
+    energy_entities = [
+        ("energy_pv_power", "Moc PV", lambda d: _ec_flow_value(d, "pv"),
+         SensorDeviceClass.POWER, SensorStateClass.MEASUREMENT,
+         UnitOfPower.WATT, "mdi:solar-power", None, 0),
+        ("energy_grid_power", "Moc sieci",
+         lambda d: _ec_flow_value(d, "grid"),
+         SensorDeviceClass.POWER, SensorStateClass.MEASUREMENT,
+         UnitOfPower.WATT, "mdi:transmission-tower", None, 0),
+        ("energy_building_power", "Moc budynku",
+         lambda d: _ec_flow_value(d, "building"),
+         SensorDeviceClass.POWER, SensorStateClass.MEASUREMENT,
+         UnitOfPower.WATT, "mdi:home-lightning-bolt", None, 0),
+        ("energy_battery_power", "Moc baterii",
+         lambda d: _ec_flow_value(d, "battery"),
+         SensorDeviceClass.POWER, SensorStateClass.MEASUREMENT,
+         UnitOfPower.WATT, "mdi:battery-charging", None, 0),
+        ("energy_battery_soc", "Poziom baterii",
+         lambda d: _ec_battery_soc(d),
+         SensorDeviceClass.BATTERY, SensorStateClass.MEASUREMENT,
+         PERCENTAGE, "mdi:battery", None, 0),
+        ("energy_consumption_today", "Zużycie dziś",
+         lambda d: _ec_energy(d, "consumption", "today",
+                              "total_consumption"),
+         SensorDeviceClass.ENERGY, SensorStateClass.TOTAL,
+         UnitOfEnergy.KILO_WATT_HOUR, "mdi:home-lightning-bolt", None, 2),
+        ("energy_consumption_total", "Zużycie total",
+         lambda d: _ec_energy(d, "consumption", "total",
+                              "total_consumption"),
+         SensorDeviceClass.ENERGY, SensorStateClass.TOTAL_INCREASING,
+         UnitOfEnergy.KILO_WATT_HOUR, "mdi:home-lightning-bolt", None, 2),
+        ("energy_production_today", "Produkcja dziś",
+         lambda d: _ec_energy(d, "production", "today", "all"),
+         SensorDeviceClass.ENERGY, SensorStateClass.TOTAL,
+         UnitOfEnergy.KILO_WATT_HOUR, "mdi:solar-power", None, 2),
+        ("energy_production_total", "Produkcja total",
+         lambda d: _ec_energy(d, "production", "total", "all"),
+         SensorDeviceClass.ENERGY, SensorStateClass.TOTAL_INCREASING,
+         UnitOfEnergy.KILO_WATT_HOUR, "mdi:solar-power", None, 2),
+        ("energy_grid_export_today", "Eksport do sieci dziś",
+         lambda d: _ec_energy(d, "production", "today", "grid_export"),
+         SensorDeviceClass.ENERGY, SensorStateClass.TOTAL,
+         UnitOfEnergy.KILO_WATT_HOUR, "mdi:transmission-tower-export",
+         None, 2),
+        ("energy_storage_charged_today", "Bateria ładowana dziś",
+         lambda d: _ec_storage(d, "energy_charged_today"),
+         SensorDeviceClass.ENERGY, SensorStateClass.TOTAL,
+         UnitOfEnergy.KILO_WATT_HOUR, "mdi:battery-plus", None, 2),
+        ("energy_storage_discharged_today", "Bateria rozładowana dziś",
+         lambda d: _ec_storage(d, "energy_discharged_today"),
+         SensorDeviceClass.ENERGY, SensorStateClass.TOTAL,
+         UnitOfEnergy.KILO_WATT_HOUR, "mdi:battery-minus", None, 2),
+        ("energy_storage_power", "Moc baterii (storage)",
+         lambda d: _ec_storage(d, "power"),
+         SensorDeviceClass.POWER, SensorStateClass.MEASUREMENT,
+         UnitOfPower.WATT, "mdi:battery-charging", None, 0),
+        ("energy_storage_status", "Status baterii",
+         lambda d: _ec_storage(d, "status"),
+         None, None, None, "mdi:battery-heart-variant", None, None),
+        ("energy_price_currency", "Waluta cen energii",
+         lambda d: _ec_currency(d),
+         None, None, None, "mdi:currency-usd",
+         EntityCategory.DIAGNOSTIC, None),
+    ]
+    for (
+        key,
+        name,
+        value_fn,
+        device_class,
+        state_class,
+        unit,
+        icon,
+        category,
+        precision,
+    ) in energy_entities:
+        entities.append(
+            SinumValueSensor(
+                coordinator,
+                energy_info,
+                key,
+                name,
+                value_fn,
+                device_class=device_class,
+                state_class=state_class,
+                unit=unit,
+                icon=icon,
+                entity_category=category,
+                precision=precision,
+            )
+        )
 
     if coordinator.enable_schedules and data.schedules:
         for schedule_id, schedule in data.schedules.items():

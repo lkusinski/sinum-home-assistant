@@ -70,6 +70,7 @@ Poniższa macierz przedstawia rzeczywisty, rzetelny stan wdrożenia — bez kolo
 | **Moduł klimatyzacji AC (`ac_module`)** | 🧪 LAB Bench | Moduł Lua w LAB Wirtualne | Dwukierunkowe mapowanie z encją `climate` w HA (tryby auto/cool/heat/fan/dry, nastawa). |
 | **32 moduły rozszerzeń Lua Sinum** | 🧪 LAB Bench | Moduły Lua w LAB Wirtualne | Moduły przekaźników, ściemniaczy, RGB, liczników energii/wody, czujników CO2/IAQ/jakości powietrza. |
 | **Moduły Lua jako encje HA** | ✅ LAB Bench | LAB Wirtualne | Przekaźnik → `switch`, dimmer/RGB → `light`, klimatyzator → `climate`, pompa ciepła → sensory read-only, sensory i liczniki → `sensor`, wejścia/kontaktrony → `binary_sensor`; moduły należące do mostu są filtrowane. |
+| **Energy Center → HA** | ✅ LAB Bench | Chmura Sinum | PV/sieć/budynek/bateria, SOC, zużycie/produkcja dziś i total, eksport, magazyn, waluta. |
 | **Klimatyzator (moduł AC → HA)** | ✅ LAB Bench | Moduł AC 1 (LAB) | Tryby off/auto/cool/heat/fan/dry, nastawa, prędkość wentylatora; testowo sterowany z HA. |
 | **Most pompy ciepła (heat_pump)** | ✅ LAB Bench | Moduł heat_pump + zdalny climate W9 | `enabled` i temperatura zadana w obie strony; test na module LAB. |
 | **Status prac serwisowych Sinum** | ✅ LAB Bench | Chmura Sinum | `binary_sensor` `Prace serwisowe` z `serviceStatus`, `from`, `to`, `message`. |

@@ -162,8 +162,10 @@ Read-only probing of the cloud API and the current target runtime:
 
 ### Next priorities
 
-1. **Energy Center → HA** — new sensors/device and HA Energy dashboard
-   support (highest user value).
+1. **Energy Center → HA** — implemented in 1.7.0: PV/grid/building/battery
+   power, SOC/status, consumption/production today/total, grid export,
+   storage counters and currency. Next: dashboard examples and optional
+   price parsing.
 2. **Bridge health and tests** — mapping counts, offline devices, last
    event, request/echo metrics, plus echo/momentary/heat-pump and long-run
    reconnect tests.

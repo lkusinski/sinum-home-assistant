@@ -29,6 +29,23 @@ All endpoints use the normal authenticated cloud client (Bearer token +
   devices.
 - The integration does not currently expose any energy-center entities.
 
+## Integration status (1.7.0)
+
+Implemented in `sensor.py` as the **Sinum Energy Center** device:
+
+- `energy_pv_power`, `energy_grid_power`, `energy_building_power`,
+  `energy_battery_power`
+- `energy_battery_soc`
+- `energy_consumption_today`, `energy_consumption_total`
+- `energy_production_today`, `energy_production_total`
+- `energy_grid_export_today`
+- `energy_storage_charged_today`, `energy_storage_discharged_today`
+- `energy_storage_power`, `energy_storage_status`
+- `energy_price_currency` (diagnostic)
+
+The coordinator refreshes the energy-center payload at most once per minute
+and keeps the previous snapshot between refreshes.
+
 ## Integration plan
 
 1. Add `async_get_energy_center()` methods to the API client for the six
