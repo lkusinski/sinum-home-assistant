@@ -192,6 +192,9 @@ authoritative and mapping/config are owned by Home Assistant. The scripts in
   The LAB AC module is only a simulator; controlling the physical AC from
   Sinum requires a remote-HA proxy/bridge or adding the Midea integration to
   the target HA.
+- Heat-pump modules are bridged (`variant: heat_pump`) from a HA climate to a
+  Sinum heat_pump module (enabled/target), and Sinum maintenance status is
+  exposed as a HA binary sensor (1.6.0).
 - Remaining: valve/radiator actuators, module commands for blind controllers,
   and marketplace-ready export/import tests.
 - Decide whether to use the official Sinum MQTT/Lua path or cloud REST/WS.

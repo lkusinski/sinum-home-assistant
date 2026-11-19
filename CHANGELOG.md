@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.6.0 — 2026-11-19
+
+- Add a Sinum maintenance sensor. The coordinator reads
+  `/maintenance-manager/status` and exposes a `binary_sensor` (`Prace
+  serwisowe`) that is on for `SCHEDULED`/`UNDERWAY`, with status, start, end
+  and message attributes.
+- Add a `heat_pump` bridge variant for custom device modules. A HA climate
+  entity is mirrored to a Sinum heat-pump module (`enabled`, target
+  temperature) with echo suppression and reconciliation; Sinum changes call
+  `climate.set_hvac_mode`/`set_temperature` back on HA.
+- Read-only module update status is kept out of automatic updates; module
+  update endpoints are documented for a later explicit action.
+
 ## 1.5.3 — 2026-11-19
 
 - Synchronize air-conditioner fan speed between the HA climate entity and the

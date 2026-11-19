@@ -21,6 +21,7 @@ from .entity import (
     SinumHomeAssistantEntity,
     generic_device_info,
     generic_parent_device_info,
+    hub_device_info,
     parent_device_info,
     schedule_device_info,
     system_module_device_info,
@@ -115,6 +116,33 @@ class SinumDeviceBinarySensor(SinumDeviceEntity, BinarySensorEntity):
         return self._value_fn(self._device())
 
 
+class SinumMaintenanceBinary(
+    SinumHomeAssistantEntity, BinarySensorEntity
+):
+    """Scheduled or ongoing Sinum cloud maintenance."""
+
+    _attr_name = "Prace serwisowe"
+    _attr_icon = "mdi:tools"
+    _attr_device_class = BinarySensorDeviceClass.PROBLEM
+
+    @property
+    def is_on(self) -> bool:
+        status = str(
+            self.coordinator.data.maintenance.get("serviceStatus") or ""
+        ).upper()
+        return status in ("SCHEDULED", "UNDERWAY")
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        maintenance = self.coordinator.data.maintenance
+        return {
+            "service_status": maintenance.get("serviceStatus"),
+            "from": maintenance.get("from"),
+            "to": maintenance.get("to"),
+            "message": maintenance.get("message"),
+        }
+
+
 class SinumScheduleActiveBinary(SinumHomeAssistantEntity, BinarySensorEntity):
     """Whether a thermal schedule is active now."""
 
@@ -201,6 +229,14 @@ async def async_setup_entry(
     coordinator: SinumHomeAssistantCoordinator = entry.runtime_data
     data = coordinator.data
     entities: list[BinarySensorEntity] = []
+
+    entities.append(
+        SinumMaintenanceBinary(
+            coordinator,
+            hub_device_info(entry.entry_id, data),
+            "hub_maintenance",
+        )
+    )
 
     if coordinator.enable_schedules and data.schedules:
         for schedule_id, schedule in data.schedules.items():

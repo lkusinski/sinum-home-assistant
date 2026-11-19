@@ -316,6 +316,28 @@ def _ac_mode_to_ha(mode: str) -> str:
     }.get(mode, "off")
 
 
+def _ha_heat_pump_values(state: State) -> dict[str, Any]:
+    mode = str(state.state or "off")
+    attrs = state.attributes
+    return {
+        "enabled": mode not in ("off", "unavailable", "unknown"),
+        "hvac_mode": mode,
+        "temperature": attrs.get("temperature"),
+        "current_temperature": attrs.get("current_temperature"),
+    }
+
+
+def _sinum_heat_pump_values(module: dict[str, Any]) -> dict[str, Any]:
+    target = module.get("target_temperature_indoor")
+    return {
+        "enabled": bool(module.get("enabled")),
+        "target_temperature": round(float(target) / 10, 1)
+        if isinstance(target, (int, float))
+        else None,
+        "thermal_demand": module.get("thermal_demand"),
+    }
+
+
 def _ac_fan_to_sinum(value: Any) -> str:
     return {
         "auto": "automatic",
@@ -423,6 +445,7 @@ class SinumBridge:
         self._relay_echo_until: dict[str, float] = {}
         self._light_echo_until: dict[str, float] = {}
         self._ac_echo_until: dict[str, float] = {}
+        self._hp_echo_until: dict[str, float] = {}
         self._state_watchers: dict[str, list[tuple[str, dict[str, Any]]]] = {}
         self._momentary_ready: set[int] = set()
         self._momentary_text_cache: dict[int, str] = {}
@@ -605,7 +628,7 @@ class SinumBridge:
             variant = entry.get("variant")
             if variant == "momentary":
                 continue
-            if variant in ("relay", "light", "ac_module"):
+            if variant in ("relay", "light", "ac_module", "heat_pump"):
                 self._ha_last[entity_id] = self._desired(
                     variant, entry, state
                 )
@@ -626,6 +649,8 @@ class SinumBridge:
             return _ha_light_values(state)
         if variant == "ac_module":
             return _ha_ac_values(state)
+        if variant == "heat_pump":
+            return _ha_heat_pump_values(state)
         return _value_for(entry, state)
 
     async def _async_apply_ha_state(
@@ -649,6 +674,25 @@ class SinumBridge:
             variant = str(entry.get("variant"))
             device_id = int(entry["id"])
             if variant == "momentary":
+                return
+            if variant == "heat_pump":
+                desired = _ha_heat_pump_values(state)
+                if self._ha_last.get(entity_id) == desired:
+                    return
+                self._ha_last[entity_id] = desired
+                self._hp_echo_until[entity_id] = (
+                    time.monotonic() + RELAY_ECHO_SECONDS
+                )
+                try:
+                    await self._async_apply_heat_pump_module(
+                        device_id, desired
+                    )
+                except SinumHomeAssistantError as err:
+                    _LOGGER.warning(
+                        "Sinum bridge heat pump update failed for %s: %s",
+                        entity_id,
+                        err,
+                    )
                 return
             if variant == "ac_module":
                 desired = _ha_ac_values(state)
@@ -804,6 +848,22 @@ class SinumBridge:
         fan_speed = desired.get("fan_speed")
         if fan_speed and module.get("fan_speed") != fan_speed:
             patch["fan_speed"] = fan_speed
+        if patch:
+            await self.client.async_patch(
+                f"devices/custom-device-module/{module_id}", patch
+            )
+
+    async def _async_apply_heat_pump_module(
+        self, module_id: int, desired: dict[str, Any]
+    ) -> None:
+        module = await self._async_get_module(module_id)
+        patch: dict[str, Any] = {}
+        if bool(module.get("enabled")) != bool(desired["enabled"]):
+            patch["enabled"] = bool(desired["enabled"])
+        if desired.get("temperature") is not None:
+            raw = int(round(float(desired["temperature"]) * 10))
+            if module.get("target_temperature_indoor") != raw:
+                patch["target_temperature_indoor"] = raw
         if patch:
             await self.client.async_patch(
                 f"devices/custom-device-module/{module_id}", patch
@@ -1339,10 +1399,14 @@ class SinumBridge:
                     self._mark_recent(entity_id, current)
                     await self._async_apply_light_to_ha(entity_id, current)
         for entity_id, entry in list(self._mapping.items()):
-            if entry.get("variant") != "ac_module":
+            variant = entry.get("variant")
+            if variant not in ("ac_module", "heat_pump"):
                 continue
             module = await self._async_get_module(int(entry["id"]))
-            current = _sinum_ac_values(module)
+            if variant == "ac_module":
+                current = _sinum_ac_values(module)
+            else:
+                current = _sinum_heat_pump_values(module)
             if entity_id not in self._sinum_last:
                 self._sinum_last[entity_id] = current
                 continue
@@ -1350,7 +1414,10 @@ class SinumBridge:
                 continue
             self._sinum_last[entity_id] = current
             self._mark_recent(entity_id, current)
-            await self._async_apply_ac_to_ha(entity_id, current)
+            if variant == "ac_module":
+                await self._async_apply_ac_to_ha(entity_id, current)
+            else:
+                await self._async_apply_heat_pump_to_ha(entity_id, current)
 
     def _create_payload(
         self,
@@ -1781,6 +1848,27 @@ class SinumBridge:
                 {"fan_mode": _ac_fan_to_ha(current["fan_speed"])},
             )
 
+    async def _async_apply_heat_pump_to_ha(
+        self, entity_id: str, current: dict[str, Any]
+    ) -> None:
+        if not current["enabled"]:
+            # Setting the temperature on a climate entity can turn it on.
+            # When the Sinum module is disabled, only ensure the HVAC mode is
+            # off and never touch the target temperature.
+            await self._async_call_ha(
+                entity_id, "set_hvac_mode", {"hvac_mode": "off"}
+            )
+            return
+        await self._async_call_ha(
+            entity_id, "set_hvac_mode", {"hvac_mode": "heat"}
+        )
+        if current.get("target_temperature") is not None:
+            await self._async_call_ha(
+                entity_id,
+                "set_temperature",
+                {"temperature": float(current["target_temperature"])},
+            )
+
     async def _async_sinum_stream(self) -> None:
         while not self._stop.is_set():
             try:
@@ -1924,9 +2012,14 @@ class SinumBridge:
                     None,
                 )
                 if entity_id is not None:
-                    await self._async_handle_ac_event(
-                        device_id, entity_id
-                    )
+                    if entry.get("variant") == "ac_module":
+                        await self._async_handle_ac_event(
+                            device_id, entity_id
+                        )
+                    elif entry.get("variant") == "heat_pump":
+                        await self._async_handle_heat_pump_event(
+                            device_id, entity_id
+                        )
             return
         if event_type == "custom_device_element_stateless_event":
             found = self._by_id.get(device_id)
@@ -2015,6 +2108,26 @@ class SinumBridge:
             "room_temp",
         ):
             await self._async_handle_ac_event(device_id, entity_id)
+
+    async def _async_handle_heat_pump_event(
+        self, module_id: int, entity_id: str
+    ) -> None:
+        try:
+            module = await self._async_get_module(module_id)
+        except SinumHomeAssistantError as err:
+            _LOGGER.warning(
+                "Sinum bridge heat pump event fetch failed: %s", err
+            )
+            return
+        current = _sinum_heat_pump_values(module)
+        if time.monotonic() < self._hp_echo_until.get(entity_id, 0.0):
+            self._sinum_last[entity_id] = current
+            return
+        if self._sinum_last.get(entity_id) == current:
+            return
+        self._mark_recent(entity_id, current)
+        self._sinum_last[entity_id] = current
+        await self._async_apply_heat_pump_to_ha(entity_id, current)
 
     async def _async_handle_ac_event(
         self, module_id: int, entity_id: str

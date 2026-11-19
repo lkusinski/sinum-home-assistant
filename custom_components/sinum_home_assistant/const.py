@@ -8,8 +8,10 @@ DOMAIN = "sinum_home_assistant"
 MANUFACTURER = "Sinum"
 MODEL = "Sinum"
 
-API_BASE = "https://backend.prd.sinum24.com/proxy"
-OAUTH_URL = "https://backend.prd.sinum24.com/authentication/oauth/token"
+CLOUD_BASE = "https://backend.prd.sinum24.com"
+API_BASE = CLOUD_BASE + "/proxy"
+OAUTH_URL = CLOUD_BASE + "/authentication/oauth/token"
+MAINTENANCE_URL = CLOUD_BASE + "/maintenance-manager/status"
 APP_BASIC = "ZWhvbWU6dG9wX3NlY3JldA=="
 TOKEN_SAFETY = 45
 

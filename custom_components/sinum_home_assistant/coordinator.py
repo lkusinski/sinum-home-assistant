@@ -146,6 +146,13 @@ class SinumHomeAssistantCoordinator(DataUpdateCoordinator[SinumHomeAssistantData
                 raise ConfigEntryAuthFailed(str(err)) from err
             except SinumHomeAssistantError as err:
                 _LOGGER.debug("Sinum schedules unavailable: %s", err)
+        maintenance: dict[str, Any] = {}
+        try:
+            maintenance = await self.client.async_get_maintenance_status()
+        except SinumAuthError as err:
+            raise ConfigEntryAuthFailed(str(err)) from err
+        except SinumHomeAssistantError as err:
+            _LOGGER.debug("Sinum maintenance status unavailable: %s", err)
         data = build_data(
             info=info,
             rooms=rooms,
@@ -154,6 +161,7 @@ class SinumHomeAssistantCoordinator(DataUpdateCoordinator[SinumHomeAssistantData
             custom_modules=modules,
             weather=weather,
             schedules=schedules,
+            maintenance=maintenance,
         )
         keys: set[tuple[str, int]] = set()
         for group, items in data.device_groups.items():

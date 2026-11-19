@@ -10,7 +10,13 @@ from typing import Any
 
 import aiohttp
 
-from .const import API_BASE, APP_BASIC, OAUTH_URL, TOKEN_SAFETY
+from .const import (
+    API_BASE,
+    APP_BASIC,
+    MAINTENANCE_URL,
+    OAUTH_URL,
+    TOKEN_SAFETY,
+)
 
 REQUEST_RETRIES = 2
 REQUEST_RETRY_DELAY = 0.75
@@ -161,7 +167,7 @@ class SinumHomeAssistantClient:
         # The Sinum cloud allows only one request in flight per device id.
         # Coordinator polls, the bridge and entity actions all share this
         # client, so serialize requests instead of racing into HTTP 429.
-        url = f"{API_BASE}/{path.lstrip('/')}"
+        url = path if path.startswith("http") else f"{API_BASE}/{path.lstrip('/')}"
         attempts = REQUEST_RETRIES + 1 if retry else 1
         token = await self.async_ensure_token()
         async with self._request_lock:
@@ -273,6 +279,13 @@ class SinumHomeAssistantClient:
     async def async_get_weather(self) -> dict[str, Any]:
         data = await self.async_get("weather")
         return data.get("data", {}) if isinstance(data, dict) else {}
+
+    async def async_get_maintenance_status(self) -> dict[str, Any]:
+        try:
+            data = await self._async_request("GET", MAINTENANCE_URL)
+        except SinumNotSupportedError:
+            return {}
+        return data if isinstance(data, dict) else {}
 
     async def async_get_custom_device_modules(
         self,
