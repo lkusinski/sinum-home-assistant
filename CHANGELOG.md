@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.5.0 — 2026-11-18
+
+- Expose Sinum `air_conditioner` custom device modules as Home Assistant
+  `climate` entities: hvac modes (off/auto/cool/heat/fan/dry), target
+  temperature, fan modes, current temperature when the module reports it, and
+  hvac action.
+- Expose `heat_pump` modules read-only: target indoor temperature, thermal
+  demand, target temperature mode, enabled and electric-heater binary sensors.
+  No heat-pump commands are sent.
+- The LAB AC module is now controlled natively; remove it from the bridge
+  mapping to avoid two controllers for the same module.
+
 ## 1.4.2 — 2026-11-18
 
 - Remove stale Home Assistant devices left behind for bridge-owned or legacy

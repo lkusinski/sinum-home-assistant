@@ -68,6 +68,11 @@ MODULE_BINARY_SPECS = {
     "opening_sensor": [
         ("open", OPENING, BinarySensorDeviceClass.WINDOW),
     ],
+    "heat_pump": [
+        ("enabled", "Włączona", None),
+        ("electric_heater_active", "Grzałka elektryczna",
+         BinarySensorDeviceClass.HEAT),
+    ],
 }
 
 

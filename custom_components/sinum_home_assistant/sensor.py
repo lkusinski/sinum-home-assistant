@@ -321,6 +321,14 @@ MODULE_SENSOR_SPECS: dict[str, list[tuple]] = {
          UnitOfVolume.CUBIC_METERS, 0.001, 1,
          SensorStateClass.TOTAL_INCREASING),
     ],
+    "heat_pump": [
+        ("target_temperature_indoor", "Temperatura zadana",
+         SensorDeviceClass.TEMPERATURE, UnitOfTemperature.CELSIUS,
+         TEMP_SCALE, 1, SensorStateClass.MEASUREMENT),
+        ("thermal_demand", "Zapotrzebowanie", None, None, None, None, None),
+        ("target_temperature_mode", "Tryb temperatury", None, None, None,
+         None, None),
+    ],
     "heat_meter": [
         ("current_water_flow", "Przepływ", None,
          UnitOfVolumeFlowRate.CUBIC_METERS_PER_HOUR, None, 2,

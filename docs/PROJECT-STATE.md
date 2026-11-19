@@ -182,8 +182,15 @@ authoritative and mapping/config are owned by Home Assistant. The scripts in
   `sensor`, opening/motion/flood/smoke/two-state → `binary_sensor`.
 - Bridge-owned modules (`custom_device_id` whose parent has
   `integration_uid: z2m-bridge`) are filtered out.
-- Remaining: AC module → HA `climate`, valve/radiator actuators, module
-  commands for blind controllers, and marketplace-ready export/import tests.
+- AC modules are now exposed as HA `climate` (modes, target, fan) and heat
+  pumps as read-only sensors/binary sensors (1.5.0).
+- The real Wiśniowa 9 salon AC is a Midea device in the production HA
+  (`climate.wisniowa_salon_klimatyzator_salon`), **not** a Sinum cloud device.
+  The LAB AC module is only a simulator; controlling the physical AC from
+  Sinum requires a remote-HA proxy/bridge or adding the Midea integration to
+  the target HA.
+- Remaining: valve/radiator actuators, module commands for blind controllers,
+  and marketplace-ready export/import tests.
 - Decide whether to use the official Sinum MQTT/Lua path or cloud REST/WS.
 
 ### Phase 4 — tests and release
