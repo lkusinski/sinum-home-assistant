@@ -138,6 +138,48 @@ optional part of the integration (one config entry), so the options flow is
 authoritative and mapping/config are owned by Home Assistant. The scripts in
 `bridge/` remain only as a reference implementation.
 
+## Research snapshot — 2026-11-19
+
+Read-only probing of the cloud API and the current target runtime:
+
+- **Energy Center:** `flow-monitor`, `energy-consumption` and
+  `energy-storage` are available; `energy-production` can be
+  `available: false`; prices may be empty. The integration does not expose
+  these yet. Details and an implementation plan:
+  [`ENERGY-CENTER.md`](ENERGY-CENTER.md).
+- **Automations/scenes:** the cloud API has `/automations` and `/scenes`.
+  A normal target hub may have a small number of automations and no scenes;
+  the integration does not expose either yet.
+- **Marketplace/updates:** `POST /proxy/marketplace/check-updates` works and
+  is safe to call; custom devices can expose `software_status` and
+  `update_details`. Per-device `check-update` is not exposed through the cloud
+  proxy. Automatic updates are intentionally not performed.
+- **Maintenance:** `GET /maintenance-manager/status` is available outside the
+  `/proxy` prefix and is exposed as a HA binary sensor (1.6.0).
+- **Bridge:** the target mapping has ~100 entries across `momentary`, `relay`,
+  `light`, `ac_module`, `heat_pump`, sensors and binary sensors. The AC and
+  heat-pump bridges are live and tested.
+
+### Next priorities
+
+1. **Energy Center → HA** — new sensors/device and HA Energy dashboard
+   support (highest user value).
+2. **Bridge health and tests** — mapping counts, offline devices, last
+   event, request/echo metrics, plus echo/momentary/heat-pump and long-run
+   reconnect tests.
+3. **Sinum automations/scenes** — expose run/enable and scene activation.
+4. **Module controls** — valve/radiator/blind/car charger/DHW/inverter/button;
+   AC preset/swing; heat-pump mode/DHW/current temperature.
+5. **Custom-device update status** — read-only update entities/sensors; never
+   auto-update.
+6. **Configuration and UX** — direction, exclusions, per-entity overrides,
+   module opt-in, release automation.
+7. **Performance** — sensor coalescing and request metrics to keep cloud
+   load predictable.
+
+Still blocked or out of scope: local LAN API (no route), Sinum dashboard
+widgets (API limitations), camera/NVR in Sinum (cloud limitation).
+
 ## Refactor phases
 
 ### Phase 0 — CI and documentation (done)
@@ -205,8 +247,10 @@ authoritative and mapping/config are owned by Home Assistant. The scripts in
   `404` handling; the CI `tests` job runs pytest on every push.
 - Still to add: selection/mapping and echo-suppression tests, plus a repeatable
   LAB smoke test (API + Playwright + physical verification).
-- Releases `v1.2.4`, `v1.3.0` and `v1.3.1` are published on GitHub; HACS uses
-  the manifest version and matching tag.
+- Releases up to `v1.6.0` are published on GitHub; HACS uses the manifest
+  version and matching tag.
+- Next: tests for mapping/echo/momentary/heat-pump, and a repeated LAB smoke
+  test.
 
 ## Safety rules
 

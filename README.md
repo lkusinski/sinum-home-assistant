@@ -260,6 +260,7 @@ Więcej informacji technicznych i poradników znajduje się w katalogu `docs/`:
 - [Katalog encji i atrybutów](docs/ENTITIES.md)
 - [Architektura mostu Z2M ↔ Sinum](docs/BRIDGE-Z2M.md)
 - [Moduły rozszerzeń Lua w Sinum](docs/SINUM-LUA-MODULES.md)
+- [Energy Center Sinum — API i plan integracji](docs/ENERGY-CENTER.md)
 - [Rozwiązywanie problemów (Troubleshooting)](docs/TROUBLESHOOTING.md)
 - [Polityka prywatności i bezpieczeństwa danych](docs/PRIVACY.md)
 - [Klasyfikacja encji i zalecane etykiety](docs/LABELS.md)
