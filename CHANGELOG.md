@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.5.1 — 2026-11-19
+
+- Follow Sinum room changes in Home Assistant: when a device moves between
+  Sinum rooms, its HA area is updated even if it already had an area. Manual
+  HA-only areas are preserved (only areas matching Sinum room names are
+  overwritten).
+- Look up devices by their Sinum identifier without requiring the device to be
+  linked in the config-entry column; the integration-created devices are
+  otherwise found by the stable `sinum_home_assistant` identifier.
+- This makes moving the LAB AC and heat-pump modules from LAB Wirtualne to
+  LAB Lukasz visible in the HA area assignment, without recreating entities.
+
 ## 1.5.0 — 2026-11-18
 
 - Expose Sinum `air_conditioner` custom device modules as Home Assistant

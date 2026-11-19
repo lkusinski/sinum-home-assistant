@@ -91,6 +91,9 @@ planned refactor. No credentials belong in this file.
 - **Registry cleanup (1.4.2):** HA devices for bridge-owned/legacy virtual
   Sinum devices without entities are removed on setup; dimmer/RGB lights share
   the module device instead of creating a second one.
+- **Area refresh (1.5.1):** moving a device between Sinum rooms updates its HA
+  area when the current HA area is one of the Sinum rooms; manual HA-only
+  areas are kept.
 
 ## Current bridge behavior
 

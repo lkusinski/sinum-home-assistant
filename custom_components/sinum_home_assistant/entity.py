@@ -491,13 +491,24 @@ async def async_assign_areas(
 
     areas = ar.async_get(hass)
     devices = dr.async_get(hass)
+    sinum_area_ids = {
+        area.id
+        for name in data.room_names.values()
+        if (area := areas.async_get_area_by_name(name)) is not None
+    }
+    devices_by_identifier: dict[tuple[str, str], Any] = {}
+    for device in devices.devices:
+        for identifier in device.identifiers:
+            devices_by_identifier[identifier] = device
 
     for key, area_name in data.area_names.items():
         area = areas.async_get_area_by_name(area_name)
         if area is None:
             area = areas.async_create(area_name)
-        device = devices.async_get_device_by_identifier(
-            (DOMAIN, f"{entry.entry_id}_{key}"), entry.entry_id
+        device = devices_by_identifier.get(
+            (DOMAIN, f"{entry.entry_id}_{key}")
         )
-        if device is not None and device.area_id is None:
+        if device is None or device.area_id == area.id:
+            continue
+        if device.area_id is None or device.area_id in sinum_area_ids:
             devices.async_update_device(device.id, area_id=area.id)
