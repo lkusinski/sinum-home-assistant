@@ -290,6 +290,7 @@ def _ha_ac_values(state: State) -> dict[str, Any]:
         "hvac_mode": mode,
         "temperature": attrs.get("temperature"),
         "current_temperature": attrs.get("current_temperature"),
+        "fan_speed": _ac_fan_to_sinum(attrs.get("fan_mode")),
     }
 
 
@@ -315,6 +316,28 @@ def _ac_mode_to_ha(mode: str) -> str:
     }.get(mode, "off")
 
 
+def _ac_fan_to_sinum(value: Any) -> str:
+    return {
+        "auto": "automatic",
+        "automatic": "automatic",
+        "silent": "low",
+        "low": "low",
+        "medium": "medium",
+        "high": "high",
+        "full": "high",
+    }.get(str(value), "automatic")
+
+
+def _ac_fan_to_ha(value: Any) -> str:
+    return {
+        "automatic": "auto",
+        "auto": "auto",
+        "low": "low",
+        "medium": "medium",
+        "high": "high",
+    }.get(str(value), "auto")
+
+
 def _sinum_ac_values(module: dict[str, Any]) -> dict[str, Any]:
     mode = str(module.get("mode") or "off")
     target = module.get("target_temperature")
@@ -328,6 +351,7 @@ def _sinum_ac_values(module: dict[str, Any]) -> dict[str, Any]:
         "current_temperature": round(float(room) / 10, 1)
         if isinstance(room, (int, float))
         else None,
+        "fan_speed": str(module.get("fan_speed") or "automatic"),
     }
 
 
@@ -777,6 +801,9 @@ class SinumBridge:
             raw = int(round(float(desired["temperature"]) * 10))
             if module.get("target_temperature") != raw:
                 patch["target_temperature"] = raw
+        fan_speed = desired.get("fan_speed")
+        if fan_speed and module.get("fan_speed") != fan_speed:
+            patch["fan_speed"] = fan_speed
         if patch:
             await self.client.async_patch(
                 f"devices/custom-device-module/{module_id}", patch
@@ -1746,6 +1773,12 @@ class SinumBridge:
                 entity_id,
                 "set_temperature",
                 {"temperature": float(current["temperature"])},
+            )
+        if current.get("fan_speed"):
+            await self._async_call_ha(
+                entity_id,
+                "set_fan_mode",
+                {"fan_mode": _ac_fan_to_ha(current["fan_speed"])},
             )
 
     async def _async_sinum_stream(self) -> None:

@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.5.3 — 2026-11-19
+
+- Synchronize air-conditioner fan speed between the HA climate entity and the
+  Sinum AC module. `auto`/`silent`/`full` are mapped to the module's
+  `automatic`/`low`/`high` fan set.
+
 ## 1.5.2 — 2026-11-19
 
 - Stop blocking new Sinum user commands with the 15 s recent-event window.
