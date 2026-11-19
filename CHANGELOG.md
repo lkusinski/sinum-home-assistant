@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.5.2 — 2026-11-19
+
+- Stop blocking new Sinum user commands with the 15 s recent-event window.
+  HA→Sinum echo suppression stays in place, while relay, light and AC use a
+  short per-device echo window. Turning a relay off shortly after turning it
+  on from Sinum is no longer ignored.
+
 ## 1.5.1 — 2026-11-19
 
 - Follow Sinum room changes in Home Assistant: when a device moves between

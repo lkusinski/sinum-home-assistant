@@ -397,6 +397,8 @@ class SinumBridge:
         self._sinum_last: dict[str, Any] = {}
         self._recent: dict[str, tuple[Any, float]] = {}
         self._relay_echo_until: dict[str, float] = {}
+        self._light_echo_until: dict[str, float] = {}
+        self._ac_echo_until: dict[str, float] = {}
         self._state_watchers: dict[str, list[tuple[str, dict[str, Any]]]] = {}
         self._momentary_ready: set[int] = set()
         self._momentary_text_cache: dict[int, str] = {}
@@ -629,6 +631,9 @@ class SinumBridge:
                 if self._ha_last.get(entity_id) == desired:
                     return
                 self._ha_last[entity_id] = desired
+                self._ac_echo_until[entity_id] = (
+                    time.monotonic() + RELAY_ECHO_SECONDS
+                )
                 try:
                     await self._async_apply_ac_module(device_id, desired)
                 except SinumHomeAssistantError as err:
@@ -644,6 +649,9 @@ class SinumBridge:
                 if old == desired:
                     return
                 self._ha_last[entity_id] = desired
+                self._light_echo_until[entity_id] = (
+                    time.monotonic() + RELAY_ECHO_SECONDS
+                )
                 try:
                     await self._async_apply_light(
                         device_id, entry, desired, old
@@ -1911,7 +1919,7 @@ class SinumBridge:
         if event_type != "custom_device_element_state_changed":
             return
         found = self._by_id.get(device_id)
-        if not found or self._is_recent(found[0]):
+        if not found:
             return
         entity_id, entry = found
         if self._availability.get(entity_id) is False:
@@ -1957,7 +1965,12 @@ class SinumBridge:
                 )
                 return
             current = _sinum_light_values(device.get(device_id, {}))
-            if current is None or self._sinum_last.get(entity_id) == current:
+            if current is None:
+                return
+            if time.monotonic() < self._light_echo_until.get(entity_id, 0.0):
+                self._sinum_last[entity_id] = current
+                return
+            if self._sinum_last.get(entity_id) == current:
                 return
             self._mark_recent(entity_id, current)
             self._sinum_last[entity_id] = current
@@ -1973,14 +1986,15 @@ class SinumBridge:
     async def _async_handle_ac_event(
         self, module_id: int, entity_id: str
     ) -> None:
-        if self._is_recent(entity_id):
-            return
         try:
             module = await self._async_get_module(module_id)
         except SinumHomeAssistantError as err:
             _LOGGER.warning("Sinum bridge AC event fetch failed: %s", err)
             return
         current = _sinum_ac_values(module)
+        if time.monotonic() < self._ac_echo_until.get(entity_id, 0.0):
+            self._sinum_last[entity_id] = current
+            return
         if self._sinum_last.get(entity_id) == current:
             return
         self._mark_recent(entity_id, current)
